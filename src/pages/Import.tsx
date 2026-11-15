@@ -6,6 +6,7 @@ import { db } from '../lib/db';
 import { parseChapterFile, repairPrompt, type ImportResult } from '../lib/importer';
 import { generatePrompt, outlinePrompt, STORY_STYLES, verifyPrompt } from '../lib/prompts';
 import { go } from '../router';
+import { tr, useLang } from '../lib/i18n';
 
 const NEW = '__new__';
 
@@ -16,12 +17,69 @@ function PromptBox({ title, text, children }: { title: string; text: string; chi
       <div className="row between wrap gap">
         <strong>{title}</strong>
         <div className="row gap">
-          <button className="btn small ghost" onClick={() => setShow((s) => !s)}>{show ? 'Ausblenden' : 'Ansehen'}</button>
-          <CopyButton text={text} label="Prompt kopieren" className="btn small primary" />
+          <button className="btn small ghost" onClick={() => setShow((s) => !s)}>{show ? tr('Ausblenden', 'Hide') : tr('Ansehen', 'View')}</button>
+          <CopyButton text={text} label={tr('Prompt kopieren', 'Copy prompt')} className="btn small primary" />
         </div>
       </div>
       {children}
       {show && <pre className="prompt-text">{text}</pre>}
+    </div>
+  );
+}
+
+function StylePicker({
+  style,
+  setStyle,
+  custom,
+  setCustom,
+}: {
+  style: string;
+  setStyle: (s: string) => void;
+  custom: boolean;
+  setCustom: (b: boolean) => void;
+}) {
+  const styles = STORY_STYLES();
+  const active = custom ? undefined : styles.find((s) => s.value === style);
+  return (
+    <div className="stack style-picker">
+      <span className="label">{tr('Story-Stil', 'Story style')}</span>
+      <div className="chips">
+        {styles.map((s) => (
+          <button
+            key={s.label}
+            type="button"
+            className={`chip ${!custom && s.value === style ? 'active' : ''}`}
+            title={s.fits}
+            onClick={() => {
+              setCustom(false);
+              setStyle(s.value);
+            }}
+          >
+            {s.label}
+          </button>
+        ))}
+        <button
+          type="button"
+          className={`chip ${custom ? 'active' : ''}`}
+          onClick={() => {
+            setCustom(true);
+            setStyle('');
+          }}
+        >
+          {tr('✎ Eigener Stil', '✎ Your own')}
+        </button>
+      </div>
+      {custom ? (
+        <input
+          className="input"
+          autoFocus
+          value={style}
+          onChange={(e) => setStyle(e.target.value)}
+          placeholder={tr('z. B. Western, Kochshow, Sitcom in einer WG, Piratenschiff …', 'e.g. western, cooking show, flat-share sitcom, pirate ship …')}
+        />
+      ) : (
+        active && <p className="muted small">{active.value ? `${tr('Passt gut für', 'Good for')}: ${active.fits}` : active.fits}</p>
+      )}
     </div>
   );
 }
@@ -32,12 +90,14 @@ export default function ImportPage({ courseId }: { courseId?: string }) {
   const [courseTitle, setCourseTitle] = useState('');
   const [chapterNumber, setChapterNumber] = useState('1');
   const [chapterTitle, setChapterTitle] = useState('');
-  const [style, setStyle] = useState(STORY_STYLES[0]);
+  const [style, setStyle] = useState(''); // '' = KI wählt passend zum Stoff
+  const [customStyle, setCustomStyle] = useState(false);
   const [pasted, setPasted] = useState('');
   const [result, setResult] = useState<ImportResult>();
   const [busy, setBusy] = useState(false);
 
   const targetCourse = courses.find((c) => c.id === target);
+  const lang = useLang();
 
   // nächste freie Kapitelnummer vorschlagen
   useEffect(() => {
@@ -51,7 +111,8 @@ export default function ImportPage({ courseId }: { courseId?: string }) {
 
   const prompt = useMemo(
     () => generatePrompt({ course: targetCourse?.title ?? courseTitle, chapterNumber, chapterTitle, style }),
-    [targetCourse, courseTitle, chapterNumber, chapterTitle, style],
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [targetCourse, courseTitle, chapterNumber, chapterTitle, style, lang],
   );
 
   useEffect(() => {
@@ -75,15 +136,15 @@ export default function ImportPage({ courseId }: { courseId?: string }) {
 
   return (
     <div className="stack">
-      <h1>Kapitel importieren</h1>
+      <h1>{tr('Kapitel importieren', 'Import chapter')}</h1>
 
       <section className="card stack">
-        <h2 className="step"><span>1</span> Kapitel festlegen</h2>
+        <h2 className="step"><span>1</span> {tr('Kapitel festlegen', 'Define the chapter')}</h2>
         <div className="form-grid">
           <label>
-            Kurs
+            {tr('Kurs', 'Course')}
             <select className="input" value={target} onChange={(e) => setTarget(e.target.value)}>
-              <option value={NEW}>Neuer Kurs …</option>
+              <option value={NEW}>{tr('Neuer Kurs …', 'New course …')}</option>
               {courses.map((c) => (
                 <option key={c.id} value={c.id}>{c.title}</option>
               ))}
@@ -91,61 +152,69 @@ export default function ImportPage({ courseId }: { courseId?: string }) {
           </label>
           {!targetCourse && (
             <label>
-              Kurstitel
-              <input className="input" value={courseTitle} onChange={(e) => setCourseTitle(e.target.value)} placeholder="z. B. KE 2 – Kostenrechnung" />
+              {tr('Kurstitel', 'Course title')}
+              <input className="input" value={courseTitle} onChange={(e) => setCourseTitle(e.target.value)} placeholder={tr('z. B. KE 2 – Kostenrechnung', 'e.g. Unit 2 – Cost accounting')} />
             </label>
           )}
           <label>
-            Kapitel-Nr.
+            {tr('Kapitel-Nr.', 'Chapter no.')}
             <input className="input" inputMode="numeric" value={chapterNumber} onChange={(e) => setChapterNumber(e.target.value)} />
           </label>
           <label>
-            Kapiteltitel (wie im PDF)
-            <input className="input" value={chapterTitle} onChange={(e) => setChapterTitle(e.target.value)} placeholder="z. B. 2.3 Deckungsbeitragsrechnung" />
-          </label>
-          <label>
-            Story-Stil
-            <input className="input" list="styles" value={style} onChange={(e) => setStyle(e.target.value)} />
-            <datalist id="styles">
-              {STORY_STYLES.map((s) => (
-                <option key={s} value={s} />
-              ))}
-            </datalist>
+            {tr('Kapiteltitel (wie im PDF)', 'Chapter title (as in the PDF)')}
+            <input className="input" value={chapterTitle} onChange={(e) => setChapterTitle(e.target.value)} placeholder={tr('z. B. 2.3 Deckungsbeitragsrechnung', 'e.g. 2.3 Contribution margin analysis')} />
           </label>
         </div>
+        <StylePicker style={style} setStyle={setStyle} custom={customStyle} setCustom={setCustomStyle} />
         <details>
-          <summary>Du kennst die Kapitel und Seiten noch nicht?</summary>
-          <PromptBox title="Gliederung erstellen (optional)" text={outlinePrompt()}>
-            <p className="muted small">PDF hochladen, diesen Prompt dazu. Du bekommst eine Liste mit Kapiteln und Seiten.</p>
+          <summary>{tr('Du kennst die Kapitel und Seiten noch nicht?', 'Don\'t know the chapters and pages yet?')}</summary>
+          <PromptBox title={tr('Gliederung erstellen (optional)', 'Create an outline (optional)')} text={outlinePrompt()}>
+            <p className="muted small">{tr('PDF hochladen, diesen Prompt dazu. Du bekommst eine Liste mit Kapiteln und Seiten.', 'Upload the PDF and add this prompt. You get a list of chapters and pages.')}</p>
           </PromptBox>
         </details>
       </section>
 
       <section className="card stack">
-        <h2 className="step"><span>2</span> Inhalte erzeugen lassen</h2>
+        <h2 className="step"><span>2</span> {tr('Inhalte erzeugen lassen', 'Generate the content')}</h2>
         <ol className="steps-list">
-          <li>Öffne einen <strong>neuen Chat</strong> in Claude, ChatGPT oder Gemini (ein Modell mit PDF-Upload; das stärkste, das du hast).</li>
-          <li>Lade dein PDF hoch und füge <strong>Prompt A</strong> ein.</li>
-          <li>Bricht die Antwort ab, schreibe „weiter“ und kopiere später beide Teile zusammen.</li>
+          {tr(
+            <>
+              <li>Öffne einen <strong>neuen Chat</strong> in Claude, ChatGPT oder Gemini (ein Modell mit PDF-Upload; das stärkste, das du hast).</li>
+              <li>Lade dein PDF hoch und füge <strong>Prompt A</strong> ein.</li>
+              <li>Bricht die Antwort ab, schreibe „weiter“ und kopiere später beide Teile zusammen.</li>
+            </>,
+            <>
+              <li>Open a <strong>new chat</strong> in Claude, ChatGPT or Gemini (a model with PDF upload; the strongest one you have).</li>
+              <li>Upload your PDF and paste <strong>Prompt A</strong>.</li>
+              <li>If the answer gets cut off, write "continue" and later copy both parts together.</li>
+            </>,
+          )}
         </ol>
-        <PromptBox title="Prompt A – Lerneinheit erzeugen" text={prompt} />
+        <PromptBox title={tr('Prompt A – Lerneinheit erzeugen', 'Prompt A – generate the learning unit')} text={prompt} />
       </section>
 
       <section className="card stack">
-        <h2 className="step"><span>3</span> Prüfen lassen <span className="tag">empfohlen</span></h2>
+        <h2 className="step"><span>3</span> {tr('Prüfen lassen', 'Have it checked')} <span className="tag">{tr('empfohlen', 'recommended')}</span></h2>
         <p className="muted">
-          Ein zweiter, unabhängiger Durchlauf prüft jede Frage gegen das PDF, korrigiert Seitenzahlen und entfernt Fragen ohne Beleg. Das ist dein
-          Schutz gegen Halluzinationen.
+          {tr('Ein zweiter, unabhängiger Durchlauf prüft jede Frage gegen das PDF, korrigiert Seitenzahlen und entfernt Fragen ohne Beleg. Das ist dein Schutz gegen Halluzinationen.', 'A second, independent pass checks every question against the PDF, fixes page numbers and removes questions without evidence. This is your protection against hallucinations.')}
         </p>
         <ol className="steps-list">
-          <li>Öffne einen <strong>weiteren neuen Chat</strong> (nicht denselben!).</li>
-          <li>Lade das PDF erneut hoch, füge <strong>Prompt B</strong> ein und ersetze den Platzhalter am Ende durch das JSON aus Schritt 2.</li>
+          {tr(
+            <>
+              <li>Öffne einen <strong>weiteren neuen Chat</strong> (nicht denselben!).</li>
+              <li>Lade das PDF erneut hoch, füge <strong>Prompt B</strong> ein und ersetze den Platzhalter am Ende durch das JSON aus Schritt 2.</li>
+            </>,
+            <>
+              <li>Open <strong>another new chat</strong> (not the same one!).</li>
+              <li>Upload the PDF again, paste <strong>Prompt B</strong> and replace the placeholder at the end with the JSON from step 2.</li>
+            </>,
+          )}
         </ol>
-        <PromptBox title="Prompt B – Inhalte prüfen" text={verifyPrompt()} />
+        <PromptBox title={tr('Prompt B – Inhalte prüfen', 'Prompt B – check the content')} text={verifyPrompt()} />
       </section>
 
       <section className="card stack">
-        <h2 className="step"><span>4</span> Ergebnis einfügen</h2>
+        <h2 className="step"><span>4</span> {tr('Ergebnis einfügen', 'Paste the result')}</h2>
         <textarea
           className="input mono"
           rows={8}
@@ -156,38 +225,40 @@ export default function ImportPage({ courseId }: { courseId?: string }) {
             e.preventDefault();
             onFile(e.dataTransfer.files[0]);
           }}
-          placeholder="Antwort aus dem Chat hier einfügen (ganze Antwort ist ok) oder eine .json-Datei hierher ziehen"
+          placeholder={tr('Antwort aus dem Chat hier einfügen (ganze Antwort ist ok) oder eine .json-Datei hierher ziehen', 'Paste the chat answer here (the whole answer is fine) or drop a .json file here')}
         />
         <label className="btn small ghost file-btn">
-          .json-Datei wählen
+          {tr('.json-Datei wählen', 'Choose .json file')}
           <input type="file" accept=".json,application/json,text/plain" onChange={(e) => onFile(e.target.files?.[0])} hidden />
         </label>
 
         {result && !result.ok && (
           <div className="feedback bad">
-            <p className="verdict">Das passt noch nicht ganz ({result.errors.length} Fehler)</p>
+            <p className="verdict">{tr(`Das passt noch nicht ganz (${result.errors.length} Fehler)`, `Not quite right yet (${result.errors.length} errors)`)}</p>
             <ul className="small">
               {result.errors.map((e, i) => (
                 <li key={i}><code>{e}</code></li>
               ))}
             </ul>
-            <p>Kopiere diese Korrekturanweisung in denselben Chat und füge die neue Antwort hier ein:</p>
-            <CopyButton text={repairPrompt(result.errors)} label="Korrekturanweisung kopieren" className="btn primary" />
+            <p>{tr('Kopiere diese Korrekturanweisung in denselben Chat und füge die neue Antwort hier ein:', 'Copy this correction request into the same chat and paste the new answer here:')}</p>
+            <CopyButton text={repairPrompt(result.errors)} label={tr('Korrekturanweisung kopieren', 'Copy correction request')} className="btn primary" />
           </div>
         )}
 
         {d && (
           <div className="feedback good stack">
             <p className="verdict">
-              ✓ {d.course.title} · Kapitel {d.chapter.number}: {d.chapter.title}
+              ✓ {d.course.title} · {tr('Kapitel', 'Chapter')} {d.chapter.number}: {d.chapter.title}
             </p>
             <p className="small">
-              {d.chapter.objectives.length} Lernziele · {d.chapter.story.scenes.length} Szenen · {d.chapter.pretest.length} Vorabfragen ·{' '}
-              {d.chapter.posttest.length} Nachfragen · {d.chapter.review.length} Wiederholungsfragen ·{' '}
-              {d.verified ? <strong>geprüft</strong> : <strong>ungeprüft</strong>}
+              {tr(
+                `${d.chapter.objectives.length} Lernziele · ${d.chapter.story.scenes.length} Szenen · ${d.chapter.pretest.length} Vorabfragen · ${d.chapter.posttest.length} Nachfragen · ${d.chapter.review.length} Wiederholungsfragen · `,
+                `${d.chapter.objectives.length} objectives · ${d.chapter.story.scenes.length} scenes · ${d.chapter.pretest.length} pre-questions · ${d.chapter.posttest.length} post-questions · ${d.chapter.review.length} review questions · `,
+              )}
+              <strong>{d.verified ? tr('geprüft', 'verified') : tr('ungeprüft', 'unverified')}</strong>
             </p>
             {targetCourse && d.course.title !== targetCourse.title && (
-              <p className="small">Wird dem Kurs „{targetCourse.title}“ hinzugefügt.</p>
+              <p className="small">{tr(`Wird dem Kurs „${targetCourse.title}“ hinzugefügt.`, `Will be added to the course "${targetCourse.title}".`)}</p>
             )}
             {result.warnings.length > 0 && (
               <ul className="small warnings">
@@ -196,7 +267,7 @@ export default function ImportPage({ courseId }: { courseId?: string }) {
                 ))}
               </ul>
             )}
-            <button className="btn primary" onClick={doImport} disabled={busy}>Importieren und loslegen</button>
+            <button className="btn primary" onClick={doImport} disabled={busy}>{tr('Importieren und loslegen', 'Import and start')}</button>
           </div>
         )}
       </section>

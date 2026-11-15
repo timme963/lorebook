@@ -4,6 +4,7 @@ import { buildBoss, type BossQuestion, type BossResult } from '../lib/courses';
 import { db, getMeta, setMeta } from '../lib/db';
 import { addXp } from '../lib/progress';
 import { href } from '../router';
+import { tr } from '../lib/i18n';
 
 export default function BossPage({ courseId }: { courseId: string }) {
   const [questions, setQuestions] = useState<BossQuestion[]>();
@@ -27,9 +28,9 @@ export default function BossPage({ courseId }: { courseId: string }) {
   if (questions.length === 0) {
     return (
       <div className="card empty">
-        <h2>Noch kein Boss</h2>
-        <p>Schließe zuerst Kapitel ab.</p>
-        <a className="btn" href={back}>Zurück</a>
+        <h2>{tr('Noch kein Boss', 'No boss yet')}</h2>
+        <p>{tr('Schließe zuerst Kapitel ab.', 'Complete some chapters first.')}</p>
+        <a className="btn" href={back}>{tr('Zurück', 'Back')}</a>
       </div>
     );
   }
@@ -59,14 +60,14 @@ export default function BossPage({ courseId }: { courseId: string }) {
     return (
       <section className="card result">
         <p className="eyebrow">Boss-Fight</p>
-        <h2>{won ? '⚔ Besiegt!' : 'Der Boss steht noch'}</h2>
+        <h2>{won ? tr('⚔ Besiegt!', '⚔ Defeated!') : tr('Der Boss steht noch', 'The boss is still standing')}</h2>
         <div className="compare">
-          <div><span className="big accent">{Math.round(result.score * 100)} %</span><span className="muted small">{result.best ? 'neuer Bestwert' : 'Ergebnis'}</span></div>
+          <div><span className="big accent">{Math.round(result.score * 100)} %</span><span className="muted small">{result.best ? tr('neuer Bestwert', 'new best') : tr('Ergebnis', 'Result')}</span></div>
         </div>
-        <p>{won ? 'Über 70 % – du kannst das Gelernte auch anwenden.' : 'Ab 70 % ist der Boss besiegt. Die Wiederholungen der nächsten Tage bringen dich dahin.'} +{result.xp} XP</p>
+        <p>{won ? tr('Über 70 % – du kannst das Gelernte auch anwenden.', 'Over 70 % – you can apply what you learned.') : tr('Ab 70 % ist der Boss besiegt. Die Wiederholungen der nächsten Tage bringen dich dahin.', 'At 70 % the boss is defeated. The reviews over the next days will get you there.')} +{result.xp} XP</p>
         <div className="row gap wrap center">
-          <a className="btn primary" href={back}>Zur Quest-Karte</a>
-          <button className="btn" onClick={start}>Neuer Kampf (neue Fragen)</button>
+          <a className="btn primary" href={back}>{tr('Zur Quest-Karte', 'To the quest map')}</a>
+          <button className="btn" onClick={start}>{tr('Neuer Kampf (neue Fragen)', 'New fight (new questions)')}</button>
         </div>
       </section>
     );
@@ -76,13 +77,13 @@ export default function BossPage({ courseId }: { courseId: string }) {
   const current = questions[i];
   if (!current) {
     // letzte Frage beantwortet, Ergebnis wird gerade gespeichert
-    return <section className="card result"><p className="muted">Auswertung …</p></section>;
+    return <section className="card result"><p className="muted">{tr('Auswertung …', 'Scoring …')}</p></section>;
   }
   const hp = 1 - scores.reduce((a, b) => a + b, 0) / questions.length;
 
   return (
     <div className="stack">
-      <a className="back" href={back}>← Aufgeben</a>
+      <a className="back" href={back}>{tr('← Aufgeben', '← Give up')}</a>
       <div className="boss-bar">
         <span>⚔ Boss</span>
         <div className="bar hp"><div style={{ width: `${hp * 100}%` }} /></div>

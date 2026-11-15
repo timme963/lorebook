@@ -2,6 +2,7 @@ import { createEmptyCard, fsrs, generatorParameters, Rating, type Card, type Gra
 import { db, type CardRow, type ChapterRow } from './db';
 import { addXp, touchStreak } from './progress';
 import type { Question } from './schema';
+import { tr } from './i18n';
 
 export { Rating };
 export type { Grade };
@@ -72,9 +73,9 @@ export function previewIntervals(row: CardRow, now = new Date()): Record<Grade, 
     const hours = Math.round(mins / 60);
     if (hours < 24) return `${hours} h`;
     const days = Math.round(hours / 24);
-    if (days < 31) return `${days} T`;
+    if (days < 31) return `${days} ${tr('T', 'd')}`;
     const months = Math.round(days / 30);
-    return months < 12 ? `${months} Mon` : `${(days / 365).toFixed(1)} J`;
+    return months < 12 ? `${months} ${tr('Mon', 'mo')}` : `${(days / 365).toFixed(1)} ${tr('J', 'y')}`;
   };
   return {
     [Rating.Again]: fmt(rec[Rating.Again].card.due),

@@ -7,6 +7,7 @@ import { App as CapApp } from '@capacitor/app';
 import { LocalNotifications } from '@capacitor/local-notifications';
 import { db, getLocal, onLocalChange, setLocal } from './db';
 import { isNative } from './platform';
+import { plural, tr } from './i18n';
 
 export interface ReminderSettings {
   enabled: boolean;
@@ -43,7 +44,10 @@ async function plan(s: ReminderSettings): Promise<void> {
     notifications.push({
       id: BASE_ID + i,
       title: 'Lorebook',
-      body: n === 1 ? '1 Karte wartet auf deine Wiederholung.' : `${n} Karten warten auf deine Wiederholung.`,
+      body: tr(
+        n === 1 ? '1 Karte wartet auf deine Wiederholung.' : `${n} Karten warten auf deine Wiederholung.`,
+        `${plural(n, '', '', 'card is', 'cards are')} waiting for review.`,
+      ),
       schedule: { at: when, allowWhileIdle: true },
     });
   }
@@ -63,9 +67,9 @@ export async function setReminder(s: ReminderSettings): Promise<'ok' | 'denied'>
 
 export async function testReminder(): Promise<void> {
   const perm = await LocalNotifications.requestPermissions();
-  if (perm.display !== 'granted') throw new Error('Benachrichtigungen sind für Lorebook nicht erlaubt.');
+  if (perm.display !== 'granted') throw new Error(tr('Benachrichtigungen sind für Lorebook nicht erlaubt.', 'Notifications are not allowed for Lorebook.'));
   await LocalNotifications.schedule({
-    notifications: [{ id: TEST_ID, title: 'Lorebook', body: 'So sieht deine Erinnerung aus.', schedule: { at: new Date(Date.now() + 3000) } }],
+    notifications: [{ id: TEST_ID, title: 'Lorebook', body: tr('So sieht deine Erinnerung aus.', 'This is what your reminder looks like.'), schedule: { at: new Date(Date.now() + 3000) } }],
   });
 }
 

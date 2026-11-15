@@ -1,4 +1,5 @@
 import type { ChapterFile } from './schema';
+import { getLang } from './i18n';
 
 /** Beispielkapitel, damit man die App ohne eigenes PDF ausprobieren kann. Quelle: Hilfeseite von Lorebook. */
 export const DEMO_CHAPTER: ChapterFile = {
@@ -168,3 +169,164 @@ export const DEMO_CHAPTER: ChapterFile = {
     ],
   },
 };
+
+const Q1 = 'People who answer questions before studying remember the material better afterwards – even if their answers were wrong.';
+const Q2 = 'Actively recalling something strengthens it more than reading it again.';
+const Q3 = 'Reviews work best when they happen just before you forget and the intervals keep growing.';
+const Q4 = 'Interesting details that have nothing to do with the learning goal distract and make retention worse.';
+
+/** Englische Fassung des Demo-Kapitels */
+export const DEMO_CHAPTER_EN: ChapterFile = {
+  lorebook: 1,
+  course: { title: 'Demo: How learning sticks', source: 'Lorebook help (no PDF)' },
+  verified: true,
+  verificationNotes: ['Demo content, checked by hand'],
+  chapter: {
+    number: 1,
+    title: 'The four tools of memory',
+    pages: [1, 1],
+    objectives: [
+      { id: 'o1', text: 'Pre-questions (pretesting) improve later learning, even when you guess wrong.', source: { page: 1, quote: Q1 } },
+      { id: 'o2', text: 'Active recall strengthens knowledge more than re-reading.', source: { page: 1, quote: Q2 } },
+      { id: 'o3', text: 'Spaced repetition with growing intervals makes deliberate use of forgetting.', source: { page: 1, quote: Q3 } },
+      { id: 'o4', text: 'Interesting but irrelevant details (seductive details) impair learning.', source: { page: 1, quote: Q4 } },
+    ],
+    pretest: [
+      {
+        id: 'q1', objective: 'o1', level: 'understand', type: 'mc',
+        prompt: 'You answer questions on a topic before you have studied it and get most of them wrong. What happens to how well you learn it later?',
+        options: ['It drops, because the wrong answers stick', 'It rises, because guessing prepares you for the material', 'It stays the same', 'It only rises if you get at least half right'],
+        correct: 1,
+        explanation: 'The pretesting effect works even with wrong answers: your brain notices the gaps and stores the correct answer better later.',
+        source: { page: 1, quote: Q1 },
+      },
+      {
+        id: 'q2', objective: 'o2', level: 'remember', type: 'mc',
+        prompt: 'Which study method strengthens knowledge the most?',
+        options: ['Reading the text twice', 'Highlighting the important parts', 'Recalling the content without looking', 'Copying out a summary'],
+        correct: 2,
+        explanation: 'Active recall without notes is more effective than passive re-reading, highlighting or copying.',
+        source: { page: 1, quote: Q2 },
+      },
+      {
+        id: 'q3', objective: 'o3', level: 'remember', type: 'cloze',
+        prompt: 'In spaced repetition, the intervals between reviews keep getting ___.',
+        answers: ['longer', 'bigger', 'larger'],
+        explanation: 'Each successful review makes the knowledge last longer, so the intervals grow.',
+        source: { page: 1, quote: Q3 },
+      },
+    ],
+    story: {
+      title: 'The Archivist of Kessel',
+      setting: 'Mira is the new archivist in the harbour town of Kessel. In seven days the council will come to test the archivists. Whoever fails loses their key to the archive.',
+      scenes: [
+        {
+          objective: 'o1', title: 'The riddle at the gate',
+          text: 'On the first morning, old archivist Bento hands Mira a slate with ten questions before she may even open a book. "But I don\'t know anything yet!" she protests. "That\'s exactly why," says Bento. Mira guesses, scribbles answers and gets almost all of them wrong. Yet when she reads the books that afternoon, the very passages she stumbled over that morning leap out at her. Every gap from the morning is now a hook for the new knowledge to hang on. Bento grins: "The guessing wasn\'t a test. It was the preparation."',
+          concept: 'Pretesting: answering questions before studying improves later retention, even when the answers are wrong. Guessing directs your attention to the gaps in your knowledge while you study afterwards.',
+        },
+        {
+          objective: 'o2', title: 'The closed books',
+          text: 'On the third day, Mira reads the harbour chronicle for the fourth time. Everything feels familiar. Bento shuts the book: "Tell me when the lighthouse was built." Silence. The familiarity was only recognition, not knowledge. From now on Mira works differently: read a chapter, close the book, write down everything from memory, then compare. It is harder work, and that is the point. Every time she struggles to remember, the trace in her memory grows deeper.',
+          concept: 'Active recall: actively retrieving content without notes strengthens it more than re-reading. Re-reading creates a deceptive feeling of familiarity without you being able to retrieve the content yourself.',
+        },
+        {
+          objective: 'o3', title: 'The calendar of tides',
+          text: 'Now Mira wants to review everything every evening, but the list grows too long. Bento shows her his tide calendar: what she knows well today comes back in three days, then in a week, then in a month. What she has forgotten comes back tomorrow. "You review just before the water washes the knowledge away," he says. Mira notices: the intervals grow, and yet she forgets less. She is not studying more, but at the right moment.',
+          concept: 'Spaced repetition: reviews are most effective just before you forget. After each successful review the intervals grow; whatever was forgotten is reviewed again soon.',
+        },
+        {
+          objective: 'o4', title: 'The sea serpent in the index',
+          text: 'On the sixth day, Mira finds a beautifully illustrated book about sea serpents that supposedly lived in the harbour. She reads it in one night, spellbound. In the morning Bento asks about the trade routes printed on the same pages. Mira remembers every serpent but not a single route. "Exciting is only good if it belongs to the topic," says Bento. Mira crosses out the serpents and instead imagines the routes as a story in which every stop reveals something about the trade.',
+          concept: 'Seductive details: interesting details that are irrelevant to the learning goal draw attention away and impair retention of the actual material. Vivid elements only help if they carry the learning goal itself.',
+        },
+      ],
+      ending: 'On the seventh day the council convenes. Mira answers every question – not because she read the most, but because she guessed, recalled, reviewed at the right rhythm and did not let sea serpents distract her. Bento hands her the key.',
+    },
+    posttest: [
+      {
+        id: 'q4', objective: 'o1', level: 'apply', type: 'mc',
+        prompt: 'A teacher wants to boost her class\'s learning on the new topic "volcanoes" without using more lesson time. What does the pretesting effect suggest?',
+        options: ['Give a test at the end of the unit', 'Ask a few questions on the topic at the start, before explaining it', 'Only ask questions once everyone is sure to answer correctly', 'Hand out the questions with answers in advance'],
+        correct: 1,
+        explanation: 'Pre-questions before the explanation direct attention to the gaps. Questions handed out with answers would not be a retrieval attempt.',
+        source: { page: 1, quote: Q1 },
+      },
+      {
+        id: 'q5', objective: 'o2', level: 'understand', type: 'open',
+        prompt: 'Why does re-reading often feel more effective than it is?',
+        modelAnswer: 'When you re-read, you recognise the text and mistake that feeling of familiarity for knowledge. Whether you can retrieve the content yourself is never tested.',
+        rubric: ['Familiarity or recognition is mistaken for knowledge', 'Reading does not practise retrieval'],
+        explanation: 'Recognising is easier than recalling. Only a retrieval attempt shows whether the knowledge is really available.',
+        source: { page: 1, quote: Q2 },
+      },
+      {
+        id: 'q6', objective: 'o3', level: 'apply', type: 'mc',
+        prompt: 'You knew a vocabulary word confidently today, yesterday and four days ago. According to spaced repetition, when should it come up next?',
+        options: ['Tomorrow', 'In about one to two weeks', 'Once more tonight', 'Never again'],
+        correct: 1,
+        explanation: 'After several successful reviews the interval grows considerably. Never again is wrong, because even well-learned material fades in the long run.',
+        source: { page: 1, quote: Q3 },
+      },
+      {
+        id: 'q7', objective: 'o4', level: 'transfer', type: 'open',
+        prompt: 'An explainer video on compound interest opens with a funny two-minute anecdote about a lottery winner who blew everything. Then comes the formula. What speaks against this from a learning-psychology perspective, and how could the anecdote be saved?',
+        modelAnswer: 'The anecdote is entertaining but does not convey compound interest. It is a seductive detail that grabs attention and impairs retention of the formula. It can be saved if the story itself shows compound interest, e.g. what the winnings would have grown to if invested over the years.',
+        rubric: ['Identifies the anecdote as an irrelevant detail unrelated to the learning goal', 'Names the consequence: distraction, worse retention', 'Suggests aligning the story with the concept'],
+        explanation: 'Vividness only helps when it carries the learning goal.',
+        source: { page: 1, quote: Q4 },
+      },
+    ],
+    review: [
+      {
+        id: 'q8', objective: 'o1', level: 'remember', type: 'cloze',
+        prompt: 'The effect that questions before studying improve retention is called the ___ effect.',
+        answers: ['pretesting', 'pretest', 'pre-testing'],
+        explanation: 'Pretesting = testing before learning.',
+        source: { page: 1, quote: Q1 },
+      },
+      {
+        id: 'q9', objective: 'o2', level: 'transfer', type: 'mc',
+        prompt: 'A paramedic wants to memorise the order of first-aid steps. Which approach fits active recall best?',
+        options: ['Look at the poster once a day', 'Recite the steps from memory and then compare with the poster', 'Take a photo of the poster', 'Highlight the steps in colour'],
+        correct: 1,
+        explanation: 'Only reciting from memory is a retrieval attempt; comparing afterwards provides feedback.',
+        source: { page: 1, quote: Q2 },
+      },
+      {
+        id: 'q10', objective: 'o3', level: 'understand', type: 'mc',
+        prompt: 'In spaced repetition, why does a forgotten card come back soon?',
+        options: ['As a punishment', 'Because the knowledge is evidently not yet stable, so the intervals start small again', 'Because all cards come every day', 'To make the statistics look better'],
+        correct: 1,
+        explanation: 'Forgetting shows that the interval was too long. Reviewing starts over with short intervals.',
+        source: { page: 1, quote: Q3 },
+      },
+      {
+        id: 'q11', objective: 'o3', level: 'apply', type: 'open',
+        prompt: 'You have 20 days until the exam and 4 hours of study time for one chapter. How do you distribute the time according to spaced repetition, and why not do it all the day before the exam?',
+        modelAnswer: 'One large first study block, then short reviews at growing intervals, e.g. after 1, 3, 7 and 14 days. Cramming the day before helps in the short term but is forgotten quickly, because no review happens just before forgetting.',
+        rubric: ['Spreads the time over several sessions', 'Intervals grow', 'Explains why cramming the day before is retained worse'],
+        explanation: 'Spaced repetition beats massed learning for the same total time.',
+        source: { page: 1, quote: Q3 },
+      },
+      {
+        id: 'q12', objective: 'o4', level: 'understand', type: 'cloze',
+        prompt: 'Interesting details that are irrelevant to the learning goal are called seductive ___.',
+        answers: ['details', 'detail'],
+        explanation: 'Seductive: the details lure your attention away from the learning goal.',
+        source: { page: 1, quote: Q4 },
+      },
+      {
+        id: 'q13', objective: 'o4', level: 'transfer', type: 'mc',
+        prompt: 'A company designs a safety training as a game. Which element is most likely to support learning?',
+        options: ['Funny cat videos between chapters', 'A puzzle that can only be solved with the correct safety rule', 'An elaborate soundtrack', 'Random bonus points'],
+        correct: 1,
+        explanation: 'The puzzle carries the learning goal itself. The other elements are entertaining but unrelated to the material.',
+        source: { page: 1, quote: Q4 },
+      },
+    ],
+  },
+};
+
+/** Demo-Kapitel in der aktuellen Sprache */
+export const demoChapter = (): ChapterFile => (getLang() === 'en' ? DEMO_CHAPTER_EN : DEMO_CHAPTER);

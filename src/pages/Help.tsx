@@ -1,7 +1,8 @@
 import { href } from '../router';
 import { APK_URL } from '../lib/platform';
+import { useLang } from '../lib/i18n';
 
-export default function HelpPage() {
+function HelpDe() {
   return (
     <div className="stack prose">
       <h1>So funktioniert Lorebook</h1>
@@ -37,6 +38,7 @@ export default function HelpPage() {
         </p>
         <ul>
           <li><strong>Ein Kapitel pro Durchlauf</strong>, sonst wird die Antwort abgeschnitten.</li>
+          <li><strong>Story-Stil:</strong> „Passend zum Stoff“ lässt die KI das Genre wählen. Die Vorschläge zeigen, wofür sie sich eignen, z. B. Start-up für BWL oder Gerichtsdrama für Jura. Ein eigener Stil geht immer.</li>
           <li><strong>Prompt B immer nutzen:</strong> Ein zweiter, neuer Chat prüft jede Frage gegen das PDF. Das ist dein Schutz gegen erfundene Inhalte.</li>
           <li>Bei Zweifeln: <strong>📖 Quelle</strong> zeigt das Zitat und, wenn du das PDF auf der Kursseite hinterlegt hast, die Originalseite.</li>
           <li>Falsche Frage in der Wiederholung? <strong>⚑ melden</strong>, dann ist sie aus dem Plan genommen.</li>
@@ -69,4 +71,79 @@ export default function HelpPage() {
       </section>
     </div>
   );
+}
+
+function HelpEn() {
+  return (
+    <div className="stack prose">
+      <h1>How Lorebook works</h1>
+
+      <section className="card stack">
+        <h3>The flow for each chapter</h3>
+        <ol>
+          <li><strong>What do you know already?</strong> A few questions before you read anything. Just guess.</li>
+          <li><strong>Story:</strong> Each scene explains exactly one objective. Then "What's behind it?" shows the concept in technical terms, with a page reference.</li>
+          <li><strong>What do you know now?</strong> New questions on the same objectives, with answers. Then you see how much you gained.</li>
+          <li><strong>Review:</strong> All questions go into a review schedule (FSRS). What you know well comes back less often. What you forget comes back soon.</li>
+          <li><strong>Boss fight:</strong> Once all chapters of a course are mastered, you get mixed questions from all chapters, focused on application and transfer.</li>
+        </ol>
+      </section>
+
+      <section className="card stack">
+        <h3>Why this way?</h3>
+        <p>The four principles behind it (this is also the source text of the demo chapter, "page 1"):</p>
+        <blockquote className="quote">
+          People who answer questions before studying remember the material better afterwards – even if their answers were wrong. Actively
+          recalling something strengthens it more than reading it again. Reviews work best when they happen just before you forget and the
+          intervals keep growing. Interesting details that have nothing to do with the learning goal distract and make retention worse.
+        </blockquote>
+        <p>The story is the packaging. What works is pre-questions, active recall and spaced repetition. That's why most XP comes from reviewing.</p>
+      </section>
+
+      <section className="card stack">
+        <h3>Where does the content come from?</h3>
+        <p>
+          Lorebook generates nothing itself and calls no AI. You use your own Claude, ChatGPT or Gemini. Upload your PDF there and add the
+          ready-made prompt from <a href={href({ name: 'import' })}>Import</a>. Then paste the answer (JSON) back in.
+        </p>
+        <ul>
+          <li><strong>One chapter per run</strong>, otherwise the answer gets cut off.</li>
+          <li><strong>Story style:</strong> "Fits the material" lets the AI choose the genre. The suggestions show what they suit, e.g. start-up for business or courtroom drama for law. You can always enter your own.</li>
+          <li><strong>Always use Prompt B:</strong> a second, new chat checks every question against the PDF. This is your protection against invented content.</li>
+          <li>When in doubt: <strong>📖 Source</strong> shows the quote and, if you attached the PDF on the course page, the original page.</li>
+          <li>Wrong question in review? <strong>⚑ Report</strong> it and it's removed from the schedule.</li>
+        </ul>
+        <p className="muted small">The content is written in the language of your PDF. The prompts follow the app language.</p>
+      </section>
+
+      <section className="card stack">
+        <h3>Privacy</h3>
+        <p>
+          Without an account, everything stays in your browser. With an <a href={href({ name: 'account' })}>account</a>, courses and progress
+          are backed up to the cloud (Supabase, Frankfurt) and synced between your devices. PDFs always stay on the device. No tracking.
+        </p>
+        <p className="muted small">
+          Note: course materials are usually copyrighted. The generated files contain quotes from them, so don't share them.
+        </p>
+      </section>
+
+      <section className="card stack">
+        <h3>Install as an app</h3>
+        <ul>
+          <li>
+            <strong>Android:</strong> <a href={APK_URL}>download the Lorebook app</a> (APK) and open it. The first time, Android asks whether the
+            browser may install apps: allow it. The app reminds you daily of due reviews (set it under "Data &amp; backup") and tells you when an
+            update is available.
+          </li>
+          <li><strong>iPhone (Safari):</strong> Share icon → "Add to Home Screen".</li>
+          <li><strong>PC (Chrome/Edge):</strong> install icon on the right of the address bar, or menu → "Apps" → "Install Lorebook".</li>
+        </ul>
+        <p className="muted small">Courses and reviews work offline too. With an account, the app and the website stay in sync.</p>
+      </section>
+    </div>
+  );
+}
+
+export default function HelpPage() {
+  return useLang() === 'en' ? <HelpEn /> : <HelpDe />;
 }

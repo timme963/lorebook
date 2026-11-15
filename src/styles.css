@@ -313,3 +313,11 @@ details summary { cursor: pointer; color: var(--muted); margin-bottom: 8px; }
 /* Update-Hinweis in der Android-App */
 .update-banner { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 16px; padding: 10px 14px; border: 1px solid var(--accent); border-radius: 12px; background: var(--surface); }
 .update-banner span { flex: 1; min-width: 12rem; font-weight: 600; }
+
+.lang-toggle { font-size: 0.75rem; font-weight: 700; letter-spacing: 0.04em; }
+
+/* Story-Stil-Auswahl */
+.chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.chip { border: 1px solid var(--line); background: var(--surface); color: var(--ink); border-radius: 999px; padding: 6px 12px; font: inherit; font-size: 0.875rem; cursor: pointer; }
+.chip:hover { border-color: var(--accent); }
+.chip.active { background: var(--accent-soft); border-color: var(--accent); font-weight: 600; }

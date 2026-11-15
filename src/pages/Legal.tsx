@@ -1,7 +1,14 @@
 import { LEGAL } from '../legal';
 import { href } from '../router';
+import { getLang } from '../lib/i18n';
 
 const v = (s: string) => s.trim() || '[bitte ergänzen]';
+
+/** Rechtstexte gibt es nur auf Deutsch – im englischen Modus ein Hinweis darauf. */
+function GermanOnly() {
+  if (getLang() !== 'en') return null;
+  return <p className="feedback neutral small">The legal texts are only available in German, and the German version is binding.</p>;
+}
 
 function Address() {
   return (
@@ -29,6 +36,7 @@ export function ImpressumPage() {
   return (
     <div className="stack prose">
       <h1>Impressum</h1>
+      <GermanOnly />
       <section className="card stack">
         <h3>Angaben gemäß § 5 DDG</h3>
         <Address />
@@ -49,6 +57,7 @@ export function DatenschutzPage() {
   return (
     <div className="stack prose">
       <h1>Datenschutzerklärung</h1>
+      <GermanOnly />
       <p className="muted small">Stand: {LEGAL.updated}</p>
 
       <section className="card stack">

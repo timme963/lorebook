@@ -8,6 +8,8 @@ Lorebook ruft selbst keine KI auf. Du lädst dein PDF bei Claude, ChatGPT oder G
 - **Optionaler Account (Supabase, Frankfurt):** E-Mail + Passwort. Kurse und Fortschritt werden zwischen Geräten synchronisiert. PDFs bleiben immer lokal.
 - **Web-App (PWA):** https://lorebook-9yf.pages.dev – installierbar (PC, iPhone), funktioniert offline.
 - **Android-App (Capacitor):** https://lorebook-9yf.pages.dev/lorebook.apk – mit täglicher Erinnerung an fällige Karten und Update-Hinweis.
+- **Deutsch und Englisch:** Oberfläche, Prompts und Demo-Kapitel. Die Lerninhalte entstehen in der Sprache des PDFs. Impressum/Datenschutz nur deutsch.
+- **Story-Stile:** Vorschläge mit Hinweis, wofür sie passen (Start-up für BWL, Gerichtsdrama für Jura …), „Passend zum Stoff“ lässt die KI wählen, eigener Stil möglich.
 - **Korrektheit:** Zu jeder Frage gibt es Zitat und PDF-Seite. Prompt B prüft die erzeugten Inhalte in einem zweiten Chat gegen das PDF. Falsche Fragen lassen sich melden und kommen dann nicht mehr in die Wiederholung.
 
 Live: https://lorebook-9yf.pages.dev · Impressum und Datenschutz unter `#/impressum` und `#/datenschutz` (Angaben in `src/legal.ts`).
@@ -55,7 +57,8 @@ Projekt `lorebook` (`pvzzxmwtaokcefkuyevn`, Frankfurt).
 | `src/lib/sync.ts`, `supabase.ts` | Account und Synchronisierung |
 | `src/lib/platform.ts` | Web oder Android-App, öffentliche URL |
 | `src/lib/reminders.ts` | Tägliche Erinnerung (nur App, lokale Benachrichtigungen) |
-| `src/lib/demo.ts` | Demo-Kapitel |
+| `src/lib/i18n.ts` | Deutsch/Englisch: `tr('Deutsch', 'English')`, Umschalter oben (pro Gerät gespeichert) |
+| `src/lib/demo.ts` | Demo-Kapitel (deutsch und englisch) |
 | `src/pages/*` | Oberfläche |
 
 Ändert sich das Format, müssen `FORMAT_VERSION`, Schema und Prompts gemeinsam angepasst werden.

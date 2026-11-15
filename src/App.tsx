@@ -16,16 +16,18 @@ import AccountPage from './pages/Account';
 import { DatenschutzPage, ImpressumPage } from './pages/Legal';
 import UpdateBanner from './components/UpdateBanner';
 import { APK_URL, isNative } from './lib/platform';
+import { setLang, tr, useLang } from './lib/i18n';
 
 const SYNC_ICON = { off: '☁', idle: '☁', syncing: '⟳', offline: '☁', error: '⚠', conflict: '⚠' } as const;
-const SYNC_TITLE = {
-  off: 'Nicht angemeldet – Daten nur in diesem Browser',
-  idle: 'Synchronisiert',
-  syncing: 'Synchronisiert …',
-  offline: 'Offline – Sync wird nachgeholt',
-  error: 'Sync-Fehler',
-  conflict: 'Sync wartet auf deine Entscheidung',
-} as const;
+const SYNC_TITLE = () =>
+  ({
+    off: tr('Nicht angemeldet – Daten nur in diesem Browser', 'Not signed in – data only in this browser'),
+    idle: tr('Synchronisiert', 'Synced'),
+    syncing: tr('Synchronisiert …', 'Syncing …'),
+    offline: tr('Offline – Sync wird nachgeholt', 'Offline – will sync later'),
+    error: tr('Sync-Fehler', 'Sync error'),
+    conflict: tr('Sync wartet auf deine Entscheidung', 'Sync is waiting for your decision'),
+  }) as const;
 
 function TopBar() {
   const xp = useLiveQuery(totalXp, [], 0);
@@ -34,6 +36,8 @@ function TopBar() {
   const lvl = levelFor(xp);
   const [theme, cycleTheme] = useTheme();
   const sync = useSyncStatus();
+  const lang = useLang();
+  const syncTitle = SYNC_TITLE()[sync.state];
   return (
     <header className="topbar">
       <a className="brand" href={href({ name: 'home' })}>
@@ -41,22 +45,31 @@ function TopBar() {
         <span>Lorebook</span>
       </a>
       <nav className="topnav">
-        <a href={href({ name: 'review' })} className="pill" title="Heute fällige Wiederholungen">
+        <a href={href({ name: 'review' })} className="pill" title={tr('Heute fällige Wiederholungen', 'Reviews due today')}>
           ↻ <strong>{due}</strong>
         </a>
-        <span className="pill" title="Lernserie (ein Tag Pause ist erlaubt)">
+        <span className="pill" title={tr('Lernserie (ein Tag Pause ist erlaubt)', 'Study streak (one day off is allowed)')}>
           🔥 <strong>{streak}</strong>
         </span>
         <span className="pill" title={`${xp} XP`}>
           Lv <strong>{lvl.level}</strong>
         </span>
-        <a href={href({ name: 'account' })} className={`pill sync sync-${sync.state}`} title={SYNC_TITLE[sync.state]} aria-label={SYNC_TITLE[sync.state]}>
+        <a href={href({ name: 'account' })} className={`pill sync sync-${sync.state}`} title={syncTitle} aria-label={syncTitle}>
           {SYNC_ICON[sync.state]}
         </a>
-        <button type="button" className="pill theme-toggle" onClick={cycleTheme} title={`${THEME_LABEL[theme]} – klicken zum Wechseln`} aria-label={THEME_LABEL[theme]}>
+        <button type="button" className="pill theme-toggle" onClick={cycleTheme} title={`${THEME_LABEL()[theme]} – ${tr('klicken zum Wechseln', 'click to change')}`} aria-label={THEME_LABEL()[theme]}>
           {THEME_ICON[theme]}
         </button>
-        <a href={href({ name: 'help' })} className="pill" title="Hilfe">?</a>
+        <button
+          type="button"
+          className="pill lang-toggle"
+          onClick={() => setLang(lang === 'de' ? 'en' : 'de')}
+          title={lang === 'de' ? 'Switch to English' : 'Auf Deutsch umschalten'}
+          aria-label={lang === 'de' ? 'Switch to English' : 'Auf Deutsch umschalten'}
+        >
+          {lang === 'de' ? 'EN' : 'DE'}
+        </button>
+        <a href={href({ name: 'help' })} className="pill" title={tr('Hilfe', 'Help')}>?</a>
       </nav>
     </header>
   );
@@ -65,6 +78,7 @@ function TopBar() {
 export default function App() {
   const route = useRoute();
   const sync = useSyncStatus();
+  useLang(); // beim Umschalten alles neu rendern
   let page;
   switch (route.name) {
     case 'home':
@@ -111,21 +125,23 @@ export default function App() {
       <footer className="footer">
         <a href={href({ name: 'account' })}>Account &amp; Sync</a>
         <span>·</span>
-        <a href={href({ name: 'data' })}>Daten &amp; Sicherung</a>
+        <a href={href({ name: 'data' })}>{tr('Daten & Sicherung', 'Data & backup')}</a>
         <span>·</span>
-        <a href={href({ name: 'help' })}>So funktioniert's</a>
+        <a href={href({ name: 'help' })}>{tr("So funktioniert's", 'How it works')}</a>
         <span>·</span>
         {!isNative && (
           <>
-            <a href={APK_URL}>Android-App</a>
+            <a href={APK_URL}>{tr('Android-App', 'Android app')}</a>
             <span>·</span>
           </>
         )}
-        <a href={href({ name: 'impressum' })}>Impressum</a>
+        <a href={href({ name: 'impressum' })}>{tr('Impressum', 'Legal notice')}</a>
         <span>·</span>
-        <a href={href({ name: 'datenschutz' })}>Datenschutz</a>
+        <a href={href({ name: 'datenschutz' })}>{tr('Datenschutz', 'Privacy')}</a>
         <span>·</span>
-        <span>{sync.state === 'off' ? 'Ohne Account bleiben alle Daten in diesem Browser.' : 'PDFs bleiben immer nur auf diesem Gerät.'}</span>
+        <span>{sync.state === 'off'
+            ? tr('Ohne Account bleiben alle Daten in diesem Browser.', 'Without an account, all data stays in this browser.')
+            : tr('PDFs bleiben immer nur auf diesem Gerät.', 'PDFs always stay on this device only.')}</span>
       </footer>
     </>
   );

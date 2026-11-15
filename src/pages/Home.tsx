@@ -2,7 +2,8 @@ import { useLiveQuery } from 'dexie-react-hooks';
 import { useState } from 'react';
 import { importChapter } from '../lib/courses';
 import { db } from '../lib/db';
-import { DEMO_CHAPTER } from '../lib/demo';
+import { demoChapter } from '../lib/demo';
+import { plural, tr } from '../lib/i18n';
 import { currentStreak, levelFor, levelTitle, totalXp } from '../lib/progress';
 import { dueCards } from '../lib/srs';
 import { go, href } from '../router';
@@ -26,7 +27,7 @@ export default function Home() {
 
   async function loadDemo() {
     setLoadingDemo(true);
-    const { course } = await importChapter(DEMO_CHAPTER);
+    const { course } = await importChapter(demoChapter());
     go({ name: 'course', id: course.id });
   }
 
@@ -44,30 +45,36 @@ export default function Home() {
           </div>
         </div>
         <div className="hero-stats">
-          <div><span className="big">{due.length}</span><span className="muted small">heute fällig</span></div>
-          <div><span className="big">{streak}</span><span className="muted small">Tage Serie</span></div>
-          <div><span className="big">{chapters.filter((c) => c.phase === 'done').length}</span><span className="muted small">Kapitel gemeistert</span></div>
+          <div><span className="big">{due.length}</span><span className="muted small">{tr('heute fällig', 'due today')}</span></div>
+          <div><span className="big">{streak}</span><span className="muted small">{tr('Tage Serie', 'day streak')}</span></div>
+          <div><span className="big">{chapters.filter((c) => c.phase === 'done').length}</span><span className="muted small">{tr('Kapitel gemeistert', 'chapters mastered')}</span></div>
         </div>
         {due.length > 0 && (
-          <a className="btn primary block" href={href({ name: 'review' })}>Jetzt {due.length} Wiederholungen machen</a>
+          <a className="btn primary block" href={href({ name: 'review' })}>{tr(`Jetzt ${due.length} Wiederholungen machen`, `Do ${due.length} reviews now`)}</a>
         )}
       </section>
 
       <div className="row between">
-        <h2>Deine Kurse</h2>
-        <a className="btn" href={href({ name: 'import' })}>+ Kapitel importieren</a>
+        <h2>{tr('Deine Kurse', 'Your courses')}</h2>
+        <a className="btn" href={href({ name: 'import' })}>{tr('+ Kapitel importieren', '+ Import chapter')}</a>
       </div>
 
       {courses.length === 0 && (
         <section className="card empty">
-          <h3>Noch keine Kurse</h3>
-          <p>
-            So geht's: Du lädst dein PDF bei Claude, ChatGPT oder Gemini hoch und kopierst einen fertigen Prompt aus Lorebook dazu. Die Antwort
-            fügst du hier ein. Daraus wird pro Kapitel: <strong>Vorabfragen → Story → Nachfragen → Wiederholung</strong>.
-          </p>
+          <h3>{tr('Noch keine Kurse', 'No courses yet')}</h3>
+          {tr(
+            <p>
+              So geht's: Du lädst dein PDF bei Claude, ChatGPT oder Gemini hoch und kopierst einen fertigen Prompt aus Lorebook dazu. Die Antwort
+              fügst du hier ein. Daraus wird pro Kapitel: <strong>Vorabfragen → Story → Nachfragen → Wiederholung</strong>.
+            </p>,
+            <p>
+              How it works: upload your PDF to Claude, ChatGPT or Gemini and add a ready-made prompt from Lorebook. Paste the answer here. Each
+              chapter becomes: <strong>pre-questions → story → post-questions → review</strong>.
+            </p>,
+          )}
           <div className="row gap wrap">
-            <a className="btn primary" href={href({ name: 'import' })}>Erstes Kapitel importieren</a>
-            <button className="btn" onClick={loadDemo} disabled={loadingDemo}>Demo-Kapitel ausprobieren</button>
+            <a className="btn primary" href={href({ name: 'import' })}>{tr('Erstes Kapitel importieren', 'Import first chapter')}</a>
+            <button className="btn" onClick={loadDemo} disabled={loadingDemo}>{tr('Demo-Kapitel ausprobieren', 'Try the demo chapter')}</button>
           </div>
         </section>
       )}
@@ -80,7 +87,7 @@ export default function Home() {
           return (
             <a key={c.id} className="card course-card" href={href({ name: 'course', id: c.id })}>
               <h3>{c.title}</h3>
-              <p className="muted small">{chs.length} Kapitel · {done} abgeschlossen{dueHere ? ` · ${dueHere} fällig` : ''}</p>
+              <p className="muted small">{plural(chs.length, 'Kapitel', 'Kapitel', 'chapter', 'chapters')} · {done} {tr('abgeschlossen', 'completed')}{dueHere ? ` · ${dueHere} ${tr('fällig', 'due')}` : ''}</p>
               <div className="bar"><div style={{ width: chs.length ? `${(done / chs.length) * 100}%` : '0%' }} /></div>
             </a>
           );

@@ -3,6 +3,7 @@ import { checkAuto } from '../lib/courses';
 import type { AnswerRecord } from '../lib/db';
 import { LEVEL_LABEL, type Question } from '../lib/schema';
 import { SourceButton } from './Source';
+import { tr } from '../lib/i18n';
 
 interface Props {
   q: Question;
@@ -44,7 +45,7 @@ export default function QuestionCard({ q, courseId, mode, onDone, after, meta }:
   return (
     <article className="card question">
       <div className="q-meta">
-        <span className={`tag level-${q.level}`}>{LEVEL_LABEL[q.level]}</span>
+        <span className={`tag level-${q.level}`}>{LEVEL_LABEL()[q.level]}</span>
         {meta}
       </div>
       <h3 className="q-prompt">{q.type === 'cloze' ? q.prompt.replace('___', '_____') : q.prompt}</h3>
@@ -75,32 +76,32 @@ export default function QuestionCard({ q, courseId, mode, onDone, after, meta }:
             if (given.trim()) submit(given.trim());
           }}
         >
-          <input className="input grow" value={given} disabled={locked} onChange={(e) => setGiven(e.target.value)} placeholder="Deine Antwort" autoFocus />
+          <input className="input grow" value={given} disabled={locked} onChange={(e) => setGiven(e.target.value)} placeholder={tr('Deine Antwort', 'Your answer')} autoFocus />
         </form>
       )}
 
       {q.type === 'open' && (
-        <textarea className="input" rows={4} value={given} disabled={locked} onChange={(e) => setGiven(e.target.value)} placeholder="Antworte in eigenen Worten. Stichpunkte reichen." />
+        <textarea className="input" rows={4} value={given} disabled={locked} onChange={(e) => setGiven(e.target.value)} placeholder={tr('Antworte in eigenen Worten. Stichpunkte reichen.', 'Answer in your own words. Bullet points are fine.')} />
       )}
 
       {!locked && (
         <div className="row gap wrap actions">
           {(q.type !== 'mc' || mode === 'feedback') && (
             <button className="btn primary" disabled={!given.trim()} onClick={() => submit(given.trim())}>
-              {q.type === 'open' && mode === 'feedback' ? 'Musterantwort zeigen' : mode === 'silent' ? 'Weiter' : 'Prüfen'}
+              {q.type === 'open' && mode === 'feedback' ? tr('Musterantwort zeigen', 'Show model answer') : mode === 'silent' ? tr('Weiter', 'Next') : tr('Prüfen', 'Check')}
             </button>
           )}
           <button className="btn ghost" onClick={() => (q.type === 'open' && mode === 'feedback' ? submit('') : mode === 'silent' ? submit('') : setRecord({ given: '', correct: false, score: 0 }))}>
-            Weiß ich nicht
+            {tr('Weiß ich nicht', 'Don\'t know')}
           </button>
         </div>
       )}
 
       {q.type === 'open' && revealed && !record && (
         <div className="feedback neutral">
-          <p className="label">Musterantwort</p>
+          <p className="label">{tr('Musterantwort', 'Model answer')}</p>
           <p>{q.modelAnswer}</p>
-          <p className="label">Welche Punkte hast du getroffen?</p>
+          <p className="label">{tr('Welche Punkte hast du getroffen?', 'Which points did you cover?')}</p>
           <div className="rubric">
             {q.rubric.map((r, i) => (
               <label key={i} className="check">
@@ -109,23 +110,27 @@ export default function QuestionCard({ q, courseId, mode, onDone, after, meta }:
               </label>
             ))}
           </div>
-          <button className="btn primary" onClick={acceptSelfGrade}>Bewertung übernehmen</button>
+          <button className="btn primary" onClick={acceptSelfGrade}>{tr('Bewertung übernehmen', 'Apply rating')}</button>
         </div>
       )}
 
       {record && (
         <div className={`feedback ${record.correct === null ? (record.score >= 0.75 ? 'good' : record.score >= 0.4 ? 'neutral' : 'bad') : record.correct ? 'good' : 'bad'}`}>
           <p className="verdict">
-            {record.correct === null ? `${Math.round(record.score * 100)} % der Kernpunkte` : record.correct ? 'Richtig!' : 'Nicht ganz.'}
-            {q.type === 'cloze' && !record.correct && <> Richtig wäre: <strong>{q.answers[0]}</strong></>}
+            {record.correct === null
+              ? tr(`${Math.round(record.score * 100)} % der Kernpunkte`, `${Math.round(record.score * 100)} % of key points`)
+              : record.correct
+                ? tr('Richtig!', 'Correct!')
+                : tr('Nicht ganz.', 'Not quite.')}
+            {q.type === 'cloze' && !record.correct && <> {tr('Richtig wäre:', 'Correct would be:')} <strong>{q.answers[0]}</strong></>}
           </p>
           {q.type === 'open' && record.given && (
-            <p className="muted small">Deine Antwort: {record.given}</p>
+            <p className="muted small">{tr('Deine Antwort:', 'Your answer:')} {record.given}</p>
           )}
           <p>{q.explanation}</p>
           <SourceButton courseId={courseId} source={q.source} />
           <div className="row gap wrap actions">
-            {after ? after(record) : <button className="btn primary" onClick={() => onDone(record)} autoFocus>Weiter →</button>}
+            {after ? after(record) : <button className="btn primary" onClick={() => onDone(record)} autoFocus>{tr('Weiter →', 'Next →')}</button>}
           </div>
         </div>
       )}

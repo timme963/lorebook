@@ -1,6 +1,7 @@
 import { useState } from 'react';
+import { tr } from '../lib/i18n';
 
-export default function CopyButton({ text, label = 'Kopieren', className = 'btn' }: { text: string; label?: string; className?: string }) {
+export default function CopyButton({ text, label, className = 'btn' }: { text: string; label?: string; className?: string }) {
   const [done, setDone] = useState(false);
   async function copy() {
     try {
@@ -18,7 +19,7 @@ export default function CopyButton({ text, label = 'Kopieren', className = 'btn'
   }
   return (
     <button type="button" className={className} onClick={copy}>
-      {done ? '✓ Kopiert' : label}
+      {done ? tr('✓ Kopiert', '✓ Copied') : (label ?? tr('Kopieren', 'Copy'))}
     </button>
   );
 }

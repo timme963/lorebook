@@ -1,15 +1,16 @@
 import { useEffect, useState } from 'react';
+import { tr } from './i18n';
 
 export type ThemeChoice = 'system' | 'light' | 'dark';
 
 const KEY = 'lorebook-theme';
 const ORDER: ThemeChoice[] = ['system', 'light', 'dark'];
 
-export const THEME_LABEL: Record<ThemeChoice, string> = {
-  system: 'Design: wie System',
-  light: 'Design: hell',
-  dark: 'Design: dunkel',
-};
+export const THEME_LABEL = (): Record<ThemeChoice, string> => ({
+  system: tr('Design: wie System', 'Theme: system'),
+  light: tr('Design: hell', 'Theme: light'),
+  dark: tr('Design: dunkel', 'Theme: dark'),
+});
 
 export const THEME_ICON: Record<ThemeChoice, string> = {
   system: '◐',

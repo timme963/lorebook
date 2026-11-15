@@ -1,4 +1,5 @@
 import { db, deviceId, getMeta, setMeta } from './db';
+import { getLang } from './i18n';
 
 // XP und Lerntage werden pro Gerät gespeichert (meta "xp:<gerät>", "days:<gerät>") und zusammengerechnet.
 // So überschreiben sich zwei Geräte beim Sync nie gegenseitig.
@@ -84,17 +85,12 @@ export function levelFor(xp: number): { level: number; current: number; next: nu
   return { level, current, next, progress: (xp - current) / (next - current) };
 }
 
-export const LEVEL_TITLES = [
-  'Neugierige Seele',
-  'Lehrling',
-  'Spurenleser',
-  'Wissenssammler',
-  'Chronist',
-  'Gelehrte:r',
-  'Meister:in der Archive',
-  'Hüter:in des Lorebooks',
-];
+const LEVEL_TITLES = {
+  de: ['Neugierige Seele', 'Lehrling', 'Spurenleser', 'Wissenssammler', 'Chronist', 'Gelehrte:r', 'Meister:in der Archive', 'Hüter:in des Lorebooks'],
+  en: ['Curious soul', 'Apprentice', 'Tracker', 'Knowledge gatherer', 'Chronicler', 'Scholar', 'Master of the archives', 'Keeper of the Lorebook'],
+};
 
 export function levelTitle(level: number): string {
-  return LEVEL_TITLES[Math.min(level - 1, LEVEL_TITLES.length - 1)];
+  const titles = LEVEL_TITLES[getLang()];
+  return titles[Math.min(level - 1, titles.length - 1)];
 }

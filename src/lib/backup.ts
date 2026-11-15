@@ -2,6 +2,7 @@ import { Directory, Encoding, Filesystem } from '@capacitor/filesystem';
 import { Share } from '@capacitor/share';
 import { db } from './db';
 import { isNative } from './platform';
+import { tr } from './i18n';
 
 const TABLES = ['courses', 'chapters', 'cards', 'reviews', 'meta'] as const;
 
@@ -15,7 +16,7 @@ export async function exportBackup(): Promise<Blob> {
 export async function importBackup(text: string): Promise<void> {
   const payload = JSON.parse(text);
   if (payload?.app !== 'lorebook' || payload.backupVersion !== 1 || typeof payload.data !== 'object') {
-    throw new Error('Das ist keine Lorebook-Sicherung.');
+    throw new Error(tr('Das ist keine Lorebook-Sicherung.', 'This is not a Lorebook backup.'));
   }
   await db.transaction('rw', TABLES.map((t) => db.table(t)), async () => {
     for (const t of TABLES) {
@@ -31,7 +32,7 @@ export async function importBackup(text: string): Promise<void> {
 export async function downloadBlob(blob: Blob, filename: string): Promise<void> {
   if (isNative) {
     const res = await Filesystem.writeFile({ path: filename, data: await blob.text(), directory: Directory.Cache, encoding: Encoding.UTF8 });
-    await Share.share({ title: 'Lorebook-Sicherung', files: [res.uri] });
+    await Share.share({ title: tr('Lorebook-Sicherung', 'Lorebook backup'), files: [res.uri] });
     return;
   }
   const url = URL.createObjectURL(blob);

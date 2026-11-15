@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { App as CapApp } from '@capacitor/app';
 import { isNative, PUBLIC_URL } from '../lib/platform';
+import { tr } from '../lib/i18n';
 
 interface VersionInfo {
   android?: { versionCode: number; url: string };
@@ -36,10 +37,10 @@ export default function UpdateBanner() {
   if (!url || dismissed) return null;
   return (
     <div className="update-banner">
-      <span>Eine neue Version von Lorebook ist da.</span>
+      <span>{tr('Eine neue Version von Lorebook ist da.', 'A new version of Lorebook is available.')}</span>
       {/* öffnet den System-Browser, der die APK lädt und an den Installer übergibt */}
-      <a className="btn small primary" href={url} target="_blank" rel="noopener">Herunterladen</a>
-      <button className="btn small ghost" onClick={() => setDismissed(true)} aria-label="Schließen">✕</button>
+      <a className="btn small primary" href={url} target="_blank" rel="noopener">{tr('Herunterladen', 'Download')}</a>
+      <button className="btn small ghost" onClick={() => setDismissed(true)} aria-label={tr('Schließen', 'Close')}>✕</button>
     </div>
   );
 }
