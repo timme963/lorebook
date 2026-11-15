@@ -87,7 +87,7 @@ export function previewIntervals(row: CardRow, now = new Date()): Record<Grade, 
 export async function gradeCard(row: CardRow, rating: Grade): Promise<void> {
   const now = new Date();
   const { card } = scheduler.next(reviveCard(row.fsrs), now, rating);
-  await db.transaction('rw', db.cards, db.reviews, db.meta, async () => {
+  await db.transaction('rw', [db.cards, db.reviews, db.meta, db.local], async () => {
     await db.cards.update(row.id, { fsrs: card, due: new Date(card.due).getTime() });
     await db.reviews.add({ cardId: row.id, courseId: row.courseId, rating, at: now.getTime() });
     await addXp(rating === Rating.Again ? 4 : 10);

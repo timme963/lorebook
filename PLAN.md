@@ -34,7 +34,9 @@ Die App erzeugt selbst nichts und nutzt keine API. Inhalte entstehen beim Nutzer
 
 ---
 
-# Erweiterung: Accounts & Sync (Plan, 15.11.2026)
+# Erweiterung: Accounts & Sync (15.11.2026)
+
+**Umgesetzt** (Entscheidungen: Supabase-Projekt `lorebook` in Frankfurt, Login nur per E-Mail-Code, Kurse + Fortschritt werden synchronisiert, PDFs bleiben lokal). Abweichend vom ursprünglichen Plan: eine generische Tabelle `records` statt einzelner Tabellen; XP und Lerntage pro Gerät statt Ereignis-Log. Offen: Push-Erinnerungen.
 
 ## Ziel
 Daten sollen nicht verschwinden, wenn der Browser-Speicher gelöscht wird, und auf Laptop und Handy gleich sein.

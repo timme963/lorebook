@@ -23,7 +23,7 @@ export default function DataPage() {
   }
 
   async function wipe() {
-    if (!confirm('Wirklich ALLE Daten (Kurse, PDFs, Fortschritt) in diesem Browser löschen?')) return;
+    if (!confirm('Wirklich ALLE Daten (Kurse, PDFs, Fortschritt) in diesem Browser löschen? Mit Account werden Kurse und Fortschritt beim nächsten Login wieder geladen.')) return;
     await db.delete();
     location.href = '/';
   }
@@ -34,10 +34,10 @@ export default function DataPage() {
       <section className="card stack">
         <h3>Wo liegen meine Daten?</h3>
         <p>
-          Ausschließlich in diesem Browser auf diesem Gerät (IndexedDB). Es gibt keinen Server und keinen Account. Wenn du den Browserspeicher
-          löschst, sind die Daten weg. Mach deshalb ab und zu eine Sicherung.
+          In diesem Browser (IndexedDB). Mit einem <a href="#/account">Account</a> werden Kurse und Fortschritt zusätzlich in der Cloud
+          gesichert und auf deine anderen Geräte übertragen. Ohne Account sind die Daten weg, wenn du den Browserspeicher löschst.
         </p>
-        <p className="muted small">Auf ein anderes Gerät umziehen: hier exportieren, dort importieren. PDFs sind nicht in der Sicherung enthalten.</p>
+        <p className="muted small">Die Sicherungsdatei funktioniert auch ohne Account. PDFs sind weder in der Sicherung noch in der Cloud enthalten.</p>
       </section>
       <section className="card stack">
         <h3>Sicherung</h3>

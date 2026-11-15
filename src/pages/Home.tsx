@@ -1,9 +1,9 @@
 import { useLiveQuery } from 'dexie-react-hooks';
 import { useState } from 'react';
 import { importChapter } from '../lib/courses';
-import { db, getMeta } from '../lib/db';
+import { db } from '../lib/db';
 import { DEMO_CHAPTER } from '../lib/demo';
-import { currentStreak, levelFor, levelTitle, type Streak } from '../lib/progress';
+import { currentStreak, levelFor, levelTitle, totalXp } from '../lib/progress';
 import { dueCards } from '../lib/srs';
 import { go, href } from '../router';
 
@@ -13,8 +13,8 @@ export default function Home() {
       db.courses.orderBy('createdAt').reverse().toArray(),
       db.chapters.toArray(),
       dueCards(),
-      getMeta<number>('xp', 0),
-      getMeta<Streak>('streak', { count: 0, lastDay: null }),
+      totalXp(),
+      currentStreak(),
     ]);
     return { courses, chapters, due, xp, streak };
   });
@@ -45,7 +45,7 @@ export default function Home() {
         </div>
         <div className="hero-stats">
           <div><span className="big">{due.length}</span><span className="muted small">heute fällig</span></div>
-          <div><span className="big">{currentStreak(streak)}</span><span className="muted small">Tage Serie</span></div>
+          <div><span className="big">{streak}</span><span className="muted small">Tage Serie</span></div>
           <div><span className="big">{chapters.filter((c) => c.phase === 'done').length}</span><span className="muted small">Kapitel gemeistert</span></div>
         </div>
         {due.length > 0 && (

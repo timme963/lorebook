@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { DEMO_CHAPTER } from './demo';
 import { extractJson, parseChapterFile, repairPrompt } from './importer';
 import { buildBoss, checkCloze } from './courses';
-import { currentStreak, levelFor, nextStreak } from './progress';
+import { levelFor, streakFromDays } from './progress';
 import { generatePrompt, verifyPrompt } from './prompts';
 import type { ChapterRow } from './db';
 
@@ -68,12 +68,13 @@ describe('Antworten', () => {
 
 describe('Fortschritt', () => {
   it('Serie verzeiht einen Tag Pause', () => {
-    let s = nextStreak({ count: 0, lastDay: null }, '2026-11-01');
-    s = nextStreak(s, '2026-11-02');
-    s = nextStreak(s, '2026-11-04');
-    expect(s.count).toBe(3);
-    expect(nextStreak(s, '2026-11-08').count).toBe(1);
-    expect(currentStreak(s, '2026-11-10')).toBe(0);
+    const days = ['2026-11-01', '2026-11-02', '2026-11-04'];
+    expect(streakFromDays(days, '2026-11-04')).toBe(3);
+    expect(streakFromDays(days, '2026-11-06')).toBe(3);
+    expect(streakFromDays(days, '2026-11-07')).toBe(0);
+    expect(streakFromDays([...days, '2026-11-08'], '2026-11-08')).toBe(1);
+    // Lerntage zweier Geräte werden vereinigt
+    expect(streakFromDays(['2026-11-01', '2026-11-03', '2026-11-03', '2026-11-04'], '2026-11-04')).toBe(3);
   });
 
   it('Level-Kurve', () => {

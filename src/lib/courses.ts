@@ -4,7 +4,7 @@ import { chapterQuestions, createCardsForChapter } from './srs';
 import type { ChapterFile, Question } from './schema';
 
 export async function importChapter(file: ChapterFile, targetCourseId?: string): Promise<{ course: CourseRow; chapter: ChapterRow; replaced: boolean }> {
-  return db.transaction('rw', db.courses, db.chapters, db.cards, async () => {
+  return db.transaction('rw', [db.courses, db.chapters, db.cards, db.tombstones], async () => {
     let course: CourseRow | undefined = targetCourseId ? await db.courses.get(targetCourseId) : undefined;
     if (!course) {
       const id = slug(file.course.title);
@@ -47,7 +47,7 @@ export async function importChapter(file: ChapterFile, targetCourseId?: string):
 }
 
 export async function deleteCourse(courseId: string): Promise<void> {
-  await db.transaction('rw', [db.courses, db.chapters, db.cards, db.reviews, db.pdfs, db.meta], async () => {
+  await db.transaction('rw', [db.courses, db.chapters, db.cards, db.reviews, db.pdfs, db.meta, db.tombstones], async () => {
     await db.chapters.where('courseId').equals(courseId).delete();
     await db.cards.where('courseId').equals(courseId).delete();
     await db.reviews.where('courseId').equals(courseId).delete();
@@ -58,7 +58,7 @@ export async function deleteCourse(courseId: string): Promise<void> {
 }
 
 export async function deleteChapter(chapterId: string): Promise<void> {
-  await db.transaction('rw', db.chapters, db.cards, async () => {
+  await db.transaction('rw', [db.chapters, db.cards, db.tombstones], async () => {
     await db.cards.where('chapterId').equals(chapterId).delete();
     await db.chapters.delete(chapterId);
   });

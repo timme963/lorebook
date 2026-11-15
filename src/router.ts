@@ -8,6 +8,7 @@ export type Route =
   | { name: 'review'; courseId?: string }
   | { name: 'boss'; courseId: string }
   | { name: 'data' }
+  | { name: 'account' }
   | { name: 'help' };
 
 export function parseHash(hash: string): Route {
@@ -29,6 +30,8 @@ export function parseHash(hash: string): Route {
       return { name: 'data' };
     case 'help':
       return { name: 'help' };
+    case 'account':
+      return { name: 'account' };
     default:
       return { name: 'home' };
   }
@@ -53,6 +56,8 @@ export function href(r: Route): string {
       return '#/data';
     case 'help':
       return '#/help';
+    case 'account':
+      return '#/account';
   }
 }
 

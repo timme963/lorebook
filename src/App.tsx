@@ -1,7 +1,7 @@
 import { useLiveQuery } from 'dexie-react-hooks';
-import { getMeta } from './lib/db';
-import { currentStreak, levelFor, type Streak } from './lib/progress';
+import { currentStreak, levelFor, totalXp } from './lib/progress';
 import { countDue } from './lib/srs';
+import { useSyncStatus } from './lib/sync';
 import { THEME_ICON, THEME_LABEL, useTheme } from './lib/theme';
 import { href, useRoute } from './router';
 import Home from './pages/Home';
@@ -12,13 +12,25 @@ import ReviewPage from './pages/Review';
 import BossPage from './pages/Boss';
 import DataPage from './pages/Data';
 import HelpPage from './pages/Help';
+import AccountPage from './pages/Account';
+
+const SYNC_ICON = { off: '☁', idle: '☁', syncing: '⟳', offline: '☁', error: '⚠', conflict: '⚠' } as const;
+const SYNC_TITLE = {
+  off: 'Nicht angemeldet – Daten nur in diesem Browser',
+  idle: 'Synchronisiert',
+  syncing: 'Synchronisiert …',
+  offline: 'Offline – Sync wird nachgeholt',
+  error: 'Sync-Fehler',
+  conflict: 'Sync wartet auf deine Entscheidung',
+} as const;
 
 function TopBar() {
-  const xp = useLiveQuery(() => getMeta<number>('xp', 0), [], 0);
-  const streak = useLiveQuery(() => getMeta<Streak>('streak', { count: 0, lastDay: null }), [], { count: 0, lastDay: null });
+  const xp = useLiveQuery(totalXp, [], 0);
+  const streak = useLiveQuery(currentStreak, [], 0);
   const due = useLiveQuery(() => countDue(), [], 0);
   const lvl = levelFor(xp);
   const [theme, cycleTheme] = useTheme();
+  const sync = useSyncStatus();
   return (
     <header className="topbar">
       <a className="brand" href={href({ name: 'home' })}>
@@ -30,11 +42,14 @@ function TopBar() {
           ↻ <strong>{due}</strong>
         </a>
         <span className="pill" title="Lernserie (ein Tag Pause ist erlaubt)">
-          🔥 <strong>{currentStreak(streak)}</strong>
+          🔥 <strong>{streak}</strong>
         </span>
         <span className="pill" title={`${xp} XP`}>
           Lv <strong>{lvl.level}</strong>
         </span>
+        <a href={href({ name: 'account' })} className={`pill sync sync-${sync.state}`} title={SYNC_TITLE[sync.state]} aria-label={SYNC_TITLE[sync.state]}>
+          {SYNC_ICON[sync.state]}
+        </a>
         <button type="button" className="pill theme-toggle" onClick={cycleTheme} title={`${THEME_LABEL[theme]} – klicken zum Wechseln`} aria-label={THEME_LABEL[theme]}>
           {THEME_ICON[theme]}
         </button>
@@ -46,6 +61,7 @@ function TopBar() {
 
 export default function App() {
   const route = useRoute();
+  const sync = useSyncStatus();
   let page;
   switch (route.name) {
     case 'home':
@@ -72,17 +88,22 @@ export default function App() {
     case 'help':
       page = <HelpPage />;
       break;
+    case 'account':
+      page = <AccountPage />;
+      break;
   }
   return (
     <>
       <TopBar />
       <main className="container">{page}</main>
       <footer className="footer">
+        <a href={href({ name: 'account' })}>Account &amp; Sync</a>
+        <span>·</span>
         <a href={href({ name: 'data' })}>Daten &amp; Sicherung</a>
         <span>·</span>
         <a href={href({ name: 'help' })}>So funktioniert's</a>
         <span>·</span>
-        <span>Alle Daten bleiben in diesem Browser.</span>
+        <span>{sync.state === 'off' ? 'Ohne Account bleiben alle Daten in diesem Browser.' : 'PDFs bleiben immer nur auf diesem Gerät.'}</span>
       </footer>
     </>
   );

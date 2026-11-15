@@ -45,8 +45,8 @@ export default function HelpPage() {
       <section className="card stack">
         <h3>Datenschutz</h3>
         <p>
-          Alles bleibt in deinem Browser: Kurse, PDFs, Fortschritt. Kein Account, kein Server, kein Tracking. Für den Gerätewechsel gibt es{' '}
-          <a href={href({ name: 'data' })}>Export und Import</a>.
+          Ohne Account bleibt alles in deinem Browser. Mit <a href={href({ name: 'account' })}>Account</a> werden Kurse und Fortschritt in der
+          Cloud gesichert (Supabase, Frankfurt) und zwischen deinen Geräten abgeglichen. PDFs bleiben immer nur auf dem Gerät. Kein Tracking.
         </p>
         <p className="muted small">
           Hinweis: Kursmaterialien sind meist urheberrechtlich geschützt. Die erzeugten Dateien enthalten Zitate daraus, also gib sie nicht weiter.

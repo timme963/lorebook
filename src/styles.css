@@ -301,3 +301,12 @@ details summary { cursor: pointer; color: var(--muted); margin-bottom: 8px; }
   .compare .big { font-size: 2rem; }
   .brand span { display: none; }
 }
+
+/* Sync */
+.pill.sync { min-width: 34px; justify-content: center; }
+.pill.sync-off { color: var(--muted); }
+.pill.sync-idle { color: var(--good); }
+.pill.sync-syncing { color: var(--accent); }
+.pill.sync-error, .pill.sync-conflict { color: var(--bad); border-color: var(--bad); }
+.code-input { font-size: 1.4rem; letter-spacing: 0.3em; max-width: 240px; font-variant-numeric: tabular-nums; }
+@media (max-width: 400px) { .topnav { gap: 4px; } .pill { padding: 4px 8px; } }

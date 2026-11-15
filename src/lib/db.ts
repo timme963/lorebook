@@ -65,6 +65,23 @@ export interface MetaRow {
   value: unknown;
 }
 
+/** Gerätelokale Werte (Sync-Stand, Geräte-ID) – werden nie synchronisiert. */
+export interface LocalRow {
+  key: string;
+  value: unknown;
+}
+
+/** Merkt sich gelöschte Zeilen, damit die Löschung auch auf anderen Geräten ankommt. */
+export interface TombstoneRow {
+  key: string; // `${tbl}:${id}`
+  tbl: SyncTable;
+  id: string;
+  _ts: number;
+}
+
+export const SYNC_TABLES = ['courses', 'chapters', 'cards', 'meta'] as const;
+export type SyncTable = (typeof SYNC_TABLES)[number];
+
 export const db = new Dexie('lorebook') as Dexie & {
   courses: EntityTable<CourseRow, 'id'>;
   chapters: EntityTable<ChapterRow, 'id'>;
@@ -72,6 +89,8 @@ export const db = new Dexie('lorebook') as Dexie & {
   reviews: EntityTable<ReviewLogRow, 'id'>;
   pdfs: EntityTable<PdfRow, 'courseId'>;
   meta: EntityTable<MetaRow, 'key'>;
+  local: EntityTable<LocalRow, 'key'>;
+  tombstones: EntityTable<TombstoneRow, 'key'>;
 };
 
 db.version(1).stores({
@@ -82,6 +101,77 @@ db.version(1).stores({
   pdfs: 'courseId',
   meta: 'key',
 });
+
+db.version(2)
+  .stores({
+    courses: 'id, title, createdAt, _ts',
+    chapters: 'id, courseId, number, _ts',
+    cards: 'id, courseId, chapterId, due, _ts',
+    meta: 'key, _ts',
+    local: 'key',
+    tombstones: 'key, _ts',
+  })
+  .upgrade(async (tx) => {
+    const now = Date.now();
+    for (const t of SYNC_TABLES) {
+      await tx.table(t).toCollection().modify((row: { _ts?: number }) => {
+        row._ts = now;
+      });
+    }
+  });
+
+// ---------- Änderungs-Zeitstempel für den Sync ----------
+// Jede lokale Änderung bekommt _ts (ms). Beim Sync gewinnt der höhere _ts.
+// Transaktionen, die Server-Daten einspielen, sind mit __remote markiert und stempeln nicht.
+
+type Tx = { __remote?: boolean; storeNames: string[]; table: (n: string) => { put: (v: unknown) => unknown } };
+let changeListener: (() => void) | undefined;
+
+export function onLocalChange(fn: () => void): void {
+  changeListener = fn;
+}
+
+for (const t of SYNC_TABLES) {
+  const table = db.table(t);
+  table.hook('creating', function (_pk, obj: { _ts?: number }, tx) {
+    if ((tx as unknown as Tx).__remote) return;
+    obj._ts = Math.max(Date.now(), (obj._ts ?? 0) + 1);
+    changeListener?.();
+  });
+  table.hook('updating', function (_mods, _pk, obj: { _ts?: number }, tx) {
+    if ((tx as unknown as Tx).__remote) return;
+    changeListener?.();
+    return { _ts: Math.max(Date.now(), (obj._ts ?? 0) + 1) };
+  });
+  table.hook('deleting', function (pk, obj: { _ts?: number }, tx) {
+    const trans = tx as unknown as Tx;
+    if (trans.__remote) return;
+    if (!trans.storeNames.includes('tombstones')) {
+      console.warn(`[lorebook] Löschung in ${t} ohne tombstones-Tabelle in der Transaktion – wird nicht synchronisiert`);
+      return;
+    }
+    trans.table('tombstones').put({ key: `${t}:${pk}`, tbl: t, id: String(pk), _ts: Math.max(Date.now(), (obj?._ts ?? 0) + 1) });
+    changeListener?.();
+  });
+}
+
+export async function getLocal<T>(key: string, fallback: T): Promise<T> {
+  const row = await db.local.get(key);
+  return row ? (row.value as T) : fallback;
+}
+
+export async function setLocal(key: string, value: unknown): Promise<void> {
+  await db.local.put({ key, value });
+}
+
+export async function deviceId(): Promise<string> {
+  let id = await getLocal<string | null>('deviceId', null);
+  if (!id) {
+    id = crypto.randomUUID().slice(0, 8);
+    await setLocal('deviceId', id);
+  }
+  return id;
+}
 
 export function slug(s: string): string {
   return (
