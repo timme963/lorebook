@@ -1,0 +1,170 @@
+import type { ChapterFile } from './schema';
+
+/** Beispielkapitel, damit man die App ohne eigenes PDF ausprobieren kann. Quelle: Hilfeseite von Lorebook. */
+export const DEMO_CHAPTER: ChapterFile = {
+  lorebook: 1,
+  course: { title: 'Demo: Wie Lernen hängen bleibt', source: 'Lorebook-Hilfe (kein PDF)' },
+  verified: true,
+  verificationNotes: ['Demo-Inhalt, von Hand geprüft'],
+  chapter: {
+    number: 1,
+    title: 'Die vier Werkzeuge des Gedächtnisses',
+    pages: [1, 1],
+    objectives: [
+      {
+        id: 'o1',
+        text: 'Vorabfragen (Pretesting) verbessern das spätere Lernen, auch wenn man falsch rät.',
+        source: { page: 1, quote: 'Wer vor dem Lernen Fragen beantwortet, behält den Stoff danach besser – selbst wenn die Antworten falsch waren.' },
+      },
+      {
+        id: 'o2',
+        text: 'Aktives Abrufen (Active Recall) festigt Wissen stärker als erneutes Lesen.',
+        source: { page: 1, quote: 'Sich aktiv an etwas zu erinnern, festigt es stärker als es noch einmal zu lesen.' },
+      },
+      {
+        id: 'o3',
+        text: 'Verteilte Wiederholung (Spaced Repetition) mit wachsenden Abständen nutzt das Vergessen gezielt aus.',
+        source: { page: 1, quote: 'Wiederholungen wirken am besten, wenn sie kurz vor dem Vergessen stattfinden und die Abstände dabei wachsen.' },
+      },
+      {
+        id: 'o4',
+        text: 'Interessante, aber irrelevante Details (Seductive Details) verschlechtern das Lernen.',
+        source: { page: 1, quote: 'Interessante Details, die mit dem Lernziel nichts zu tun haben, lenken ab und verschlechtern das Behalten.' },
+      },
+    ],
+    pretest: [
+      {
+        id: 'q1', objective: 'o1', level: 'understand', type: 'mc',
+        prompt: 'Du beantwortest Fragen zu einem Thema, bevor du es gelernt hast, und liegst meistens falsch. Was passiert mit deinem späteren Lernerfolg?',
+        options: ['Er sinkt, weil sich die falschen Antworten einprägen', 'Er steigt, weil das Raten den Stoff vorbereitet', 'Er bleibt gleich', 'Er steigt nur, wenn man mindestens die Hälfte richtig hat'],
+        correct: 1,
+        explanation: 'Der Pretesting-Effekt wirkt auch bei falschen Antworten: Das Gehirn wird auf die Lücken aufmerksam und speichert die richtige Antwort später besser.',
+        source: { page: 1, quote: 'Wer vor dem Lernen Fragen beantwortet, behält den Stoff danach besser – selbst wenn die Antworten falsch waren.' },
+      },
+      {
+        id: 'q2', objective: 'o2', level: 'remember', type: 'mc',
+        prompt: 'Welche Lernmethode festigt Wissen am stärksten?',
+        options: ['Text zweimal lesen', 'Wichtiges markieren', 'Sich ohne Vorlage an den Inhalt erinnern', 'Eine Zusammenfassung abschreiben'],
+        correct: 2,
+        explanation: 'Aktives Abrufen ohne Vorlage ist wirksamer als passives Wiederlesen, Markieren oder Abschreiben.',
+        source: { page: 1, quote: 'Sich aktiv an etwas zu erinnern, festigt es stärker als es noch einmal zu lesen.' },
+      },
+      {
+        id: 'q3', objective: 'o3', level: 'remember', type: 'cloze',
+        prompt: 'Bei der verteilten Wiederholung werden die Abstände zwischen den Wiederholungen immer ___.',
+        answers: ['größer', 'länger', 'grösser'],
+        explanation: 'Mit jeder erfolgreichen Wiederholung hält das Wissen länger, deshalb wachsen die Abstände.',
+        source: { page: 1, quote: 'Wiederholungen wirken am besten, wenn sie kurz vor dem Vergessen stattfinden und die Abstände dabei wachsen.' },
+      },
+    ],
+    story: {
+      title: 'Die Archivarin von Kessel',
+      setting: 'Mira ist neue Archivarin in der Hafenstadt Kessel. In sieben Tagen kommt der Rat, um das Wissen der Archivare zu prüfen. Wer durchfällt, verliert seinen Schlüssel zum Archiv.',
+      scenes: [
+        {
+          objective: 'o1', title: 'Das Rätsel am Tor',
+          text: 'Am ersten Morgen hält der alte Archivar Bento Mira eine Tafel mit zehn Fragen hin, bevor sie auch nur ein Buch aufschlagen darf. „Ich weiß doch noch gar nichts!“, protestiert sie. „Genau deshalb“, sagt Bento. Mira rät, kritzelt Antworten hin, liegt bei fast allen daneben. Doch als sie am Nachmittag die Bücher liest, springen ihr genau die Stellen ins Auge, an denen sie morgens gescheitert war. Jede Lücke von heute früh ist jetzt ein Haken, an dem das neue Wissen hängen bleibt. Bento grinst: „Das Raten war keine Prüfung. Es war die Vorbereitung.“',
+          concept: 'Pretesting: Fragen vor dem Lernen zu beantworten verbessert das spätere Behalten, auch wenn die Antworten falsch sind. Das Raten lenkt die Aufmerksamkeit beim anschließenden Lernen gezielt auf die Wissenslücken.',
+        },
+        {
+          objective: 'o2', title: 'Die verschlossenen Bücher',
+          text: 'Am dritten Tag liest Mira die Hafenchronik zum vierten Mal. Alles fühlt sich vertraut an. Bento klappt das Buch zu: „Erzähl mir, wann der Leuchtturm gebaut wurde.“ Stille. Das Vertraute war nur Wiedererkennen, kein Wissen. Ab jetzt arbeitet Mira anders: ein Kapitel lesen, Buch zu, alles aus dem Kopf aufschreiben, dann vergleichen. Es ist anstrengender, und genau das ist der Punkt. Jedes Mal, wenn sie sich mühsam erinnert, wird die Spur im Gedächtnis tiefer.',
+          concept: 'Active Recall: Sich aktiv und ohne Vorlage an Inhalte zu erinnern festigt sie stärker als wiederholtes Lesen. Wiederlesen erzeugt ein trügerisches Gefühl von Vertrautheit, ohne dass man den Inhalt selbst abrufen kann.',
+        },
+        {
+          objective: 'o3', title: 'Der Kalender der Gezeiten',
+          text: 'Mira will jetzt alles jeden Abend wiederholen, doch die Liste wird zu lang. Bento zeigt ihr seinen Gezeitenkalender: Was sie heute sicher weiß, kommt in drei Tagen wieder, dann in einer Woche, dann in einem Monat. Was sie vergessen hat, kommt morgen zurück. „Du wiederholst kurz bevor das Wasser das Wissen wegspült“, sagt er. Mira merkt: Die Abstände wachsen, und trotzdem vergisst sie weniger. Sie lernt nicht mehr, sondern im richtigen Moment.',
+          concept: 'Spaced Repetition: Wiederholungen sind am wirksamsten, wenn sie kurz vor dem Vergessen erfolgen. Nach jeder erfolgreichen Wiederholung werden die Abstände größer; Vergessenes wird bald erneut wiederholt.',
+        },
+        {
+          objective: 'o4', title: 'Die Seeschlange im Inhaltsverzeichnis',
+          text: 'Am sechsten Tag findet Mira ein wunderschön illustriertes Buch über Seeschlangen, die angeblich im Hafen gelebt haben. Sie liest es fasziniert in einer Nacht. Am Morgen fragt Bento nach den Handelsrouten, die auf denselben Seiten standen. Mira erinnert sich an jede Schlange, aber an keine Route. „Spannend ist nur gut, wenn es zum Thema gehört“, sagt Bento. Mira streicht die Schlangen und malt sich stattdessen die Routen als Geschichte aus, in der jede Station etwas über den Handel verrät.',
+          concept: 'Seductive Details: Interessante, aber für das Lernziel irrelevante Details ziehen Aufmerksamkeit ab und verschlechtern das Behalten des eigentlichen Stoffs. Anschauliche Elemente helfen nur, wenn sie das Lernziel selbst transportieren.',
+        },
+      ],
+      ending: 'Am siebten Tag tritt der Rat zusammen. Mira beantwortet jede Frage, nicht weil sie am meisten gelesen hat, sondern weil sie geraten, abgerufen, im richtigen Rhythmus wiederholt und sich nicht von Seeschlangen hat ablenken lassen. Bento überreicht ihr den Schlüssel.',
+    },
+    posttest: [
+      {
+        id: 'q4', objective: 'o1', level: 'apply', type: 'mc',
+        prompt: 'Eine Lehrerin will den Lernerfolg ihrer Klasse beim neuen Thema „Vulkane“ steigern, ohne mehr Unterrichtszeit zu verwenden. Was empfiehlt sich nach dem Pretesting-Effekt?',
+        options: ['Am Ende der Einheit einen Test schreiben', 'Zu Beginn ein paar Fragen zum Thema stellen, bevor sie erklärt', 'Die Fragen erst stellen, wenn alle sicher richtig antworten', 'Den Schülern die Fragen samt Lösungen vorab austeilen'],
+        correct: 1,
+        explanation: 'Vorabfragen vor der Erklärung lenken die Aufmerksamkeit auf die Lücken. Fragen mit Lösungen vorab wären kein Abrufversuch.',
+        source: { page: 1, quote: 'Wer vor dem Lernen Fragen beantwortet, behält den Stoff danach besser – selbst wenn die Antworten falsch waren.' },
+      },
+      {
+        id: 'q5', objective: 'o2', level: 'understand', type: 'open',
+        prompt: 'Warum fühlt sich wiederholtes Lesen oft wirksamer an, als es ist?',
+        modelAnswer: 'Beim Wiederlesen erkennt man den Text wieder und hält dieses Gefühl der Vertrautheit für Wissen. Ob man den Inhalt selbst abrufen kann, wird dabei nicht geprüft.',
+        rubric: ['Vertrautheit bzw. Wiedererkennen wird mit Wissen verwechselt', 'Abrufen wird beim Lesen nicht geübt'],
+        explanation: 'Wiedererkennen ist leichter als Abrufen. Erst der Abrufversuch zeigt, ob das Wissen wirklich verfügbar ist.',
+        source: { page: 1, quote: 'Sich aktiv an etwas zu erinnern, festigt es stärker als es noch einmal zu lesen.' },
+      },
+      {
+        id: 'q6', objective: 'o3', level: 'apply', type: 'mc',
+        prompt: 'Du hast eine Vokabel heute sicher gewusst, gestern auch und vor vier Tagen auch. Wann sollte sie nach dem Prinzip der verteilten Wiederholung als Nächstes drankommen?',
+        options: ['Morgen', 'In etwa einer bis zwei Wochen', 'Heute Abend noch einmal', 'Nie wieder'],
+        correct: 1,
+        explanation: 'Nach mehreren erfolgreichen Wiederholungen wächst der Abstand deutlich. Nie wieder ist falsch, weil auch gut Gelerntes langfristig verblasst.',
+        source: { page: 1, quote: 'Wiederholungen wirken am besten, wenn sie kurz vor dem Vergessen stattfinden und die Abstände dabei wachsen.' },
+      },
+      {
+        id: 'q7', objective: 'o4', level: 'transfer', type: 'open',
+        prompt: 'Ein Erklärvideo über Zinseszins beginnt mit einer zweiminütigen, witzigen Anekdote über einen Lottogewinner, der alles verprasst hat. Danach folgt die Formel. Was spricht aus lernpsychologischer Sicht dagegen, und wie könnte man die Anekdote retten?',
+        modelAnswer: 'Die Anekdote ist unterhaltsam, transportiert aber nicht das Konzept Zinseszins. Sie ist ein Seductive Detail, das Aufmerksamkeit bindet und das Behalten der Formel verschlechtert. Retten lässt sie sich, wenn die Geschichte selbst den Zinseszins zeigt, z. B. was aus dem Gewinn bei Anlage über Jahre geworden wäre.',
+        rubric: ['Erkennt die Anekdote als irrelevantes Detail ohne Bezug zum Lernziel', 'Nennt die Folge: Ablenkung, schlechteres Behalten', 'Schlägt vor, die Geschichte am Konzept auszurichten'],
+        explanation: 'Anschaulichkeit hilft nur, wenn sie das Lernziel trägt.',
+        source: { page: 1, quote: 'Interessante Details, die mit dem Lernziel nichts zu tun haben, lenken ab und verschlechtern das Behalten.' },
+      },
+    ],
+    review: [
+      {
+        id: 'q8', objective: 'o1', level: 'remember', type: 'cloze',
+        prompt: 'Der Effekt, dass Fragen vor dem Lernen das Behalten verbessern, heißt ___-Effekt.',
+        answers: ['Pretesting', 'Pretest', 'Vortest'],
+        explanation: 'Pretesting = Testen vor dem Lernen.',
+        source: { page: 1, quote: 'Wer vor dem Lernen Fragen beantwortet, behält den Stoff danach besser – selbst wenn die Antworten falsch waren.' },
+      },
+      {
+        id: 'q9', objective: 'o2', level: 'transfer', type: 'mc',
+        prompt: 'Ein Sanitäter will sich die Reihenfolge der Erste-Hilfe-Schritte einprägen. Welches Vorgehen passt am besten zu Active Recall?',
+        options: ['Das Plakat jeden Tag einmal anschauen', 'Die Schritte aus dem Kopf aufsagen und danach mit dem Plakat vergleichen', 'Das Plakat abfotografieren', 'Die Schritte farbig markieren'],
+        correct: 1,
+        explanation: 'Nur das Aufsagen aus dem Kopf ist ein Abrufversuch, der Vergleich danach liefert Feedback.',
+        source: { page: 1, quote: 'Sich aktiv an etwas zu erinnern, festigt es stärker als es noch einmal zu lesen.' },
+      },
+      {
+        id: 'q10', objective: 'o3', level: 'understand', type: 'mc',
+        prompt: 'Warum kommt eine vergessene Karte bei verteilter Wiederholung schon bald wieder?',
+        options: ['Zur Strafe', 'Weil das Wissen offenbar noch nicht stabil ist und die Abstände neu klein beginnen', 'Weil alle Karten täglich kommen', 'Damit die Statistik besser aussieht'],
+        correct: 1,
+        explanation: 'Vergessen zeigt, dass der Abstand zu groß war. Die Wiederholung beginnt mit kurzen Abständen neu.',
+        source: { page: 1, quote: 'Wiederholungen wirken am besten, wenn sie kurz vor dem Vergessen stattfinden und die Abstände dabei wachsen.' },
+      },
+      {
+        id: 'q11', objective: 'o3', level: 'apply', type: 'open',
+        prompt: 'Du hast 20 Tage bis zur Klausur und 4 Stunden Lernzeit für ein Kapitel. Wie verteilst du die Zeit nach dem Prinzip der verteilten Wiederholung, und warum nicht alles am Tag vor der Klausur?',
+        modelAnswer: 'Ein großer erster Lernblock, danach kurze Wiederholungen mit wachsenden Abständen, z. B. nach 1, 3, 7 und 14 Tagen. Alles am Vortag zu lernen hilft kurzfristig, wird aber schnell vergessen, weil keine Wiederholung kurz vor dem Vergessen stattfindet.',
+        rubric: ['Verteilt die Zeit auf mehrere Termine', 'Abstände wachsen', 'Begründet, warum Pauken am Vortag schlechter behalten wird'],
+        explanation: 'Verteilte Wiederholung schlägt massiertes Lernen bei gleicher Gesamtzeit.',
+        source: { page: 1, quote: 'Wiederholungen wirken am besten, wenn sie kurz vor dem Vergessen stattfinden und die Abstände dabei wachsen.' },
+      },
+      {
+        id: 'q12', objective: 'o4', level: 'understand', type: 'cloze',
+        prompt: 'Interessante, aber für das Lernziel irrelevante Details nennt man Seductive ___.',
+        answers: ['Details', 'Detail'],
+        explanation: 'Seductive = verführerisch: Die Details verführen die Aufmerksamkeit weg vom Lernziel.',
+        source: { page: 1, quote: 'Interessante Details, die mit dem Lernziel nichts zu tun haben, lenken ab und verschlechtern das Behalten.' },
+      },
+      {
+        id: 'q13', objective: 'o4', level: 'transfer', type: 'mc',
+        prompt: 'Eine Firma gestaltet eine Sicherheitsschulung als Spiel. Welches Element unterstützt das Lernen am ehesten?',
+        options: ['Lustige Katzenvideos zwischen den Kapiteln', 'Ein Rätsel, das man nur mit der richtigen Sicherheitsregel lösen kann', 'Eine aufwendige Hintergrundmusik', 'Zufällige Bonuspunkte'],
+        correct: 1,
+        explanation: 'Das Rätsel transportiert das Lernziel selbst. Die anderen Elemente sind unterhaltsam, aber ohne Bezug zum Stoff.',
+        source: { page: 1, quote: 'Interessante Details, die mit dem Lernziel nichts zu tun haben, lenken ab und verschlechtern das Behalten.' },
+      },
+    ],
+  },
+};
