@@ -2,6 +2,7 @@ import { useState, type FormEvent } from 'react';
 import { supabase } from '../lib/supabase';
 import { clearLocalSyncedData, deleteAccount, signOut, syncNow, useSyncStatus } from '../lib/sync';
 import { href } from '../router';
+import { isNative, PUBLIC_URL } from '../lib/platform';
 
 function timeAgo(ms?: number): string {
   if (!ms) return 'noch nie';
@@ -54,7 +55,7 @@ function Login() {
       const { data, error } = await supabase.auth.signUp({
         email: email.trim(),
         password,
-        options: { emailRedirectTo: `${location.origin}/#/account` },
+        options: { emailRedirectTo: `${isNative ? PUBLIC_URL : location.origin}/#/account` },
       });
       if (error) setError(authError(error.message));
       else if (!data.session) {

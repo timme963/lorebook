@@ -98,7 +98,7 @@ code { font-size: 0.85em; word-break: break-word; }
 .topbar {
   position: sticky; top: 0; z-index: 10;
   display: flex; justify-content: space-between; align-items: center; gap: 8px;
-  padding: 10px 16px;
+  padding: calc(10px + env(safe-area-inset-top)) calc(16px + env(safe-area-inset-right)) 10px calc(16px + env(safe-area-inset-left));
   background: color-mix(in srgb, var(--bg) 88%, transparent);
   backdrop-filter: blur(8px);
   border-bottom: 1px solid var(--line);
@@ -113,7 +113,7 @@ code { font-size: 0.85em; word-break: break-word; }
 }
 .theme-toggle { font: inherit; font-size: 0.95rem; cursor: pointer; min-width: 34px; justify-content: center; }
 .theme-toggle:hover { border-color: var(--accent); }
-.footer { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; padding: 24px 16px; color: var(--muted); font-size: 0.8rem; }
+.footer { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; padding: 24px 16px calc(24px + env(safe-area-inset-bottom)); color: var(--muted); font-size: 0.8rem; }
 .footer a { color: var(--muted); }
 .back { color: var(--muted); text-decoration: none; font-size: 0.9rem; align-self: flex-start; }
 
@@ -309,3 +309,7 @@ details summary { cursor: pointer; color: var(--muted); margin-bottom: 8px; }
 .pill.sync-syncing { color: var(--accent); }
 .pill.sync-error, .pill.sync-conflict { color: var(--bad); border-color: var(--bad); }
 @media (max-width: 400px) { .topnav { gap: 4px; } .pill { padding: 4px 8px; } }
+
+/* Update-Hinweis in der Android-App */
+.update-banner { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 16px; padding: 10px 14px; border: 1px solid var(--accent); border-radius: 12px; background: var(--surface); }
+.update-banner span { flex: 1; min-width: 12rem; font-weight: 600; }

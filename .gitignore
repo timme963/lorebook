@@ -9,3 +9,7 @@ dev-dist
 !.dev.vars.example
 .env*
 !.env.example
+
+release/
+*.jks
+*.keystore

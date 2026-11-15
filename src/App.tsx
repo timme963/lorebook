@@ -14,6 +14,8 @@ import DataPage from './pages/Data';
 import HelpPage from './pages/Help';
 import AccountPage from './pages/Account';
 import { DatenschutzPage, ImpressumPage } from './pages/Legal';
+import UpdateBanner from './components/UpdateBanner';
+import { APK_URL, isNative } from './lib/platform';
 
 const SYNC_ICON = { off: '☁', idle: '☁', syncing: '⟳', offline: '☁', error: '⚠', conflict: '⚠' } as const;
 const SYNC_TITLE = {
@@ -102,7 +104,10 @@ export default function App() {
   return (
     <>
       <TopBar />
-      <main className="container">{page}</main>
+      <main className="container">
+        <UpdateBanner />
+        {page}
+      </main>
       <footer className="footer">
         <a href={href({ name: 'account' })}>Account &amp; Sync</a>
         <span>·</span>
@@ -110,6 +115,12 @@ export default function App() {
         <span>·</span>
         <a href={href({ name: 'help' })}>So funktioniert's</a>
         <span>·</span>
+        {!isNative && (
+          <>
+            <a href={APK_URL}>Android-App</a>
+            <span>·</span>
+          </>
+        )}
         <a href={href({ name: 'impressum' })}>Impressum</a>
         <span>·</span>
         <a href={href({ name: 'datenschutz' })}>Datenschutz</a>

@@ -7,7 +7,7 @@ import { VitePWA } from 'vite-plugin-pwa';
 export default defineConfig({
   plugins: [react(), VitePWA({
     registerType: 'autoUpdate',
-    includeAssets: ['icon.svg'],
+    includeAssets: ['icon.svg', 'favicon.ico', 'apple-touch-icon-180x180.png'],
     manifest: {
       name: 'Lorebook',
       short_name: 'Lorebook',
@@ -17,13 +17,20 @@ export default defineConfig({
       background_color: '#faf8f4',
       display: 'standalone',
       start_url: '/',
+      id: '/',
       icons: [
-        { src: 'icon.svg', sizes: 'any', type: 'image/svg+xml', purpose: 'any maskable' },
+        { src: 'pwa-64x64.png', sizes: '64x64', type: 'image/png' },
+        { src: 'pwa-192x192.png', sizes: '192x192', type: 'image/png' },
+        { src: 'pwa-512x512.png', sizes: '512x512', type: 'image/png' },
+        { src: 'maskable-icon-512x512.png', sizes: '512x512', type: 'image/png', purpose: 'maskable' },
+        { src: 'icon.svg', sizes: 'any', type: 'image/svg+xml' },
       ],
     },
     workbox: {
-      globPatterns: ['**/*.{js,css,html,svg,mjs}'],
+      globPatterns: ['**/*.{js,css,html,svg,mjs,png,ico}'],
       maximumFileSizeToCacheInBytes: 5 * 1024 * 1024,
+      // APK-Download und Versionsdatei nie durch die App-Hülle ersetzen
+      navigateFallbackDenylist: [/\.apk$/, /version\.json$/],
     },
   })],
   build: { chunkSizeWarningLimit: 900 },

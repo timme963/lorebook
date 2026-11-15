@@ -4,9 +4,12 @@ import { registerSW } from 'virtual:pwa-register';
 import App from './App';
 import { migrateLegacyProgress } from './lib/progress';
 import { initSync } from './lib/sync';
+import { isNative } from './lib/platform';
+import { initReminders } from './lib/reminders';
 import './styles.css';
 
-registerSW({ immediate: true });
+// In der Android-App liegen alle Dateien in der APK, ein Service Worker wäre dort nur im Weg
+if (!isNative) registerSW({ immediate: true });
 
 // Nach Klick auf den Bestätigungslink hängt Supabase Tokens/Fehler an den Hash – der würde den Router stören
 if (/access_token=|error_description=|type=signup/.test(location.hash)) {
@@ -18,7 +21,10 @@ navigator.storage?.persist?.().catch(() => undefined);
 
 migrateLegacyProgress()
   .catch((e) => console.error('[lorebook] Migration', e))
-  .finally(() => void initSync());
+  .finally(() => {
+    void initSync();
+    initReminders();
+  });
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>

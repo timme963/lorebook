@@ -1,4 +1,7 @@
+import { Directory, Encoding, Filesystem } from '@capacitor/filesystem';
+import { Share } from '@capacitor/share';
 import { db } from './db';
+import { isNative } from './platform';
 
 const TABLES = ['courses', 'chapters', 'cards', 'reviews', 'meta'] as const;
 
@@ -24,7 +27,13 @@ export async function importBackup(text: string): Promise<void> {
   });
 }
 
-export function downloadBlob(blob: Blob, filename: string): void {
+/** Browser: Download. Android-App: Datei im Cache ablegen und über „Teilen“ speichern/versenden. */
+export async function downloadBlob(blob: Blob, filename: string): Promise<void> {
+  if (isNative) {
+    const res = await Filesystem.writeFile({ path: filename, data: await blob.text(), directory: Directory.Cache, encoding: Encoding.UTF8 });
+    await Share.share({ title: 'Lorebook-Sicherung', files: [res.uri] });
+    return;
+  }
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = url;

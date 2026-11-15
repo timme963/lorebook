@@ -2,13 +2,19 @@ import { useState } from 'react';
 import { downloadBlob, exportBackup, importBackup } from '../lib/backup';
 import { db } from '../lib/db';
 import { dayKey } from '../lib/progress';
+import { isNative } from '../lib/platform';
+import ReminderSettings from '../components/ReminderSettings';
 
 export default function DataPage() {
   const [msg, setMsg] = useState<{ ok: boolean; text: string }>();
 
   async function doExport() {
-    downloadBlob(await exportBackup(), `lorebook-sicherung-${dayKey()}.json`);
-    setMsg({ ok: true, text: 'Sicherung heruntergeladen.' });
+    try {
+      await downloadBlob(await exportBackup(), `lorebook-sicherung-${dayKey()}.json`);
+      setMsg({ ok: true, text: isNative ? 'Sicherung erstellt.' : 'Sicherung heruntergeladen.' });
+    } catch (e) {
+      setMsg({ ok: false, text: (e as Error).message });
+    }
   }
 
   async function doImport(f?: File) {
@@ -39,6 +45,7 @@ export default function DataPage() {
         </p>
         <p className="muted small">Die Sicherungsdatei funktioniert auch ohne Account. PDFs sind weder in der Sicherung noch in der Cloud enthalten.</p>
       </section>
+      {isNative && <ReminderSettings />}
       <section className="card stack">
         <h3>Sicherung</h3>
         <div className="row gap wrap">

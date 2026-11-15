@@ -1,4 +1,5 @@
 import { href } from '../router';
+import { APK_URL } from '../lib/platform';
 
 export default function HelpPage() {
   return (
@@ -55,7 +56,16 @@ export default function HelpPage() {
 
       <section className="card stack">
         <h3>Als App installieren</h3>
-        <p>Im Browser-Menü „Zum Startbildschirm hinzufügen“ bzw. „App installieren“ wählen. Wiederholungen funktionieren dann auch offline.</p>
+        <ul>
+          <li>
+            <strong>Android:</strong> <a href={APK_URL}>Lorebook-App herunterladen</a> (APK) und öffnen. Beim ersten Mal fragt Android, ob der Browser
+            Apps installieren darf: erlauben. Die App erinnert dich täglich an fällige Wiederholungen (einstellbar unter „Daten &amp; Sicherung“) und
+            meldet sich, wenn es ein Update gibt.
+          </li>
+          <li><strong>iPhone (Safari):</strong> Teilen-Symbol → „Zum Home-Bildschirm“.</li>
+          <li><strong>PC (Chrome/Edge):</strong> Installieren-Symbol rechts in der Adressleiste oder Menü → „Apps“ → „Lorebook installieren“.</li>
+        </ul>
+        <p className="muted small">Kurse und Wiederholungen funktionieren auch offline. Mit Account sind App und Website auf demselben Stand.</p>
       </section>
     </div>
   );
