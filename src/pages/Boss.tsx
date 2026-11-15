@@ -39,12 +39,19 @@ export default function BossPage({ courseId }: { courseId: string }) {
     setScores(next);
     if (next.length < questions!.length) return;
     const total = next.reduce((a, b) => a + b, 0) / next.length;
-    const prev = await getMeta<BossResult | null>(`boss:${courseId}`, null);
-    const best = !prev || total > prev.best;
-    const xp = total >= 0.7 && (!prev || prev.best < 0.7) ? 100 : Math.round(total * 30);
-    await setMeta(`boss:${courseId}`, { best: Math.max(total, prev?.best ?? 0), last: total, at: Date.now(), attempts: (prev?.attempts ?? 0) + 1 });
-    await addXp(xp);
-    setResult({ score: total, best, xp });
+    let best = true;
+    let xp = Math.round(total * 30);
+    try {
+      const prev = await getMeta<BossResult | null>(`boss:${courseId}`, null);
+      best = !prev || total > prev.best;
+      if (total >= 0.7 && (!prev || prev.best < 0.7)) xp = 100;
+      await setMeta(`boss:${courseId}`, { best: Math.max(total, prev?.best ?? 0), last: total, at: Date.now(), attempts: (prev?.attempts ?? 0) + 1 });
+      await addXp(xp);
+    } catch (e) {
+      console.error('[lorebook] Boss-Ergebnis speichern', e);
+    } finally {
+      setResult({ score: total, best, xp });
+    }
   }
 
   if (result) {
@@ -67,6 +74,10 @@ export default function BossPage({ courseId }: { courseId: string }) {
 
   const i = scores.length;
   const current = questions[i];
+  if (!current) {
+    // letzte Frage beantwortet, Ergebnis wird gerade gespeichert
+    return <section className="card result"><p className="muted">Auswertung …</p></section>;
+  }
   const hp = 1 - scores.reduce((a, b) => a + b, 0) / questions.length;
 
   return (
