@@ -32,7 +32,7 @@ export function setLang(l: Lang): void {
   } catch {
     /* egal */
   }
-  document.documentElement.lang = l;
+  if (typeof document !== 'undefined') document.documentElement.lang = l;
   subs.forEach((f) => f());
 }
 

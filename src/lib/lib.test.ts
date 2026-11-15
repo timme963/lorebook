@@ -1,5 +1,6 @@
-import { describe, expect, it } from 'vitest';
-import { DEMO_CHAPTER } from './demo';
+import { afterAll, beforeEach, describe, expect, it } from 'vitest';
+import { setLang } from './i18n';
+import { DEMO_CHAPTER, DEMO_CHAPTER_EN } from './demo';
 import { extractJson, parseChapterFile, repairPrompt } from './importer';
 import { buildBoss, checkCloze } from './courses';
 import { levelFor, streakFromDays } from './progress';
@@ -7,6 +8,10 @@ import { generatePrompt, verifyPrompt } from './prompts';
 import type { ChapterRow } from './db';
 
 const demoJson = JSON.stringify(DEMO_CHAPTER);
+
+// Tests prüfen deutsche Texte; unabhängig von der Systemsprache (CI läuft auf Englisch)
+beforeEach(() => setLang('de'));
+afterAll(() => setLang('de'));
 
 describe('Import', () => {
   it('akzeptiert das Demo-Kapitel ohne Fehler', () => {
@@ -102,5 +107,18 @@ describe('Prompts', () => {
     expect(p).toContain('KAPITEL: 3 – Kosten');
     expect(p).toContain('STORY-STIL: Krimi');
     expect(verifyPrompt()).toContain('"verified" auf true');
+  });
+});
+
+describe('Englisch', () => {
+  it('liefert englische Prompts, Meldungen und ein gültiges Demo-Kapitel', () => {
+    setLang('en');
+    const p = generatePrompt({ course: 'Econ', chapterNumber: '2', chapterTitle: 'Costs', style: '' });
+    expect(p).toContain('CHAPTER: 2 – Costs');
+    expect(p).toContain('STORY STYLE: Choose the genre');
+    expect(parseChapterFile('{"lorebook": 1, "course": {').errors[0]).toMatch(/Not valid JSON/);
+    const r = parseChapterFile(JSON.stringify(DEMO_CHAPTER_EN));
+    expect(r.errors).toEqual([]);
+    expect(r.ok).toBe(true);
   });
 });
