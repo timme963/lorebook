@@ -2,6 +2,7 @@ import { useLiveQuery } from 'dexie-react-hooks';
 import { getMeta } from './lib/db';
 import { currentStreak, levelFor, type Streak } from './lib/progress';
 import { countDue } from './lib/srs';
+import { THEME_ICON, THEME_LABEL, useTheme } from './lib/theme';
 import { href, useRoute } from './router';
 import Home from './pages/Home';
 import ImportPage from './pages/Import';
@@ -17,6 +18,7 @@ function TopBar() {
   const streak = useLiveQuery(() => getMeta<Streak>('streak', { count: 0, lastDay: null }), [], { count: 0, lastDay: null });
   const due = useLiveQuery(() => countDue(), [], 0);
   const lvl = levelFor(xp);
+  const [theme, cycleTheme] = useTheme();
   return (
     <header className="topbar">
       <a className="brand" href={href({ name: 'home' })}>
@@ -33,6 +35,9 @@ function TopBar() {
         <span className="pill" title={`${xp} XP`}>
           Lv <strong>{lvl.level}</strong>
         </span>
+        <button type="button" className="pill theme-toggle" onClick={cycleTheme} title={`${THEME_LABEL[theme]} – klicken zum Wechseln`} aria-label={THEME_LABEL[theme]}>
+          {THEME_ICON[theme]}
+        </button>
         <a href={href({ name: 'help' })} className="pill" title="Hilfe">?</a>
       </nav>
     </header>

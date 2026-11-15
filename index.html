@@ -3,9 +3,18 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="theme-color" content="#1f1b2e" />
+    <meta name="theme-color" content="#faf8f4" />
     <link rel="icon" href="/icon.svg" type="image/svg+xml" />
     <title>Lorebook</title>
+    <script>
+      // Gewähltes Design vor dem ersten Rendern setzen, damit nichts aufblitzt
+      try {
+        var t = localStorage.getItem('lorebook-theme');
+        var dark = t === 'dark' || (t !== 'light' && matchMedia('(prefers-color-scheme: dark)').matches);
+        if (t === 'light' || t === 'dark') document.documentElement.setAttribute('data-theme', t);
+        document.querySelector('meta[name="theme-color"]').setAttribute('content', dark ? '#15131d' : '#faf8f4');
+      } catch (e) {}
+    </script>
   </head>
   <body>
     <div id="root"></div>
