@@ -6,6 +6,8 @@ import { migrateLegacyProgress } from './lib/progress';
 import { initSync } from './lib/sync';
 import { isNative } from './lib/platform';
 import { initReminders } from './lib/reminders';
+import { onLangChange } from './lib/i18n';
+import { localizeDemo } from './lib/demo';
 import './styles.css';
 
 // In der Android-App liegen alle Dateien in der APK, ein Service Worker wäre dort nur im Weg
@@ -22,6 +24,9 @@ navigator.storage?.persist?.().catch(() => undefined);
 migrateLegacyProgress()
   .catch((e) => console.error('[lorebook] Migration', e))
   .finally(() => {
+    // Demo-Kapitel folgt der eingestellten Sprache
+    void localizeDemo().catch((e) => console.error('[lorebook] Demo', e));
+    onLangChange(() => void localizeDemo().catch((e) => console.error('[lorebook] Demo', e)));
     void initSync();
     initReminders();
   });

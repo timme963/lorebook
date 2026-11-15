@@ -1,5 +1,6 @@
 import type { ChapterFile } from './schema';
 import { getLang } from './i18n';
+import { db, slug } from './db';
 
 /** Beispielkapitel, damit man die App ohne eigenes PDF ausprobieren kann. Quelle: Hilfeseite von Lorebook. */
 export const DEMO_CHAPTER: ChapterFile = {
@@ -330,3 +331,31 @@ export const DEMO_CHAPTER_EN: ChapterFile = {
 
 /** Demo-Kapitel in der aktuellen Sprache */
 export const demoChapter = (): ChapterFile => (getLang() === 'en' ? DEMO_CHAPTER_EN : DEMO_CHAPTER);
+
+/** Kurs-IDs des Demo-Kapitels (die ID kommt aus dem Titel, daher je Sprache eine) */
+const DEMO_COURSE_IDS = [slug(DEMO_CHAPTER.course.title), slug(DEMO_CHAPTER_EN.course.title)];
+
+/** ID des vorhandenen Demo-Kurses, falls schon geladen */
+export async function findDemoCourse(): Promise<string | undefined> {
+  for (const id of DEMO_COURSE_IDS) if (await db.courses.get(id)) return id;
+  return undefined;
+}
+
+/**
+ * Bringt ein bereits geladenes Demo-Kapitel in die aktuelle Sprache. Beide Fassungen haben dieselben
+ * Lernziel- und Frage-IDs, deshalb bleiben Fortschritt und Wiederholungskarten erhalten. Eigene Kurse bleiben unberührt.
+ */
+export async function localizeDemo(): Promise<void> {
+  const file = demoChapter();
+  for (const id of DEMO_COURSE_IDS) {
+    const course = await db.courses.get(id);
+    if (!course) continue;
+    if (course.title !== file.course.title) await db.courses.update(id, { title: file.course.title, source: file.course.source });
+    const chapters = await db.chapters.where('courseId').equals(id).toArray();
+    for (const ch of chapters) {
+      if (ch.content.title !== file.chapter.title) {
+        await db.chapters.update(ch.id, { content: file.chapter, verificationNotes: file.verificationNotes });
+      }
+    }
+  }
+}

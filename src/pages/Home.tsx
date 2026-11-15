@@ -2,7 +2,7 @@ import { useLiveQuery } from 'dexie-react-hooks';
 import { useState } from 'react';
 import { importChapter } from '../lib/courses';
 import { db } from '../lib/db';
-import { demoChapter } from '../lib/demo';
+import { demoChapter, findDemoCourse, localizeDemo } from '../lib/demo';
 import { plural, tr } from '../lib/i18n';
 import { currentStreak, levelFor, levelTitle, totalXp } from '../lib/progress';
 import { dueCards } from '../lib/srs';
@@ -27,6 +27,11 @@ export default function Home() {
 
   async function loadDemo() {
     setLoadingDemo(true);
+    const existing = await findDemoCourse();
+    if (existing) {
+      await localizeDemo();
+      return go({ name: 'course', id: existing });
+    }
     const { course } = await importChapter(demoChapter());
     go({ name: 'course', id: course.id });
   }

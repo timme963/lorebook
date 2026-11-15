@@ -47,6 +47,12 @@ export function useLang(): Lang {
   );
 }
 
+/** Wird nach jedem Umschalten aufgerufen */
+export function onLangChange(fn: () => void): () => void {
+  subs.add(fn);
+  return () => subs.delete(fn);
+}
+
 /** Inline-Übersetzung */
 export function tr<T>(de: T, en: T): T {
   return current === 'en' ? en : de;
