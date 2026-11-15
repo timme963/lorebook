@@ -21,60 +21,73 @@ const STATE_LABEL = {
   conflict: 'wartet auf deine Entscheidung',
 } as const;
 
+const AUTH_ERRORS: [RegExp, string][] = [
+  [/invalid login credentials/i, 'E-Mail oder Passwort falsch.'],
+  [/email not confirmed/i, 'E-Mail noch nicht bestätigt. Klick zuerst den Link in der Bestätigungsmail.'],
+  [/already registered|already been registered/i, 'Für diese E-Mail gibt es schon einen Account. Melde dich an.'],
+  [/signups? not allowed|signup is disabled/i, 'Neue Registrierungen sind abgeschaltet.'],
+  [/password should be at least/i, 'Das Passwort muss mindestens 8 Zeichen haben.'],
+  [/rate limit|too many/i, 'Zu viele Versuche. Bitte kurz warten.'],
+];
+
+function authError(msg: string): string {
+  return AUTH_ERRORS.find(([re]) => re.test(msg))?.[1] ?? msg;
+}
+
 function Login() {
+  const [mode, setMode] = useState<'login' | 'signup'>('login');
   const [email, setEmail] = useState('');
-  const [code, setCode] = useState('');
-  const [sent, setSent] = useState(false);
+  const [password, setPassword] = useState('');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string>();
+  const [info, setInfo] = useState<string>();
 
-  async function send(e: FormEvent) {
+  async function submit(e: FormEvent) {
     e.preventDefault();
     setBusy(true);
     setError(undefined);
-    const { error } = await supabase.auth.signInWithOtp({ email: email.trim() });
+    setInfo(undefined);
+    if (mode === 'login') {
+      const { error } = await supabase.auth.signInWithPassword({ email: email.trim(), password });
+      if (error) setError(authError(error.message));
+    } else {
+      const { data, error } = await supabase.auth.signUp({
+        email: email.trim(),
+        password,
+        options: { emailRedirectTo: `${location.origin}/#/account` },
+      });
+      if (error) setError(authError(error.message));
+      else if (!data.session) {
+        setInfo('Fast geschafft: Wir haben dir eine Bestätigungsmail geschickt. Klick den Link darin und melde dich danach hier an.');
+        setMode('login');
+      }
+    }
     setBusy(false);
-    if (error) return setError(error.message);
-    setSent(true);
-  }
-
-  async function verify(e: FormEvent) {
-    e.preventDefault();
-    setBusy(true);
-    setError(undefined);
-    const { error } = await supabase.auth.verifyOtp({ email: email.trim(), token: code.trim(), type: 'email' });
-    setBusy(false);
-    if (error) setError(error.message.includes('expired') || error.message.includes('invalid') ? 'Code ungültig oder abgelaufen.' : error.message);
   }
 
   return (
     <section className="card stack">
-      <h3>Anmelden</h3>
-      <p className="muted">Ohne Passwort: Du bekommst einen Code per E-Mail.</p>
-      {!sent ? (
-        <form className="stack" onSubmit={send}>
-          <input className="input" type="email" required autoComplete="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="deine@email.de" />
-          <button className="btn primary self-start" disabled={busy || !email.includes('@')}>Code senden</button>
-        </form>
-      ) : (
-        <form className="stack" onSubmit={verify}>
-          <p className="small">Code an <strong>{email}</strong> geschickt. Schau auch im Spam-Ordner nach.</p>
-          <input
-            className="input code-input"
-            inputMode="numeric"
-            autoComplete="one-time-code"
-            value={code}
-            onChange={(e) => setCode(e.target.value.replace(/\D/g, ''))}
-            placeholder="123456"
-            maxLength={10}
-            autoFocus
-          />
-          <div className="row gap wrap">
-            <button className="btn primary" disabled={busy || code.length < 6}>Anmelden</button>
-            <button type="button" className="btn ghost" onClick={() => { setSent(false); setCode(''); }}>Andere E-Mail</button>
-          </div>
-        </form>
-      )}
+      <div className="row gap">
+        <button type="button" className={`btn small ${mode === 'login' ? 'primary' : 'ghost'}`} onClick={() => setMode('login')}>Anmelden</button>
+        <button type="button" className={`btn small ${mode === 'signup' ? 'primary' : 'ghost'}`} onClick={() => setMode('signup')}>Account erstellen</button>
+      </div>
+      <form className="stack" onSubmit={submit}>
+        <input className="input" type="email" required autoComplete="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="deine@email.de" />
+        <input
+          className="input"
+          type="password"
+          required
+          minLength={8}
+          autoComplete={mode === 'login' ? 'current-password' : 'new-password'}
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+          placeholder={mode === 'login' ? 'Passwort' : 'Passwort (mind. 8 Zeichen)'}
+        />
+        <button className="btn primary self-start" disabled={busy || !email.includes('@') || password.length < (mode === 'signup' ? 8 : 1)}>
+          {mode === 'login' ? 'Anmelden' : 'Account erstellen'}
+        </button>
+      </form>
+      {info && <p className="success">{info}</p>}
       {error && <p className="error">{error}</p>}
     </section>
   );

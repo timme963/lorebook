@@ -8,6 +8,11 @@ import './styles.css';
 
 registerSW({ immediate: true });
 
+// Nach Klick auf den Bestätigungslink hängt Supabase Tokens/Fehler an den Hash – der würde den Router stören
+if (/access_token=|error_description=|type=signup/.test(location.hash)) {
+  history.replaceState(null, '', `${location.pathname}#/account`);
+}
+
 // Browser bitten, die lokalen Daten nicht automatisch zu löschen
 navigator.storage?.persist?.().catch(() => undefined);
 

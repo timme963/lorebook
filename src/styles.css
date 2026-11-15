@@ -308,5 +308,4 @@ details summary { cursor: pointer; color: var(--muted); margin-bottom: 8px; }
 .pill.sync-idle { color: var(--good); }
 .pill.sync-syncing { color: var(--accent); }
 .pill.sync-error, .pill.sync-conflict { color: var(--bad); border-color: var(--bad); }
-.code-input { font-size: 1.4rem; letter-spacing: 0.3em; max-width: 240px; font-variant-numeric: tabular-nums; }
 @media (max-width: 400px) { .topnav { gap: 4px; } .pill { padding: 4px 8px; } }
