@@ -25,7 +25,7 @@ Die App erzeugt selbst nichts und nutzt keine API. Inhalte entstehen beim Nutzer
 - [x] FSRS-Wiederholung mit Bewertung, Melden
 - [x] Boss-Fight, XP/Level, sanfte Serie (1 Tag Pause erlaubt), Quest-Karte
 - [x] PDF-Quellenansicht, Prüfungstermin, Export/Import, PWA/offline
-- [x] Deployment auf Cloudflare Pages
+- [x] Deployment auf Cloudflare: https://lorebook.imbisbude99.workers.dev
 
 ## Als Nächstes
 1. **Prompts an einer echten Kurseinheit testen** (das ist der wichtigste Schritt): jede Frage von Hand bewerten, Prompts nachschärfen, bis über 95 % korrekt sind
