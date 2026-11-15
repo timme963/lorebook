@@ -4,19 +4,43 @@ Lernen mit **Vorabfragen → Story → Nachfragen → Spaced Repetition**, pro K
 
 Lorebook ruft selbst keine KI auf. Du lädst dein PDF bei Claude, ChatGPT oder Gemini hoch, nimmst dazu den fertigen Prompt aus der App und fügst die Antwort (JSON) wieder ein. Die App zeigt die Inhalte an, fragt ab und plant die Wiederholungen.
 
-- **Kein Server, kein Account, keine Kosten.** Alle Daten (Kurse, PDFs, Fortschritt) liegen in IndexedDB im Browser.
-- **PWA:** installierbar, Wiederholungen funktionieren offline.
+- **Lokal zuerst, keine Kosten.** Alle Daten liegen in IndexedDB im Browser bzw. in der App. Ohne Account verlassen sie das Gerät nicht.
+- **Optionaler Account (Supabase, Frankfurt):** E-Mail + Passwort. Kurse und Fortschritt werden zwischen Geräten synchronisiert. PDFs bleiben immer lokal.
+- **Web-App (PWA):** https://lorebook-9yf.pages.dev – installierbar (PC, iPhone), funktioniert offline.
+- **Android-App (Capacitor):** https://lorebook-9yf.pages.dev/lorebook.apk – mit täglicher Erinnerung an fällige Karten und Update-Hinweis.
 - **Korrektheit:** Zu jeder Frage gibt es Zitat und PDF-Seite. Prompt B prüft die erzeugten Inhalte in einem zweiten Chat gegen das PDF. Falsche Fragen lassen sich melden und kommen dann nicht mehr in die Wiederholung.
+
+Live: https://lorebook-9yf.pages.dev · Impressum und Datenschutz unter `#/impressum` und `#/datenschutz` (Angaben in `src/legal.ts`).
 
 ## Entwicklung
 
 ```bash
 npm install
-npm run dev       # http://localhost:5173
-npm test          # Unit-Tests (Import-Validierung, Bewertung, Serie, Boss)
+npm run dev              # http://localhost:5173
+npm test                 # Unit-Tests (Import-Validierung, Bewertung, Serie, Boss)
 npm run build
-npm run deploy    # Build + Cloudflare Pages (Projekt "lorebook")
+npm run deploy           # Build + neueste APK von GitHub holen + Cloudflare Pages (Projekt "lorebook")
+npm run deploy:web-only  # wie deploy, aber ohne APK (z. B. wenn der Android-Build noch läuft)
 ```
+
+`npm run deploy` braucht die GitHub CLI (`gh`, angemeldet), weil es die APK aus dem letzten erfolgreichen Build lädt.
+
+## Android-App
+
+- Jeder Push auf `main` baut per GitHub Actions (`.github/workflows/android.yml`) eine signierte APK als Artefakt `lorebook-apk`. Die versionCode ist die Run-Nummer.
+- `npm run deploy` legt sie als `/lorebook.apk` und `/version.json` auf die Website. Die App vergleicht beim Start mit `version.json` und bietet Updates an.
+- Lokal: `npm run android:sync`, dann `npm run android:open` (Android Studio).
+- **Signierschlüssel:** liegt in `~/.lorebook/` (`release.jks`, `keystore.properties`) und als GitHub-Secrets. Einmalig angelegt mit `bash scripts/setup-signing.sh`. **Nicht löschen** – ohne ihn lassen sich Updates nicht über die installierte App installieren.
+- Icons: Quellen in `assets/`, erzeugt mit `npx @capacitor/assets generate --android`. Web-Icons in `public/` (`@vite-pwa/assets-generator`).
+
+## Backend (Supabase)
+
+Projekt `lorebook` (`pvzzxmwtaokcefkuyevn`, Frankfurt).
+
+- Tabelle `public.records(user_id, tbl, id, data jsonb, deleted, updated_at)` mit RLS (nur eigene Zeilen). Trigger `records_lww`: ältere Stände (`data._ts`) überschreiben keine neueren.
+- Funktion `delete_own_account()`: löscht den eigenen Account samt Daten („Account löschen“ in der App).
+- Sync (`src/lib/sync.ts`): lokale Änderungen bekommen `_ts`, werden hochgeladen; Abholen per `updated_at`; Löschungen als Tombstones. XP und Lerntage pro Gerät, damit nichts verloren geht.
+- Auth-Einstellungen im Dashboard: Site URL `https://lorebook-9yf.pages.dev`, E-Mail-Bestätigung an. „Allow new users to sign up“ abschalten, wenn niemand sonst sich registrieren soll.
 
 ## Aufbau
 
@@ -27,7 +51,10 @@ npm run deploy    # Build + Cloudflare Pages (Projekt "lorebook")
 | `src/lib/importer.ts` | JSON aus Chat-Antwort holen, validieren, Korrekturanweisung erzeugen |
 | `src/lib/srs.ts` | FSRS-Wiederholung (ts-fsrs) |
 | `src/lib/courses.ts` | Import, Antwortprüfung, Boss-Fight |
-| `src/lib/db.ts` | IndexedDB (Dexie) |
+| `src/lib/db.ts` | IndexedDB (Dexie), Sync-Hooks |
+| `src/lib/sync.ts`, `supabase.ts` | Account und Synchronisierung |
+| `src/lib/platform.ts` | Web oder Android-App, öffentliche URL |
+| `src/lib/reminders.ts` | Tägliche Erinnerung (nur App, lokale Benachrichtigungen) |
 | `src/lib/demo.ts` | Demo-Kapitel |
 | `src/pages/*` | Oberfläche |
 
