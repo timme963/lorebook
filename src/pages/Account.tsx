@@ -1,6 +1,6 @@
 import { useState, type FormEvent } from 'react';
 import { supabase } from '../lib/supabase';
-import { clearLocalSyncedData, deleteCloudData, signOut, syncNow, useSyncStatus } from '../lib/sync';
+import { clearLocalSyncedData, deleteAccount, signOut, syncNow, useSyncStatus } from '../lib/sync';
 import { href } from '../router';
 
 function timeAgo(ms?: number): string {
@@ -87,6 +87,11 @@ function Login() {
           {mode === 'login' ? 'Anmelden' : 'Account erstellen'}
         </button>
       </form>
+      {mode === 'signup' && (
+        <p className="muted small">
+          Mit dem Account gelten die Hinweise in der <a href={href({ name: 'datenschutz' })}>Datenschutzerklärung</a>.
+        </p>
+      )}
       {info && <p className="success">{info}</p>}
       {error && <p className="error">{error}</p>}
     </section>
@@ -164,21 +169,28 @@ export default function AccountPage() {
 
       {status.state !== 'off' && (
         <section className="card stack">
-          <h3>Cloud-Daten löschen</h3>
-          <p className="muted small">Löscht alles, was zu deinem Account in der Cloud gespeichert ist. Die Daten auf diesem Gerät bleiben, bis du sie unter <a href={href({ name: 'data' })}>Daten &amp; Sicherung</a> löschst.</p>
+          <h3>Account löschen</h3>
+          <p className="muted small">
+            Löscht deinen Account und alles, was dazu in der Cloud gespeichert ist, sofort und endgültig. Die Daten auf diesem Gerät bleiben, bis du sie
+            unter <a href={href({ name: 'data' })}>Daten &amp; Sicherung</a> löschst.
+          </p>
           <button
             className="btn danger self-start"
             disabled={busy}
             onClick={() => {
-              if (confirm('Alle Cloud-Daten dieses Accounts unwiderruflich löschen? Andere Geräte laden sie dann nicht mehr.')) {
-                run(async () => { await deleteCloudData(); await signOut(); }, 'Cloud-Daten gelöscht und abgemeldet.');
+              if (confirm('Account und alle Cloud-Daten unwiderruflich löschen? Andere Geräte werden dann nicht mehr synchronisiert.')) {
+                run(deleteAccount, 'Account gelöscht. Die Daten auf diesem Gerät sind noch da.');
               }
             }}
           >
-            Cloud-Daten löschen und abmelden
+            Account löschen
           </button>
         </section>
       )}
+
+      <p className="muted small">
+        <a href={href({ name: 'datenschutz' })}>Datenschutzerklärung</a> · <a href={href({ name: 'impressum' })}>Impressum</a>
+      </p>
 
       {msg && <p className="small">{msg}</p>}
     </div>

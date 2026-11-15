@@ -186,13 +186,12 @@ export async function signOut(): Promise<void> {
   setStatus({ state: 'off', email: undefined, lastSync: undefined });
 }
 
-/** Löscht alle Daten dieses Accounts in der Cloud. Lokale Daten bleiben. */
-export async function deleteCloudData(): Promise<void> {
-  const { data } = await supabase.auth.getSession();
-  if (!data.session) return;
-  const { error } = await supabase.from('records').delete().eq('user_id', data.session.user.id);
+/** Löscht Account und alle Cloud-Daten (Server-Funktion), meldet ab. Lokale Daten bleiben. */
+export async function deleteAccount(): Promise<void> {
+  const { error } = await supabase.rpc('delete_own_account');
   if (error) throw new Error(error.message);
-  for (const k of ['sync:pushCursor', 'sync:pullCursor', 'sync:firstDone']) await db.local.delete(k);
+  for (const k of ['sync:pushCursor', 'sync:pullCursor', 'sync:firstDone', 'sync:user']) await db.local.delete(k);
+  await supabase.auth.signOut({ scope: 'local' }).catch(() => undefined);
 }
 
 export async function initSync(): Promise<void> {

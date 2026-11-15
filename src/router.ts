@@ -9,7 +9,9 @@ export type Route =
   | { name: 'boss'; courseId: string }
   | { name: 'data' }
   | { name: 'account' }
-  | { name: 'help' };
+  | { name: 'help' }
+  | { name: 'impressum' }
+  | { name: 'datenschutz' };
 
 export function parseHash(hash: string): Route {
   const [path, query = ''] = hash.replace(/^#/, '').split('?');
@@ -32,6 +34,10 @@ export function parseHash(hash: string): Route {
       return { name: 'help' };
     case 'account':
       return { name: 'account' };
+    case 'impressum':
+      return { name: 'impressum' };
+    case 'datenschutz':
+      return { name: 'datenschutz' };
     default:
       return { name: 'home' };
   }
@@ -58,6 +64,10 @@ export function href(r: Route): string {
       return '#/help';
     case 'account':
       return '#/account';
+    case 'impressum':
+      return '#/impressum';
+    case 'datenschutz':
+      return '#/datenschutz';
   }
 }
 

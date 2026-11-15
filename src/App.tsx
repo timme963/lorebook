@@ -13,6 +13,7 @@ import BossPage from './pages/Boss';
 import DataPage from './pages/Data';
 import HelpPage from './pages/Help';
 import AccountPage from './pages/Account';
+import { DatenschutzPage, ImpressumPage } from './pages/Legal';
 
 const SYNC_ICON = { off: '☁', idle: '☁', syncing: '⟳', offline: '☁', error: '⚠', conflict: '⚠' } as const;
 const SYNC_TITLE = {
@@ -91,6 +92,12 @@ export default function App() {
     case 'account':
       page = <AccountPage />;
       break;
+    case 'impressum':
+      page = <ImpressumPage />;
+      break;
+    case 'datenschutz':
+      page = <DatenschutzPage />;
+      break;
   }
   return (
     <>
@@ -102,6 +109,10 @@ export default function App() {
         <a href={href({ name: 'data' })}>Daten &amp; Sicherung</a>
         <span>·</span>
         <a href={href({ name: 'help' })}>So funktioniert's</a>
+        <span>·</span>
+        <a href={href({ name: 'impressum' })}>Impressum</a>
+        <span>·</span>
+        <a href={href({ name: 'datenschutz' })}>Datenschutz</a>
         <span>·</span>
         <span>{sync.state === 'off' ? 'Ohne Account bleiben alle Daten in diesem Browser.' : 'PDFs bleiben immer nur auf diesem Gerät.'}</span>
       </footer>
