@@ -3,7 +3,6 @@ import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 import { VitePWA } from 'vite-plugin-pwa';
 
-import { cloudflare } from "@cloudflare/vite-plugin";
 
 export default defineConfig({
   plugins: [react(), VitePWA({
@@ -26,7 +25,7 @@ export default defineConfig({
       globPatterns: ['**/*.{js,css,html,svg,mjs}'],
       maximumFileSizeToCacheInBytes: 5 * 1024 * 1024,
     },
-  }), cloudflare()],
+  })],
   build: { chunkSizeWarningLimit: 900 },
   test: {
     environment: 'node',

@@ -15,7 +15,7 @@ npm install
 npm run dev       # http://localhost:5173
 npm test          # Unit-Tests (Import-Validierung, Bewertung, Serie, Boss)
 npm run build
-npm run deploy    # Build + Cloudflare (Worker mit statischen Dateien, Projekt "lorebook")
+npm run deploy    # Build + Cloudflare Pages (Projekt "lorebook")
 ```
 
 ## Aufbau
