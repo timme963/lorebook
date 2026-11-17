@@ -27,7 +27,7 @@ export default defineConfig({
       ],
     },
     workbox: {
-      globPatterns: ['**/*.{js,css,html,svg,mjs,png,ico}'],
+      globPatterns: ['**/*.{js,css,html,svg,mjs,png,ico,woff2}'],
       maximumFileSizeToCacheInBytes: 5 * 1024 * 1024,
       // APK-Download und Versionsdatei nie durch die App-Hülle ersetzen
       navigateFallbackDenylist: [/\.apk$/, /version\.json$/],

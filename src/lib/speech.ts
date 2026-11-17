@@ -9,6 +9,7 @@ import { TextToSpeech } from '@capacitor-community/text-to-speech';
 import { SpeechRecognition } from '@capacitor-community/speech-recognition';
 import { getLang } from './i18n';
 import { isNative } from './platform';
+import { stripMath } from './math';
 
 export type SpeechLang = 'de' | 'en';
 
@@ -158,12 +159,15 @@ function chunks(text: string): string[] {
 
 let token = 0;
 
-/** Liest vor. Ein zweiter Aufruf mit derselben id stoppt (Umschalter). */
-export async function speak(text: string, id = text): Promise<void> {
-  if (speakingId === id) return stopSpeaking();
+/** Liest vor. Ein zweiter Aufruf mit derselben id stoppt (Umschalter). true = bis zum Ende vorgelesen. */
+export async function speak(text: string, id = text): Promise<boolean> {
+  if (speakingId === id) {
+    stopSpeaking();
+    return false;
+  }
   stopSpeaking();
-  const clean = text.trim();
-  if (!clean) return;
+  const clean = stripMath(text).trim();
+  if (!clean) return true;
   const my = ++token;
   const lang = detectLang(clean);
   setSpeaking(id);
@@ -175,7 +179,7 @@ export async function speak(text: string, id = text): Promise<void> {
       await voicesReady();
       const voice = pickWebVoice(lang);
       for (const part of chunks(clean)) {
-        if (my !== token) return;
+        if (my !== token) return false;
         await new Promise<void>((resolve) => {
           const u = new SpeechSynthesisUtterance(part);
           u.lang = voice?.lang ?? BCP47[lang];
@@ -192,6 +196,7 @@ export async function speak(text: string, id = text): Promise<void> {
   } finally {
     if (my === token) setSpeaking(null);
   }
+  return my === token;
 }
 
 export function stopSpeaking(): void {
@@ -229,7 +234,12 @@ export interface Dictation {
  * Startet die Spracheingabe. onText bekommt laufend den bisher erkannten Text (inkl. Zwischenstand),
  * onEnd wird aufgerufen, wenn die Erkennung endet (Stille, Stopp oder Fehler).
  */
-export async function startDictation(lang: SpeechLang, onText: (text: string) => void, onEnd: (error?: string) => void): Promise<Dictation> {
+export async function startDictation(
+  lang: SpeechLang,
+  onText: (text: string) => void,
+  onEnd: (error?: string) => void,
+  opts: { untilPause?: boolean } = {},
+): Promise<Dictation> {
   stopSpeaking();
   if (isNative) {
     const perm = await SpeechRecognition.requestPermissions();
@@ -256,7 +266,7 @@ export async function startDictation(lang: SpeechLang, onText: (text: string) =>
   }
   const rec = new Ctor();
   rec.lang = BCP47[lang];
-  rec.continuous = true;
+  rec.continuous = !opts.untilPause;
   rec.interimResults = true;
   rec.onresult = (e) => {
     let text = '';
@@ -270,4 +280,39 @@ export async function startDictation(lang: SpeechLang, onText: (text: string) =>
   rec.onend = () => onEnd(error === 'no-speech' || error === 'aborted' ? undefined : error);
   rec.start();
   return { stop: () => rec.stop() };
+}
+
+// ---------------------------------------------------------------- freihändig: einmal zuhören
+
+let currentListen: Dictation | undefined;
+
+/** Hört zu, bis eine Sprechpause kommt (oder nach timeoutMs), und liefert den erkannten Text ('' = nichts verstanden). */
+export function listenOnce(lang: SpeechLang, timeoutMs = 15000): Promise<{ text: string; error?: string }> {
+  return new Promise((resolve) => {
+    let last = '';
+    let done = false;
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    const finish = (error?: string) => {
+      if (done) return;
+      done = true;
+      clearTimeout(timer);
+      currentListen = undefined;
+      resolve({ text: last.trim(), error });
+    };
+    startDictation(lang, (t) => (last = t), finish, { untilPause: true })
+      .then((d) => {
+        currentListen = d;
+        timer = setTimeout(() => {
+          d.stop();
+          setTimeout(() => finish(), 800);
+        }, timeoutMs);
+        if (done) d.stop();
+      })
+      .catch((e) => finish(String(e?.message ?? e)));
+  });
+}
+
+export function stopListening(): void {
+  currentListen?.stop();
+  currentListen = undefined;
 }

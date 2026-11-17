@@ -46,6 +46,17 @@ function HelpDe() {
       </section>
 
       <section className="card stack">
+        <h3>Unterwegs und gezielt lernen</h3>
+        <ul>
+          <li><strong>🔊 Vorlesen / 🎤 Einsprechen:</strong> Story, Fragen und Erklärungen vorlesen lassen, Antworten einsprechen. Geschwindigkeit und Stimme unter „Daten &amp; Sicherung“.</li>
+          <li><strong>🎧 Story anhören:</strong> Die ganze Story läuft wie ein Hörbuch durch, Szene für Szene mit „Was steckt dahinter?“.</li>
+          <li><strong>🎧 Freihändig wiederholen:</strong> In der Wiederholung liest Lorebook jede Frage vor, du antwortest per Stimme („B“, „die zweite“, das Wort oder „weiß ich nicht“), hörst die Auflösung, und es geht automatisch weiter. „Stopp“ beendet.</li>
+          <li><strong>🎯 Schwachstellen:</strong> Auf der Kursseite siehst du pro Lernziel, wie sicher es gerade sitzt. „Schwachstellen trainieren“ fragt gezielt die unsichersten ab.</li>
+          <li><strong>Formeln</strong> werden sauber dargestellt (LaTeX), wenn das Kursmaterial welche enthält.</li>
+        </ul>
+      </section>
+
+      <section className="card stack">
         <h3>Datenschutz</h3>
         <p>
           Ohne Account bleibt alles in deinem Browser. Mit <a href={href({ name: 'account' })}>Account</a> werden Kurse und Fortschritt in der
@@ -114,6 +125,17 @@ function HelpEn() {
           <li>Wrong question in review? <strong>⚑ Report</strong> it and it's removed from the schedule.</li>
         </ul>
         <p className="muted small">The content is written in the language of your PDF. The prompts follow the app language.</p>
+      </section>
+
+      <section className="card stack">
+        <h3>Learning on the go, and where it counts</h3>
+        <ul>
+          <li><strong>🔊 Read aloud / 🎤 Speak:</strong> have the story, questions and explanations read aloud, and speak your answers. Speed and voice under "Data &amp; backup".</li>
+          <li><strong>🎧 Listen to the story:</strong> the whole story plays like an audiobook, scene by scene with "What's behind it?".</li>
+          <li><strong>🎧 Hands-free review:</strong> Lorebook reads each question aloud, you answer by voice ("B", "the second one", the word or "don't know"), hear the answer and it moves on automatically. "Stop" ends.</li>
+          <li><strong>🎯 Weak spots:</strong> the course page shows how well each objective sticks right now. "Train weak spots" quizzes the shakiest ones.</li>
+          <li><strong>Formulas</strong> are rendered properly (LaTeX) if the course material contains any.</li>
+        </ul>
       </section>
 
       <section className="card stack">

@@ -1,5 +1,6 @@
 import { applyZodLocale, ChapterFileSchema, type ChapterFile, type Question } from './schema';
 import { tr } from './i18n';
+import { fixInvalidEscapes, repairMath } from './math';
 
 export interface ImportResult {
   ok: boolean;
@@ -52,25 +53,41 @@ export function parseChapterFile(raw: string): ImportResult {
 
   let json: unknown;
   const extracted = extractJson(raw);
-  try {
-    json = JSON.parse(extracted);
-  } catch {
+  const quotesMsg = tr('Typografische Anführungszeichen wurden automatisch korrigiert.', 'Typographic quotes were corrected automatically.');
+  const escMsg = tr('Backslashes in Formeln wurden automatisch korrigiert.', 'Backslashes in formulas were corrected automatically.');
+  // Erst unverändert, dann mit Reparaturen (Backslashes in LaTeX, typografische Anführungszeichen)
+  const attempts: [string, string[]][] = [
+    [extracted, []],
+    [fixInvalidEscapes(extracted), [escMsg]],
+    [normalizeQuotes(extracted), [quotesMsg]],
+    [fixInvalidEscapes(normalizeQuotes(extracted)), [quotesMsg, escMsg]],
+  ];
+  let firstError: Error | undefined;
+  for (const [text, msgs] of attempts) {
     try {
-      json = JSON.parse(normalizeQuotes(extracted));
-      warnings.push(tr('Typografische Anführungszeichen wurden automatisch korrigiert.', 'Typographic quotes were corrected automatically.'));
+      json = JSON.parse(text);
+      warnings.push(...msgs);
+      break;
     } catch (e) {
-      return {
-        ok: false,
-        errors: [
-          tr(
-            `Kein gültiges JSON: ${(e as Error).message}. Oft ist die Antwort abgeschnitten – dann im Chat „weiter“ schreiben und alles zusammen einfügen.`,
-            `Not valid JSON: ${(e as Error).message}. Often the answer was cut off – write "continue" in the chat and paste everything together.`,
-          ),
-        ],
-        warnings,
-      };
+      firstError ??= e as Error;
     }
   }
+  if (json === undefined) {
+    return {
+      ok: false,
+      errors: [
+        tr(
+          `Kein gültiges JSON: ${firstError?.message}. Oft ist die Antwort abgeschnitten – dann im Chat „weiter“ schreiben und alles zusammen einfügen.`,
+          `Not valid JSON: ${firstError?.message}. Often the answer was cut off – write "continue" in the chat and paste everything together.`,
+        ),
+      ],
+      warnings,
+    };
+  }
+  // "rac" ohne doppelten Backslash wird beim Parsen zu Steuerzeichen – in Formeln zurückholen
+  const repaired = repairMath(json);
+  json = repaired.value;
+  if (repaired.changed && !warnings.includes(escMsg)) warnings.push(escMsg);
 
   applyZodLocale();
   const parsed = ChapterFileSchema.safeParse(json);

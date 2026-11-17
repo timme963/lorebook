@@ -1,5 +1,5 @@
 import { useLiveQuery } from 'dexie-react-hooks';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import QuestionCard from '../components/QuestionCard';
 import { SourceButton } from '../components/Source';
 import { completeChapter, scoreOf } from '../lib/courses';
@@ -9,7 +9,8 @@ import type { Question } from '../lib/schema';
 import { href } from '../router';
 import { tr } from '../lib/i18n';
 import { SpeakButton } from '../components/Speech';
-import { getSpeechSettings, speak, stopSpeaking } from '../lib/speech';
+import Rich from '../components/Rich';
+import { getSpeechSettings, speak, stopSpeaking, ttsSupported } from '../lib/speech';
 
 function Progress({ phase }: { phase: ChapterRow['phase'] }) {
   const steps: [ChapterRow['phase'], string][] = [
@@ -78,12 +79,57 @@ function StoryView({ ch }: { ch: ChapterRow }) {
   const sceneText = scene ? `${scene.title}. ${scene.text}` : `${story.ending}`;
   const sceneKey = `scene:${ch.id}:${i}`;
 
-  // Szene wechselt: Vorlesen stoppen, ggf. neue Szene automatisch vorlesen
+  // Hörmodus: ganze Story am Stück (Szene, dann „Was steckt dahinter?“, dann nächste Szene, am Ende die Auflösung)
+  const [listening, setListening] = useState(false);
+  const listeningRef = useRef(false);
+
+  // Szene wechselt: Vorlesen stoppen, ggf. neue Szene automatisch vorlesen – außer der Hörmodus steuert selbst
   useEffect(() => {
+    if (listeningRef.current) return;
     if (getSpeechSettings().autoStory) void speak(sceneText, sceneKey);
-    return () => stopSpeaking();
+    return () => {
+      if (!listeningRef.current) stopSpeaking();
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [sceneKey]);
+
+  // Seite verlassen beendet den Hörmodus
+  useEffect(
+    () => () => {
+      listeningRef.current = false;
+      stopSpeaking();
+    },
+    [],
+  );
+
+  async function listenAll() {
+    stopSpeaking();
+    listeningRef.current = true;
+    setListening(true);
+    let idx = ch.sceneIndex;
+    while (listeningRef.current) {
+      const sc = story.scenes[idx];
+      if (!sc) {
+        await speak(`${tr('Auflösung.', 'Resolution.')} ${story.ending}`, `listen:end`);
+        break;
+      }
+      setConceptOpen(false);
+      if (!(await speak(`${sc.title}. ${sc.text}`, `listen:${idx}`)) || !listeningRef.current) break;
+      setConceptOpen(true);
+      if (!(await speak(`${tr('Was steckt dahinter?', "What's behind it?")} ${sc.concept}`, `listen:${idx}:c`)) || !listeningRef.current) break;
+      idx++;
+      await db.chapters.update(ch.id, { sceneIndex: idx });
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+    listeningRef.current = false;
+    setListening(false);
+  }
+
+  function stopListen() {
+    listeningRef.current = false;
+    setListening(false);
+    stopSpeaking();
+  }
 
   async function goTo(next: number) {
     setConceptOpen(false);
@@ -97,6 +143,17 @@ function StoryView({ ch }: { ch: ChapterRow }) {
         <p className="eyebrow">{tr('Kapitel', 'Chapter')} {ch.number} · {ch.content.title}</p>
         <h2 className="story-title">{story.title}</h2>
         {i === 0 && <p className="story-setting">{story.setting}</p>}
+        {ttsSupported() && (
+          <div className="listen-bar">
+            {listening ? (
+              <button className="btn small primary" onClick={stopListen}>■ {tr('Anhören stoppen', 'Stop listening')}</button>
+            ) : (
+              <button className="btn small" onClick={() => void listenAll()} title={tr('Story wie ein Hörbuch – Szene für Szene inkl. Erklärung', 'Story like an audiobook – scene by scene including the explanation')}>
+                🎧 {isEnding ? tr('Auflösung anhören', 'Listen to the resolution') : i === 0 ? tr('Ganze Story anhören', 'Listen to the whole story') : tr('Ab hier anhören', 'Listen from here')}
+              </button>
+            )}
+          </div>
+        )}
       </div>
       <div className="scene-dots" aria-label={tr('Fortschritt', 'Progress')}>
         {story.scenes.map((_, j) => (
@@ -112,19 +169,19 @@ function StoryView({ ch }: { ch: ChapterRow }) {
             <SpeakButton text={sceneText} id={sceneKey} />
           </div>
           {scene.text.split(/\n+/).map((p, k) => (
-            <p key={k}>{p}</p>
+            <p key={k}><Rich text={p} /></p>
           ))}
           <div className={`concept ${conceptOpen ? 'open' : ''}`}>
             {conceptOpen ? (
               <>
                 <p className="label">{tr('Was steckt dahinter?', 'What\'s behind it?')}</p>
                 <div className="row between gap">
-                  <p>{scene.concept}</p>
+                  <p><Rich text={scene.concept} /></p>
                   <SpeakButton text={scene.concept} />
                 </div>
                 {objective && (
                   <div className="row between wrap gap">
-                    <span className="muted small">{tr('Lernziel:', 'Objective:')} {objective.text}</span>
+                    <span className="muted small">{tr('Lernziel:', 'Objective:')} <Rich text={objective.text} /></span>
                     <SourceButton courseId={ch.courseId} source={objective.source} />
                   </div>
                 )}
@@ -143,13 +200,13 @@ function StoryView({ ch }: { ch: ChapterRow }) {
             <SpeakButton text={sceneText} id={sceneKey} />
           </div>
           {story.ending.split(/\n+/).map((p, k) => (
-            <p key={k}>{p}</p>
+            <p key={k}><Rich text={p} /></p>
           ))}
           <div className="concept open">
             <p className="label">{tr('Was du in diesem Kapitel gelernt hast', 'What you learned in this chapter')}</p>
             <ul>
               {objectives.map((o) => (
-                <li key={o.id}>{o.text}</li>
+                <li key={o.id}><Rich text={o.text} /></li>
               ))}
             </ul>
           </div>
@@ -225,7 +282,7 @@ function Result({ ch }: { ch: ChapterRow }) {
         <ul className="objective-list">
           {perObjective.map(({ o, pre, post }) => (
             <li key={o.id}>
-              <span className="grow">{o.text}</span>
+              <span className="grow"><Rich text={o.text} /></span>
               <span className="muted small nowrap">
                 {pre === undefined ? '–' : `${Math.round(pre * 100)} %`} → {post === undefined ? '–' : `${Math.round(post * 100)} %`}
               </span>
@@ -243,9 +300,9 @@ function Result({ ch }: { ch: ChapterRow }) {
             const givenText = !a?.given ? tr('weiß ich nicht', "don't know") : q.type === 'mc' ? q.options[Number(a.given)] : a.given;
             return (
               <li key={q.id}>
-                <p><strong>{q.prompt}</strong></p>
+                <p><strong><Rich text={q.prompt} /></strong></p>
                 <p className="small">
-                  {a?.correct ? '✓' : '✗'} {tr('Du:', 'You:')} {givenText} · {tr('Richtig:', 'Correct:')} <strong>{right}</strong>
+                  {a?.correct ? '✓' : '✗'} {tr('Du:', 'You:')} <Rich text={givenText} /> · {tr('Richtig:', 'Correct:')} <strong><Rich text={right} /></strong>
                 </p>
               </li>
             );

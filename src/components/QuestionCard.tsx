@@ -5,6 +5,7 @@ import { LEVEL_LABEL, type Question } from '../lib/schema';
 import { SourceButton } from './Source';
 import { tr } from '../lib/i18n';
 import { DictateButton, SpeakButton } from './Speech';
+import Rich from './Rich';
 
 interface Props {
   q: Question;
@@ -55,7 +56,7 @@ export default function QuestionCard({ q, courseId, mode, onDone, after, meta }:
         {meta}
       </div>
       <div className="row between gap">
-        <h3 className="q-prompt">{q.type === 'cloze' ? q.prompt.replace('___', '_____') : q.prompt}</h3>
+        <h3 className="q-prompt"><Rich text={q.type === 'cloze' ? q.prompt.replace('___', '_____') : q.prompt} /></h3>
         <SpeakButton text={promptText} />
       </div>
 
@@ -70,7 +71,7 @@ export default function QuestionCard({ q, courseId, mode, onDone, after, meta }:
             return (
               <button key={i} type="button" className={cls} disabled={locked} onClick={() => (mode === 'silent' ? submit(String(i)) : setGiven(String(i)))}>
                 <span className="opt-letter">{String.fromCharCode(65 + i)}</span>
-                <span>{opt}</span>
+                <span><Rich text={opt} /></span>
               </button>
             );
           })}
@@ -118,7 +119,7 @@ export default function QuestionCard({ q, courseId, mode, onDone, after, meta }:
         <div className="feedback neutral">
           <p className="label">{tr('Musterantwort', 'Model answer')}</p>
           <div className="row between gap">
-            <p>{q.modelAnswer}</p>
+            <p><Rich text={q.modelAnswer} /></p>
             <SpeakButton text={q.modelAnswer} />
           </div>
           <p className="label">{tr('Welche Punkte hast du getroffen?', 'Which points did you cover?')}</p>
@@ -126,7 +127,7 @@ export default function QuestionCard({ q, courseId, mode, onDone, after, meta }:
             {q.rubric.map((r, i) => (
               <label key={i} className="check">
                 <input type="checkbox" checked={checked[i]} onChange={(e) => setChecked((c) => c.map((v, j) => (j === i ? e.target.checked : v)))} />
-                <span>{r}</span>
+                <span><Rich text={r} /></span>
               </label>
             ))}
           </div>
@@ -148,7 +149,7 @@ export default function QuestionCard({ q, courseId, mode, onDone, after, meta }:
             <p className="muted small">{tr('Deine Antwort:', 'Your answer:')} {record.given}</p>
           )}
           <div className="row between gap">
-            <p>{q.explanation}</p>
+            <p><Rich text={q.explanation} /></p>
             <SpeakButton text={(q.type === 'cloze' && !record.correct ? `${q.answers[0]}. ` : '') + q.explanation} />
           </div>
           <SourceButton courseId={courseId} source={q.source} />

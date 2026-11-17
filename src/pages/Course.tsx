@@ -5,6 +5,7 @@ import { db, getMeta, type ChapterRow } from '../lib/db';
 import { dueCards, unflagCard } from '../lib/srs';
 import { go, href } from '../router';
 import { plural, tr } from '../lib/i18n';
+import ObjectiveInsights from '../components/ObjectiveInsights';
 
 const PHASE_LABEL = (): Record<ChapterRow['phase'], string> => ({
   new: tr('Neu', 'New'),
@@ -152,6 +153,8 @@ export default function CoursePage({ id }: { id: string }) {
           </li>
         )}
       </ol>
+
+      <ObjectiveInsights courseId={id} />
 
       <section className="card stack">
         <h3>{tr('Prüfungstermin', 'Exam date')}</h3>

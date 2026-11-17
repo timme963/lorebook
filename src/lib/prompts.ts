@@ -131,6 +131,8 @@ Bearbeite NUR dieses Kapitel. Nutze ausschließlich Inhalte aus dem PDF – kein
 - Frage-IDs eindeutig über alle Listen: "q1", "q2", …
 - Wenn du dir bei einer Frage nicht sicher bist, lass sie weg.
 
+**Formeln**: Mathematische Ausdrücke als LaTeX, im Fließtext zwischen \\( und \\), abgesetzt zwischen \\[ und \\]. Im JSON muss jeder Backslash verdoppelt werden, z. B. "\\\\(K_0 = \\\\frac{K_n}{(1+i)^n}\\\\)". Kein $ als Formelzeichen (Geldbeträge ganz normal schreiben). Ausnahmen: "quote" bleibt wörtlich wie im PDF, und "answers" bei Lückentexten enthält nur tippbare Begriffe oder Zahlen, kein LaTeX.
+
 ## Fragetypen
 ${QUESTION_TYPES_DE}
 
@@ -153,6 +155,7 @@ function verifyDe(): string {
 5. Transferfragen: Die Musterantwort folgt ZWINGEND aus dem Konzept. Nur plausibel oder strittig → umformulieren oder entfernen.
 6. Story und "concept"-Texte enthalten keine fachlich falschen oder irreführenden Aussagen.
 7. Jede Szene behandelt genau das Lernziel aus "objective".
+8. Formeln sind fachlich richtig und als LaTeX zwischen \\( \\) bzw. \\[ \\] geschrieben, mit verdoppelten Backslashes im JSON.
 
 ## Regeln für Änderungen
 - Behalte alle IDs. Wenn du eine Frage entfernst, stelle sicher, dass "pretest" und "posttest" jeweils mindestens eine Frage behalten.
@@ -265,6 +268,8 @@ Work on THIS chapter ONLY. Use only content from the PDF – no outside knowledg
 - Question IDs unique across all lists: "q1", "q2", …
 - If you are not sure about a question, leave it out.
 
+**Formulas**: write mathematical expressions as LaTeX, inline between \\( and \\), displayed between \\[ and \\]. In JSON every backslash must be doubled, e.g. "\\\\(K_0 = \\\\frac{K_n}{(1+i)^n}\\\\)". Do not use $ as a math delimiter (write amounts of money normally). Exceptions: "quote" stays verbatim as in the PDF, and "answers" in cloze questions contain only typeable terms or numbers, no LaTeX.
+
 ## Question types
 ${QUESTION_TYPES_EN}
 
@@ -287,6 +292,7 @@ function verifyEn(): string {
 5. Transfer questions: the model answer follows NECESSARILY from the concept. Merely plausible or debatable → rephrase or remove.
 6. The story and "concept" texts contain no technically wrong or misleading statements.
 7. Each scene covers exactly the objective in "objective".
+8. Formulas are correct and written as LaTeX between \\( \\) or \\[ \\], with doubled backslashes in the JSON.
 
 ## Rules for changes
 - Keep all IDs. If you remove a question, make sure "pretest" and "posttest" each keep at least one question.

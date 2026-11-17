@@ -85,6 +85,12 @@ export function previewIntervals(row: CardRow, now = new Date()): Record<Grade, 
   } as Record<Grade, string>;
 }
 
+/** Abrufwahrscheinlichkeit jetzt (0..1); undefined, solange die Karte nie bewertet wurde. */
+export function retrievabilityOf(row: CardRow, now = new Date()): number | undefined {
+  if (!row.fsrs.last_review) return undefined;
+  return scheduler.retrievability(reviveCard(row.fsrs), now);
+}
+
 export async function gradeCard(row: CardRow, rating: Grade): Promise<void> {
   const now = new Date();
   const { card } = scheduler.next(reviveCard(row.fsrs), now, rating);

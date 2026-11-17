@@ -11,6 +11,9 @@ Lorebook ruft selbst keine KI auf. Du lädst dein PDF bei Claude, ChatGPT oder G
 - **Deutsch und Englisch:** Oberfläche, Prompts und Demo-Kapitel. Die Lerninhalte entstehen in der Sprache des PDFs. Impressum/Datenschutz nur deutsch.
 - **Story-Stile:** Vorschläge mit Hinweis, wofür sie passen (Start-up für BWL, Gerichtsdrama für Jura …), „Passend zum Stoff“ lässt die KI wählen, eigener Stil möglich.
 - **Vorlesen & Spracheingabe:** 🔊 bei Story, Fragen und Erklärungen, 🎤 bei Lückentext und offenen Fragen. Geschwindigkeit, Stimme und automatisches Vorlesen unter „Daten & Sicherung“. Browser: Web Speech API, App: Capacitor-Plugins (`src/lib/speech.ts`).
+- **Hörmodus & freihändig:** Story als Hörbuch, Wiederholung komplett per Sprache (`src/components/HandsFree.tsx`, Antwort-Erkennung in `src/lib/voiceAnswer.ts`).
+- **Schwachstellen:** Abrufwahrscheinlichkeit (FSRS) pro Lernziel auf der Kursseite, gezieltes Training unter 90 % (`src/lib/insights.ts`).
+- **Formeln:** LaTeX zwischen `\\( \\)` bzw. `\\[ \\]`, gerendert mit KaTeX (lazy). Der Import repariert vergessene doppelte Backslashes (`src/lib/math.ts`).
 - **Korrektheit:** Zu jeder Frage gibt es Zitat und PDF-Seite. Prompt B prüft die erzeugten Inhalte in einem zweiten Chat gegen das PDF. Falsche Fragen lassen sich melden und kommen dann nicht mehr in die Wiederholung.
 
 Live: https://lorebook-9yf.pages.dev · Impressum und Datenschutz unter `#/impressum` und `#/datenschutz` (Angaben in `src/legal.ts`).

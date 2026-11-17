@@ -5,7 +5,7 @@ export type Route =
   | { name: 'import'; courseId?: string }
   | { name: 'course'; id: string }
   | { name: 'chapter'; id: string }
-  | { name: 'review'; courseId?: string }
+  | { name: 'review'; courseId?: string; focus?: 'weak' }
   | { name: 'boss'; courseId: string }
   | { name: 'data' }
   | { name: 'account' }
@@ -25,7 +25,7 @@ export function parseHash(hash: string): Route {
     case 'chapter':
       return parts[1] ? { name: 'chapter', id: parts[1] } : { name: 'home' };
     case 'review':
-      return { name: 'review', courseId: parts[1] };
+      return { name: 'review', courseId: parts[1], focus: params.get('focus') === 'weak' ? 'weak' : undefined };
     case 'boss':
       return parts[1] ? { name: 'boss', courseId: parts[1] } : { name: 'home' };
     case 'data':
@@ -55,7 +55,7 @@ export function href(r: Route): string {
     case 'chapter':
       return `#/chapter/${e(r.id)}`;
     case 'review':
-      return r.courseId ? `#/review/${e(r.courseId)}` : '#/review';
+      return (r.courseId ? `#/review/${e(r.courseId)}` : '#/review') + (r.focus ? `?focus=${r.focus}` : '');
     case 'boss':
       return `#/boss/${e(r.courseId)}`;
     case 'data':

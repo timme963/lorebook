@@ -98,7 +98,7 @@ export default function App() {
       page = <ChapterPage id={route.id} />;
       break;
     case 'review':
-      page = <ReviewPage courseId={route.courseId} />;
+      page = <ReviewPage key={`${route.courseId}:${route.focus}`} courseId={route.courseId} focus={route.focus} />;
       break;
     case 'boss':
       page = <BossPage courseId={route.courseId} />;
