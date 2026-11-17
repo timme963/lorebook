@@ -4,6 +4,7 @@ import type { AnswerRecord } from '../lib/db';
 import { LEVEL_LABEL, type Question } from '../lib/schema';
 import { SourceButton } from './Source';
 import { tr } from '../lib/i18n';
+import { DictateButton, SpeakButton } from './Speech';
 
 interface Props {
   q: Question;
@@ -42,13 +43,21 @@ export default function QuestionCard({ q, courseId, mode, onDone, after, meta }:
 
   const locked = !!record || revealed;
 
+  // Vorlesetext: Frage, bei Lückentext „Lücke“, bei Multiple Choice die Optionen mit Buchstaben
+  const promptText =
+    (q.type === 'cloze' ? q.prompt.replace('___', tr(' … Lücke … ', ' … blank … ')) : q.prompt) +
+    (q.type === 'mc' ? ' ' + q.options.map((o, i) => `${String.fromCharCode(65 + i)}: ${o}.`).join(' ') : '');
+
   return (
     <article className="card question">
       <div className="q-meta">
         <span className={`tag level-${q.level}`}>{LEVEL_LABEL()[q.level]}</span>
         {meta}
       </div>
-      <h3 className="q-prompt">{q.type === 'cloze' ? q.prompt.replace('___', '_____') : q.prompt}</h3>
+      <div className="row between gap">
+        <h3 className="q-prompt">{q.type === 'cloze' ? q.prompt.replace('___', '_____') : q.prompt}</h3>
+        <SpeakButton text={promptText} />
+      </div>
 
       {q.type === 'mc' && (
         <div className="options">
@@ -77,11 +86,19 @@ export default function QuestionCard({ q, courseId, mode, onDone, after, meta }:
           }}
         >
           <input className="input grow" value={given} disabled={locked} onChange={(e) => setGiven(e.target.value)} placeholder={tr('Deine Antwort', 'Your answer')} autoFocus />
+          <DictateButton value={given} onChange={setGiven} langHint={q.prompt} disabled={locked} />
         </form>
       )}
 
       {q.type === 'open' && (
-        <textarea className="input" rows={4} value={given} disabled={locked} onChange={(e) => setGiven(e.target.value)} placeholder={tr('Antworte in eigenen Worten. Stichpunkte reichen.', 'Answer in your own words. Bullet points are fine.')} />
+        <div className="stack">
+          <textarea className="input" rows={4} value={given} disabled={locked} onChange={(e) => setGiven(e.target.value)} placeholder={tr('Antworte in eigenen Worten – tippen oder 🎤 einsprechen. Stichpunkte reichen.', 'Answer in your own words – type or 🎤 speak. Bullet points are fine.')} />
+          {!locked && (
+            <div className="row gap">
+              <DictateButton value={given} onChange={setGiven} langHint={q.prompt} />
+            </div>
+          )}
+        </div>
       )}
 
       {!locked && (
@@ -100,7 +117,10 @@ export default function QuestionCard({ q, courseId, mode, onDone, after, meta }:
       {q.type === 'open' && revealed && !record && (
         <div className="feedback neutral">
           <p className="label">{tr('Musterantwort', 'Model answer')}</p>
-          <p>{q.modelAnswer}</p>
+          <div className="row between gap">
+            <p>{q.modelAnswer}</p>
+            <SpeakButton text={q.modelAnswer} />
+          </div>
           <p className="label">{tr('Welche Punkte hast du getroffen?', 'Which points did you cover?')}</p>
           <div className="rubric">
             {q.rubric.map((r, i) => (
@@ -127,7 +147,10 @@ export default function QuestionCard({ q, courseId, mode, onDone, after, meta }:
           {q.type === 'open' && record.given && (
             <p className="muted small">{tr('Deine Antwort:', 'Your answer:')} {record.given}</p>
           )}
-          <p>{q.explanation}</p>
+          <div className="row between gap">
+            <p>{q.explanation}</p>
+            <SpeakButton text={(q.type === 'cloze' && !record.correct ? `${q.answers[0]}. ` : '') + q.explanation} />
+          </div>
           <SourceButton courseId={courseId} source={q.source} />
           <div className="row gap wrap actions">
             {after ? after(record) : <button className="btn primary" onClick={() => onDone(record)} autoFocus>{tr('Weiter →', 'Next →')}</button>}

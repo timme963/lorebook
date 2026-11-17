@@ -1,5 +1,5 @@
 import { useLiveQuery } from 'dexie-react-hooks';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import QuestionCard from '../components/QuestionCard';
 import { SourceButton } from '../components/Source';
 import { completeChapter, scoreOf } from '../lib/courses';
@@ -8,6 +8,8 @@ import { addXp } from '../lib/progress';
 import type { Question } from '../lib/schema';
 import { href } from '../router';
 import { tr } from '../lib/i18n';
+import { SpeakButton } from '../components/Speech';
+import { getSpeechSettings, speak, stopSpeaking } from '../lib/speech';
 
 function Progress({ phase }: { phase: ChapterRow['phase'] }) {
   const steps: [ChapterRow['phase'], string][] = [
@@ -73,6 +75,16 @@ function StoryView({ ch }: { ch: ChapterRow }) {
   const objective = scene && objectives.find((o) => o.id === scene.objective);
   const [conceptOpen, setConceptOpen] = useState(false);
 
+  const sceneText = scene ? `${scene.title}. ${scene.text}` : `${story.ending}`;
+  const sceneKey = `scene:${ch.id}:${i}`;
+
+  // Szene wechselt: Vorlesen stoppen, ggf. neue Szene automatisch vorlesen
+  useEffect(() => {
+    if (getSpeechSettings().autoStory) void speak(sceneText, sceneKey);
+    return () => stopSpeaking();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [sceneKey]);
+
   async function goTo(next: number) {
     setConceptOpen(false);
     await db.chapters.update(ch.id, { sceneIndex: next });
@@ -95,7 +107,10 @@ function StoryView({ ch }: { ch: ChapterRow }) {
 
       {!isEnding && scene && (
         <article className="card story">
-          <h3 className="scene-title">{scene.title}</h3>
+          <div className="row between gap">
+            <h3 className="scene-title">{scene.title}</h3>
+            <SpeakButton text={sceneText} id={sceneKey} />
+          </div>
           {scene.text.split(/\n+/).map((p, k) => (
             <p key={k}>{p}</p>
           ))}
@@ -103,7 +118,10 @@ function StoryView({ ch }: { ch: ChapterRow }) {
             {conceptOpen ? (
               <>
                 <p className="label">{tr('Was steckt dahinter?', 'What\'s behind it?')}</p>
-                <p>{scene.concept}</p>
+                <div className="row between gap">
+                  <p>{scene.concept}</p>
+                  <SpeakButton text={scene.concept} />
+                </div>
                 {objective && (
                   <div className="row between wrap gap">
                     <span className="muted small">{tr('Lernziel:', 'Objective:')} {objective.text}</span>
@@ -120,7 +138,10 @@ function StoryView({ ch }: { ch: ChapterRow }) {
 
       {isEnding && (
         <article className="card story">
-          <h3 className="scene-title">{tr('Auflösung', 'Resolution')}</h3>
+          <div className="row between gap">
+            <h3 className="scene-title">{tr('Auflösung', 'Resolution')}</h3>
+            <SpeakButton text={sceneText} id={sceneKey} />
+          </div>
           {story.ending.split(/\n+/).map((p, k) => (
             <p key={k}>{p}</p>
           ))}

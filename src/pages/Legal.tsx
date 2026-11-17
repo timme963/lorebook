@@ -110,7 +110,22 @@ export function DatenschutzPage() {
       </section>
 
       <section className="card stack">
-        <h3>5. Dienstleister (Auftragsverarbeiter)</h3>
+        <h3>5. Vorlesen und Spracheingabe (freiwillig)</h3>
+        <p>
+          <strong>Vorlesen (🔊)</strong> nutzt die Sprachausgabe deines Browsers bzw. von Android. Lokale Stimmen arbeiten auf dem Gerät. Bei
+          Online-Stimmen (z. B. „Natural“-Stimmen in Edge, Google-Stimmen in Chrome) schickt der Browser den vorzulesenden Text an den Anbieter
+          (Microsoft bzw. Google). Welche Stimme genutzt wird, kannst du unter „Daten &amp; Sicherung“ einstellen.
+        </p>
+        <p>
+          <strong>Spracheingabe (🎤)</strong> startet nur, wenn du das Mikrofon antippst. Die Erkennung übernimmt dein Browser bzw. Android. Dabei
+          wird die Aufnahme in der Regel an den Spracherkennungsdienst des Anbieters übertragen (Google bei Chrome und Android, Microsoft bei Edge,
+          Apple bei Safari). Es gelten dessen Datenschutzbestimmungen. Lorebook selbst speichert keine Aufnahmen, nur den erkannten Text als deine
+          Antwort.
+        </p>
+      </section>
+
+      <section className="card stack">
+        <h3>6. Dienstleister (Auftragsverarbeiter)</h3>
         <ul>
           <li>
             <strong>Supabase</strong> (Supabase, Inc., USA): Datenbank, Anmeldung und E-Mail-Versand für Accounts. Die Daten liegen in einem
@@ -125,7 +140,7 @@ export function DatenschutzPage() {
       </section>
 
       <section className="card stack">
-        <h3>6. Speicherdauer und Löschung</h3>
+        <h3>7. Speicherdauer und Löschung</h3>
         <p>
           Die Daten in der Cloud speichere ich, solange dein Account besteht. Unter <a href={href({ name: 'account' })}>Account &amp; Sync</a> kannst
           du deinen Account jederzeit selbst löschen. Dann werden Account und alle Cloud-Daten sofort endgültig gelöscht. Die Daten in deinem Browser
@@ -134,7 +149,7 @@ export function DatenschutzPage() {
       </section>
 
       <section className="card stack">
-        <h3>7. Lokale Speicherung auf deinem Gerät</h3>
+        <h3>8. Lokale Speicherung auf deinem Gerät</h3>
         <p>
           Lorebook nutzt IndexedDB und den lokalen Speicher (localStorage) deines Browsers für deine Lerndaten, die Einstellung „Hell/Dunkel“ und,
           wenn du angemeldet bist, die Anmeldesitzung. Das ist technisch notwendig, damit die App funktioniert (§ 25 Abs. 2 Nr. 2 TDDDG). Über den Service
@@ -143,7 +158,7 @@ export function DatenschutzPage() {
       </section>
 
       <section className="card stack">
-        <h3>8. Deine Rechte</h3>
+        <h3>9. Deine Rechte</h3>
         <p>
           Du hast das Recht auf Auskunft, Berichtigung, Löschung, Einschränkung der Verarbeitung, Datenübertragbarkeit (die Sicherungsdatei unter
           „Daten &amp; Sicherung“ enthält alle deine Lerndaten) und Widerspruch. Wende dich dazu an die oben genannte E-Mail-Adresse. Außerdem kannst du

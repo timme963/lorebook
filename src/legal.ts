@@ -11,5 +11,5 @@ export const LEGAL = {
   /** optional */
   phone: '',
   /** Stand der Datenschutzerklärung */
-  updated: '15.11.2026',
+  updated: '17.11.2026',
 };

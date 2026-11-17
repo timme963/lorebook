@@ -17,6 +17,8 @@ import { DatenschutzPage, ImpressumPage } from './pages/Legal';
 import UpdateBanner from './components/UpdateBanner';
 import { APK_URL, isNative } from './lib/platform';
 import { setLang, tr, useLang } from './lib/i18n';
+import { stopSpeaking } from './lib/speech';
+import { useEffect } from 'react';
 
 const SYNC_ICON = { off: '☁', idle: '☁', syncing: '⟳', offline: '☁', error: '⚠', conflict: '⚠' } as const;
 const SYNC_TITLE = () =>
@@ -77,6 +79,8 @@ function TopBar() {
 
 export default function App() {
   const route = useRoute();
+  // Seitenwechsel beendet das Vorlesen
+  useEffect(() => stopSpeaking(), [route]);
   const sync = useSyncStatus();
   useLang(); // beim Umschalten alles neu rendern
   let page;

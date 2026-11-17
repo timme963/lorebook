@@ -321,3 +321,11 @@ details summary { cursor: pointer; color: var(--muted); margin-bottom: 8px; }
 .chip { border: 1px solid var(--line); background: var(--surface); color: var(--ink); border-radius: 999px; padding: 6px 12px; font: inherit; font-size: 0.875rem; cursor: pointer; }
 .chip:hover { border-color: var(--accent); }
 .chip.active { background: var(--accent-soft); border-color: var(--accent); font-weight: 600; }
+
+/* Vorlesen & Spracheingabe */
+.speak-btn { flex-shrink: 0; }
+.speak-btn.on, .mic-btn.on { background: var(--accent-soft); border-color: var(--accent); color: var(--ink); }
+.mic-btn { flex-shrink: 0; white-space: nowrap; }
+.mic-btn.on { animation: mic-pulse 1.2s ease-in-out infinite; }
+@keyframes mic-pulse { 50% { box-shadow: 0 0 0 4px var(--accent-soft); } }
+.range { width: 100%; accent-color: var(--accent); }

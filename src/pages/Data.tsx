@@ -4,6 +4,7 @@ import { db } from '../lib/db';
 import { dayKey } from '../lib/progress';
 import { isNative } from '../lib/platform';
 import ReminderSettings from '../components/ReminderSettings';
+import { SpeechSettingsCard } from '../components/Speech';
 import { tr } from '../lib/i18n';
 
 export default function DataPage() {
@@ -58,6 +59,7 @@ export default function DataPage() {
         <p className="muted small">{tr('Die Sicherungsdatei funktioniert auch ohne Account. PDFs sind weder in der Sicherung noch in der Cloud enthalten.', 'The backup file works without an account too. PDFs are included neither in the backup nor in the cloud.')}</p>
       </section>
       {isNative && <ReminderSettings />}
+      <SpeechSettingsCard />
       <section className="card stack">
         <h3>{tr('Sicherung', 'Backup')}</h3>
         <div className="row gap wrap">
