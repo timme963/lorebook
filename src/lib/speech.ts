@@ -14,7 +14,7 @@ import { stripMath } from './math';
 export type SpeechLang = 'de' | 'en';
 
 export interface SpeechSettings {
-  /** 0.6 … 1.6, 1 = normal */
+  /** 0.5 … 2.5, 1 = normal */
   rate: number;
   /** gewählte Stimme je Sprache ('' = automatisch die beste) */
   voice: Record<SpeechLang, string>;
@@ -44,12 +44,13 @@ function readSettings(): SpeechSettings {
   return DEFAULTS;
 }
 
-let settings = readSettings();
+const clampRate = (r: unknown) => Math.min(2.5, Math.max(0.5, Number(r) || 1));
+let settings = { ...readSettings(), rate: clampRate(readSettings().rate) };
 let speakingId: string | null = null;
 
 export const getSpeechSettings = () => settings;
 export function setSpeechSettings(patch: Partial<SpeechSettings>): void {
-  settings = { ...settings, ...patch };
+  settings = { ...settings, ...patch, rate: clampRate(patch.rate ?? settings.rate) };
   try {
     localStorage.setItem(KEY, JSON.stringify(settings));
   } catch {

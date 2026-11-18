@@ -10,7 +10,7 @@ Lorebook ruft selbst keine KI auf. Du lädst dein PDF bei Claude, ChatGPT oder G
 - **Android-App (Capacitor):** https://lorebook-9yf.pages.dev/lorebook.apk – mit täglicher Erinnerung an fällige Karten und Update-Hinweis.
 - **Deutsch und Englisch:** Oberfläche, Prompts und Demo-Kapitel. Die Lerninhalte entstehen in der Sprache des PDFs. Impressum/Datenschutz nur deutsch.
 - **Story-Stile:** Vorschläge mit Hinweis, wofür sie passen (Start-up für BWL, Gerichtsdrama für Jura …), „Passend zum Stoff“ lässt die KI wählen, eigener Stil möglich.
-- **Vorlesen & Spracheingabe:** 🔊 bei Story, Fragen und Erklärungen, 🎤 bei Lückentext und offenen Fragen. Geschwindigkeit, Stimme und automatisches Vorlesen unter „Daten & Sicherung“. Browser: Web Speech API, App: Capacitor-Plugins (`src/lib/speech.ts`).
+- **Vorlesen & Spracheingabe:** 🔊 bei Story, Fragen und Erklärungen, 🎤 bei Lückentext und offenen Fragen. Geschwindigkeit, Stimme und automatisches Vorlesen unter „Account & Daten“. Browser: Web Speech API, App: Capacitor-Plugins (`src/lib/speech.ts`).
 - **Hörmodus & freihändig:** Story als Hörbuch, Wiederholung komplett per Sprache (`src/components/HandsFree.tsx`, Antwort-Erkennung in `src/lib/voiceAnswer.ts`).
 - **Schwachstellen:** Abrufwahrscheinlichkeit (FSRS) pro Lernziel auf der Kursseite, gezieltes Training unter 90 % (`src/lib/insights.ts`).
 - **Formeln:** LaTeX zwischen `\( \)` bzw. `\[ \]`, gerendert mit KaTeX (lazy). Der Import repariert vergessene doppelte Backslashes (`src/lib/math.ts`).

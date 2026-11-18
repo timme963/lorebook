@@ -125,10 +125,13 @@ db.version(2)
 // Transaktionen, die Server-Daten einspielen, sind mit __remote markiert und stempeln nicht.
 
 type Tx = { __remote?: boolean; storeNames: string[]; table: (n: string) => { put: (v: unknown) => unknown } };
-let changeListener: (() => void) | undefined;
+const changeListeners = new Set<() => void>();
+const changeListener = { current: () => changeListeners.forEach((f) => f()) };
 
-export function onLocalChange(fn: () => void): void {
-  changeListener = fn;
+/** Wird bei jeder lokalen Änderung an synchronisierten Tabellen aufgerufen (Sync, Erinnerungen …). */
+export function onLocalChange(fn: () => void): () => void {
+  changeListeners.add(fn);
+  return () => changeListeners.delete(fn);
 }
 
 for (const t of SYNC_TABLES) {
@@ -136,11 +139,11 @@ for (const t of SYNC_TABLES) {
   table.hook('creating', function (_pk, obj: { _ts?: number }, tx) {
     if ((tx as unknown as Tx).__remote) return;
     obj._ts = Math.max(Date.now(), (obj._ts ?? 0) + 1);
-    changeListener?.();
+    changeListener.current();
   });
   table.hook('updating', function (_mods, _pk, obj: { _ts?: number }, tx) {
     if ((tx as unknown as Tx).__remote) return;
-    changeListener?.();
+    changeListener.current();
     return { _ts: Math.max(Date.now(), (obj._ts ?? 0) + 1) };
   });
   table.hook('deleting', function (pk, obj: { _ts?: number }, tx) {
@@ -151,7 +154,7 @@ for (const t of SYNC_TABLES) {
       return;
     }
     trans.table('tombstones').put({ key: `${t}:${pk}`, tbl: t, id: String(pk), _ts: Math.max(Date.now(), (obj?._ts ?? 0) + 1) });
-    changeListener?.();
+    changeListener.current();
   });
 }
 

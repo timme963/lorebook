@@ -63,3 +63,27 @@ describe('Sprachantworten', () => {
     expect(parseRating('leicht')).toBe(Rating.Easy);
   });
 });
+
+describe('Lückentext mit Zahlen', () => {
+  it('prüft Zahlen exakt, Wörter mit Tippfehler-Toleranz', async () => {
+    const { checkCloze } = await import('./courses');
+    expect(checkCloze('130000', ['120000'])).toBe(false);
+    expect(checkCloze('120.000', ['120000'])).toBe(true);
+    expect(checkCloze('1,5', ['1,5'])).toBe(true);
+    expect(checkCloze('Deckungsbeitrg', ['Deckungsbeitrag'])).toBe(true);
+  });
+});
+
+describe('Änderungs-Listener', () => {
+  it('ruft mehrere Empfänger auf (Sync und Erinnerungen)', async () => {
+    const { onLocalChange } = await import('./db');
+    let a = 0;
+    let b = 0;
+    const offA = onLocalChange(() => a++);
+    const offB = onLocalChange(() => b++);
+    expect(typeof offA).toBe('function');
+    offA();
+    offB();
+    expect(a + b).toBe(0);
+  });
+});

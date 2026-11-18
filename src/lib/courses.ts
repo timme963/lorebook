@@ -109,13 +109,18 @@ function levenshtein(a: string, b: string): number {
   return dp[a.length][b.length];
 }
 
-/** Lückentext: Groß/klein, Umlaute und kleine Tippfehler (1 pro 6 Zeichen) werden toleriert. */
+/**
+ * Lückentext: Groß/klein, Umlaute und kleine Tippfehler (1 pro 6 Zeichen) werden toleriert.
+ * Antworten mit Ziffern müssen exakt stimmen (130000 ist nicht 120000); Leerzeichen und Trennzeichen zählen dabei nicht.
+ */
 export function checkCloze(given: string, answers: string[]): boolean {
   const g = normalize(given);
   if (!g) return false;
   return answers.some((a) => {
     const n = normalize(a);
-    return n === g || levenshtein(n, g) <= Math.floor(n.length / 6);
+    if (n === g) return true;
+    if (/\d/.test(n)) return n.replace(/ /g, '') === g.replace(/ /g, '');
+    return levenshtein(n, g) <= Math.floor(n.length / 6);
   });
 }
 

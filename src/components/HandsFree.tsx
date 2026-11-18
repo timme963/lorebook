@@ -71,8 +71,12 @@ export default function HandsFree({
     setHeard('');
     const r = await listenOnce(lang);
     if (!alive.current) return null;
-    if (r.error === 'not-allowed' || r.error === 'denied') {
+    if (r.error === 'not-allowed' || r.error === 'denied' || r.error === 'service-not-allowed') {
       setError(tr('Mikrofon nicht erlaubt – freihändiger Modus beendet.', 'Microphone not allowed – hands-free mode ended.'));
+      return null;
+    }
+    if (r.error && r.error !== 'no-speech' && r.error !== 'aborted') {
+      setError(`${tr('Spracherkennung fehlgeschlagen – freihändiger Modus beendet.', 'Speech recognition failed – hands-free mode ended.')} (${r.error})`);
       return null;
     }
     setHeard(r.text);

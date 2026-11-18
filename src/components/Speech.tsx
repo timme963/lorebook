@@ -129,8 +129,8 @@ export function SpeechSettingsCard() {
             {tr('Geschwindigkeit', 'Speed')}: <strong>{s.rate.toFixed(1)}×</strong>
             <input
               type="range"
-              min={0.6}
-              max={1.6}
+              min={0.5}
+              max={2.5}
               step={0.1}
               value={s.rate}
               onChange={(e) => setSpeechSettings({ rate: Number(e.target.value) })}

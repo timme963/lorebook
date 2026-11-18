@@ -1,6 +1,6 @@
 import { Directory, Encoding, Filesystem } from '@capacitor/filesystem';
 import { Share } from '@capacitor/share';
-import { db } from './db';
+import { db, SYNC_TABLES } from './db';
 import { isNative } from './platform';
 import { tr } from './i18n';
 
@@ -18,12 +18,21 @@ export async function importBackup(text: string): Promise<void> {
   if (payload?.app !== 'lorebook' || payload.backupVersion !== 1 || typeof payload.data !== 'object') {
     throw new Error(tr('Das ist keine Lorebook-Sicherung.', 'This is not a Lorebook backup.'));
   }
-  await db.transaction('rw', TABLES.map((t) => db.table(t)), async () => {
+  await db.transaction('rw', [...TABLES.map((t) => db.table(t)), db.tombstones], async () => {
     for (const t of TABLES) {
       const rows = payload.data[t];
       if (!Array.isArray(rows)) continue;
-      await db.table(t).clear();
-      await db.table(t).bulkPut(rows);
+      const table = db.table(t);
+      if ((SYNC_TABLES as readonly string[]).includes(t)) {
+        // Einzeln löschen statt clear(): so entstehen Lösch-Markierungen und die Cloud übernimmt die Löschung
+        const pk = table.schema.primKey.keyPath as string;
+        const keep = new Set(rows.map((r: Record<string, unknown>) => String(r[pk])));
+        const existing = (await table.toCollection().primaryKeys()) as string[];
+        await table.bulkDelete(existing.filter((k) => !keep.has(String(k))));
+      } else {
+        await table.clear();
+      }
+      await table.bulkPut(rows);
     }
   });
 }

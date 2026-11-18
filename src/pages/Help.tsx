@@ -48,7 +48,7 @@ function HelpDe() {
       <section className="card stack">
         <h3>Unterwegs und gezielt lernen</h3>
         <ul>
-          <li><strong>🔊 Vorlesen / 🎤 Einsprechen:</strong> Story, Fragen und Erklärungen vorlesen lassen, Antworten einsprechen. Geschwindigkeit und Stimme unter „Daten &amp; Sicherung“.</li>
+          <li><strong>🔊 Vorlesen / 🎤 Einsprechen:</strong> Story, Fragen und Erklärungen vorlesen lassen, Antworten einsprechen. Geschwindigkeit und Stimme unter „Account &amp; Daten“.</li>
           <li><strong>🎧 Story anhören:</strong> Die ganze Story läuft wie ein Hörbuch durch, Szene für Szene mit „Was steckt dahinter?“.</li>
           <li><strong>🎧 Freihändig wiederholen:</strong> In der Wiederholung liest Lorebook jede Frage vor, du antwortest per Stimme („B“, „die zweite“, das Wort oder „weiß ich nicht“), hörst die Auflösung, und es geht automatisch weiter. „Stopp“ beendet.</li>
           <li><strong>🎯 Schwachstellen:</strong> Auf der Kursseite siehst du pro Lernziel, wie sicher es gerade sitzt. „Schwachstellen trainieren“ fragt gezielt die unsichersten ab.</li>
@@ -72,7 +72,7 @@ function HelpDe() {
         <ul>
           <li>
             <strong>Android:</strong> <a href={APK_URL}>Lorebook-App herunterladen</a> (APK) und öffnen. Beim ersten Mal fragt Android, ob der Browser
-            Apps installieren darf: erlauben. Die App erinnert dich täglich an fällige Wiederholungen (einstellbar unter „Daten &amp; Sicherung“) und
+            Apps installieren darf: erlauben. Die App erinnert dich täglich an fällige Wiederholungen (einstellbar unter „Account &amp; Daten“) und
             meldet sich, wenn es ein Update gibt.
           </li>
           <li><strong>iPhone (Safari):</strong> Teilen-Symbol → „Zum Home-Bildschirm“.</li>
@@ -130,7 +130,7 @@ function HelpEn() {
       <section className="card stack">
         <h3>Learning on the go, and where it counts</h3>
         <ul>
-          <li><strong>🔊 Read aloud / 🎤 Speak:</strong> have the story, questions and explanations read aloud, and speak your answers. Speed and voice under "Data &amp; backup".</li>
+          <li><strong>🔊 Read aloud / 🎤 Speak:</strong> have the story, questions and explanations read aloud, and speak your answers. Speed and voice under "Account &amp; data".</li>
           <li><strong>🎧 Listen to the story:</strong> the whole story plays like an audiobook, scene by scene with "What's behind it?".</li>
           <li><strong>🎧 Hands-free review:</strong> Lorebook reads each question aloud, you answer by voice ("B", "the second one", the word or "don't know"), hear the answer and it moves on automatically. "Stop" ends.</li>
           <li><strong>🎯 Weak spots:</strong> the course page shows how well each objective sticks right now. "Train weak spots" quizzes the shakiest ones.</li>
@@ -154,7 +154,7 @@ function HelpEn() {
         <ul>
           <li>
             <strong>Android:</strong> <a href={APK_URL}>download the Lorebook app</a> (APK) and open it. The first time, Android asks whether the
-            browser may install apps: allow it. The app reminds you daily of due reviews (set it under "Data &amp; backup") and tells you when an
+            browser may install apps: allow it. The app reminds you daily of due reviews (set it under "Account &amp; data") and tells you when an
             update is available.
           </li>
           <li><strong>iPhone (Safari):</strong> Share icon → "Add to Home Screen".</li>

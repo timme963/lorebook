@@ -4,6 +4,9 @@ import { clearLocalSyncedData, deleteAccount, signOut, syncNow, useSyncStatus } 
 import { href } from '../router';
 import { isNative, PUBLIC_URL } from '../lib/platform';
 import { locale, tr } from '../lib/i18n';
+import { BackupCard, WipeCard } from './Data';
+import ReminderSettings from '../components/ReminderSettings';
+import { SpeechSettingsCard } from '../components/Speech';
 
 function timeAgo(ms?: number): string {
   if (!ms) return tr('noch nie', 'never');
@@ -127,16 +130,18 @@ export default function AccountPage() {
 
   return (
     <div className="stack">
-      <h1>Account &amp; Sync</h1>
+      <h1>{tr('Account & Daten', 'Account & data')}</h1>
       <section className="card stack">
         {tr(
           <p>
-            Mit Account werden deine <strong>Kurse und dein Lernfortschritt</strong> gesichert und zwischen deinen Geräten abgeglichen. PDFs bleiben
-            immer nur auf dem jeweiligen Gerät. Ohne Account funktioniert alles wie bisher, nur eben ausschließlich in diesem Browser.
+            Deine Daten liegen auf diesem Gerät (im Browser bzw. in der App). Mit Account werden <strong>Kurse und Lernfortschritt</strong>
+            zusätzlich in der Cloud gesichert und zwischen deinen Geräten abgeglichen. PDFs bleiben immer nur auf dem jeweiligen Gerät. Ohne
+            Account sind die Daten weg, wenn du den Browserspeicher löschst – dann hilft nur eine Sicherungsdatei.
           </p>,
           <p>
-            With an account, your <strong>courses and learning progress</strong> are backed up and synced between your devices. PDFs always stay
-            on the device they were added on. Without an account, everything works the same – just only in this browser.
+            Your data lives on this device (in the browser or the app). With an account, <strong>courses and learning progress</strong> are also
+            backed up to the cloud and synced between your devices. PDFs always stay on the device they were added on. Without an account, the
+            data is gone if you clear the browser storage – then only a backup file helps.
           </p>,
         )}
       </section>
@@ -182,15 +187,18 @@ export default function AccountPage() {
         </section>
       )}
 
+      {isNative && <ReminderSettings />}
+      <SpeechSettingsCard />
+      <BackupCard />
+
       {status.state !== 'off' && (
         <section className="card stack">
           <h3>{tr('Account löschen', 'Delete account')}</h3>
           <p className="muted small">
             {tr(
-              'Löscht deinen Account und alles, was dazu in der Cloud gespeichert ist, sofort und endgültig. Die Daten auf diesem Gerät bleiben, bis du sie löschst unter',
-              'Deletes your account and everything stored for it in the cloud, immediately and permanently. The data on this device stays until you delete it under',
-            )}{' '}
-            <a href={href({ name: 'data' })}>{tr('Daten & Sicherung', 'Data & backup')}</a>.
+              'Löscht deinen Account und alles, was dazu in der Cloud gespeichert ist, sofort und endgültig. Die Daten auf diesem Gerät bleiben, bis du sie unten löschst.',
+              'Deletes your account and everything stored for it in the cloud, immediately and permanently. The data on this device stays until you delete it below.',
+            )}
           </p>
           <button
             className="btn danger self-start"
@@ -205,6 +213,8 @@ export default function AccountPage() {
           </button>
         </section>
       )}
+
+      <WipeCard signedIn={status.state !== 'off'} />
 
       <p className="muted small">
         <a href={href({ name: 'datenschutz' })}>{tr('Datenschutzerklärung', 'Privacy policy')}</a> · <a href={href({ name: 'impressum' })}>{tr('Impressum', 'Legal notice')}</a>

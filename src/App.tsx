@@ -10,7 +10,6 @@ import CoursePage from './pages/Course';
 import ChapterPage from './pages/Chapter';
 import ReviewPage from './pages/Review';
 import BossPage from './pages/Boss';
-import DataPage from './pages/Data';
 import HelpPage from './pages/Help';
 import AccountPage from './pages/Account';
 import { DatenschutzPage, ImpressumPage } from './pages/Legal';
@@ -104,7 +103,7 @@ export default function App() {
       page = <BossPage courseId={route.courseId} />;
       break;
     case 'data':
-      page = <DataPage />;
+      page = <AccountPage />;
       break;
     case 'help':
       page = <HelpPage />;
@@ -127,9 +126,7 @@ export default function App() {
         {page}
       </main>
       <footer className="footer">
-        <a href={href({ name: 'account' })}>Account &amp; Sync</a>
-        <span>·</span>
-        <a href={href({ name: 'data' })}>{tr('Daten & Sicherung', 'Data & backup')}</a>
+        <a href={href({ name: 'account' })}>{tr('Account & Daten', 'Account & data')}</a>
         <span>·</span>
         <a href={href({ name: 'help' })}>{tr("So funktioniert's", 'How it works')}</a>
         <span>·</span>

@@ -114,7 +114,7 @@ export function DatenschutzPage() {
         <p>
           <strong>Vorlesen (🔊)</strong> nutzt die Sprachausgabe deines Browsers bzw. von Android. Lokale Stimmen arbeiten auf dem Gerät. Bei
           Online-Stimmen (z. B. „Natural“-Stimmen in Edge, Google-Stimmen in Chrome) schickt der Browser den vorzulesenden Text an den Anbieter
-          (Microsoft bzw. Google). Welche Stimme genutzt wird, kannst du unter „Daten &amp; Sicherung“ einstellen.
+          (Microsoft bzw. Google). Welche Stimme genutzt wird, kannst du unter „Account &amp; Daten“ einstellen.
         </p>
         <p>
           <strong>Spracheingabe (🎤)</strong> startet nur, wenn du das Mikrofon antippst. Die Erkennung übernimmt dein Browser bzw. Android. Dabei
@@ -142,9 +142,9 @@ export function DatenschutzPage() {
       <section className="card stack">
         <h3>7. Speicherdauer und Löschung</h3>
         <p>
-          Die Daten in der Cloud speichere ich, solange dein Account besteht. Unter <a href={href({ name: 'account' })}>Account &amp; Sync</a> kannst
+          Die Daten in der Cloud speichere ich, solange dein Account besteht. Unter <a href={href({ name: 'account' })}>Account &amp; Daten</a> kannst
           du deinen Account jederzeit selbst löschen. Dann werden Account und alle Cloud-Daten sofort endgültig gelöscht. Die Daten in deinem Browser
-          löschst du unter <a href={href({ name: 'data' })}>Daten &amp; Sicherung</a> oder über die Browser-Einstellungen.
+          löschst du unter <a href={href({ name: 'account' })}>Account &amp; Daten</a> oder über die Browser-Einstellungen.
         </p>
       </section>
 
@@ -161,7 +161,7 @@ export function DatenschutzPage() {
         <h3>9. Deine Rechte</h3>
         <p>
           Du hast das Recht auf Auskunft, Berichtigung, Löschung, Einschränkung der Verarbeitung, Datenübertragbarkeit (die Sicherungsdatei unter
-          „Daten &amp; Sicherung“ enthält alle deine Lerndaten) und Widerspruch. Wende dich dazu an die oben genannte E-Mail-Adresse. Außerdem kannst du
+          „Account &amp; Daten“ enthält alle deine Lerndaten) und Widerspruch. Wende dich dazu an die oben genannte E-Mail-Adresse. Außerdem kannst du
           dich bei einer Datenschutz-Aufsichtsbehörde beschweren, zum Beispiel beim Hessischen Beauftragten für Datenschutz und Informationsfreiheit.
         </p>
       </section>
