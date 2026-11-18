@@ -8,7 +8,7 @@
     "preview": "vite preview",
     "test": "vitest run",
     "deploy": "npm run build && node scripts/fetch-apk.mjs && wrangler pages deploy dist --project-name lorebook --branch main",
-    "deploy:web-only": "npm run build && wrangler pages deploy dist --project-name lorebook --branch main",
+    "deploy:web-only": "npm run build && node scripts/copy-apk.mjs && wrangler pages deploy dist --project-name lorebook --branch main",
     "android:sync": "npm run build && cap sync android",
     "android:open": "cap open android"
   },

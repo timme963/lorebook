@@ -26,7 +26,7 @@ npm run dev              # http://localhost:5173
 npm test                 # Unit-Tests (Import-Validierung, Bewertung, Serie, Boss)
 npm run build
 npm run deploy           # Build + neueste APK von GitHub holen + Cloudflare Pages (Projekt "lorebook")
-npm run deploy:web-only  # wie deploy, aber ohne APK (z. B. wenn der Android-Build noch läuft)
+npm run deploy:web-only  # wie deploy, aber mit der zuletzt geladenen APK statt einer neuen (z. B. wenn der Android-Build noch läuft)
 ```
 
 `npm run deploy` braucht die GitHub CLI (`gh`, angemeldet), weil es die APK aus dem letzten erfolgreichen Build lädt.
