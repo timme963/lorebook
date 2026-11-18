@@ -169,7 +169,12 @@ export default function CoursePage({ id }: { id: string }) {
             <span className="muted">
               {(() => {
                 const n = Math.max(0, Math.ceil((new Date(course.examDate).getTime() - Date.now()) / 86400000));
-                return tr(`noch ${n} Tage`, `${plural(n, '', '', 'day', 'days').trim()} left`);
+                const days = plural(n, 'Tag', 'Tage', 'day', 'days');
+                if (n < 7) return tr(`noch ${days}`, `${days} left`);
+                const w = Math.floor(n / 7);
+                const rest = n % 7;
+                const weeks = plural(w, 'Woche', 'Wochen', 'week', 'weeks') + (rest ? ` ${tr('und', 'and')} ${plural(rest, 'Tag', 'Tage', 'day', 'days')}` : '');
+                return tr(`noch ${days} · ${weeks}`, `${days} left · ${weeks}`);
               })()}
             </span>
           )}
