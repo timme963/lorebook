@@ -91,6 +91,48 @@ export async function completeChapter(ch: ChapterRow): Promise<void> {
   if (firstTime) await addXp(50);
 }
 
+// ---------- Course list: stars and manual order ----------
+
+/** Sort key within a group: unpositioned (new) courses first and newest first, then the manual order. */
+function orderKey(c: CourseRow): number {
+  return c.position ?? -c.createdAt;
+}
+
+/** Starred courses first, then the user's manual order. */
+export function sortCourses(courses: readonly CourseRow[]): CourseRow[] {
+  return [...courses].sort((a, b) => Number(!!b.starred) - Number(!!a.starred) || orderKey(a) - orderKey(b));
+}
+
+/** Course IDs in display order after moving `id` one place up (-1) or down (1); unchanged at a group boundary. */
+export function reorderedIds(courses: readonly CourseRow[], id: string, delta: -1 | 1): string[] {
+  const list = sortCourses(courses);
+  const i = list.findIndex((c) => c.id === id);
+  const current = list[i];
+  const neighbour = list[i + delta];
+  // starred and unstarred courses are separate groups; a course cannot be moved across the boundary
+  if (current && neighbour && !!current.starred === !!neighbour.starred) {
+    list[i] = neighbour;
+    list[i + delta] = current;
+  }
+  return list.map((c) => c.id);
+}
+
+export async function moveCourse(id: string, delta: -1 | 1): Promise<void> {
+  await db.transaction('rw', db.courses, async () => {
+    const courses = await db.courses.toArray();
+    const ids = reorderedIds(courses, id, delta);
+    const byId = new Map(courses.map((c) => [c.id, c]));
+    for (const [position, courseId] of ids.entries()) {
+      if (byId.get(courseId)?.position !== position) await db.courses.update(courseId, { position });
+    }
+  });
+}
+
+export async function toggleStar(id: string): Promise<void> {
+  const course = await db.courses.get(id);
+  if (course) await db.courses.update(id, { starred: !course.starred });
+}
+
 // ---------- Checking answers ----------
 
 function normalize(s: string): string {

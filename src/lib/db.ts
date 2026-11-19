@@ -8,6 +8,10 @@ export interface CourseRow {
   source?: string;
   createdAt: number;
   examDate?: string; // YYYY-MM-DD
+  /** Pinned to the top of the course list */
+  starred?: boolean;
+  /** Manual position in the course list; courses without one come first, newest first */
+  position?: number;
 }
 
 export type ChapterPhase = 'new' | 'pretest' | 'story' | 'posttest' | 'done';
