@@ -24,6 +24,7 @@ Live: https://lorebook-9yf.pages.dev · Impressum und Datenschutz unter `#/impre
 npm install
 npm run dev              # http://localhost:5173
 npm test                 # Unit-Tests (Import-Validierung, Bewertung, Serie, Boss)
+npm run format           # Code einheitlich formatieren (Prettier); format:check prüft nur
 npm run build
 npm run deploy           # Build + neueste APK von GitHub holen + Cloudflare Pages (Projekt "lorebook")
 npm run deploy:web-only  # wie deploy, aber mit der zuletzt geladenen APK statt einer neuen (z. B. wenn der Android-Build noch läuft)
@@ -87,3 +88,7 @@ Projekt `lorebook` (`pvzzxmwtaokcefkuyevn`, Frankfurt).
 ```
 
 Fragetypen: `mc` (`options`, `correct` als Zahl = Einfachauswahl oder Liste wie `[0, 2]` = Mehrfachauswahl, „mehrere Antworten möglich“), `cloze` (`___` im `prompt`, `answers`), `open` (`modelAnswer`, `rubric`). Jede Frage hat `id`, `objective`, `level` (`remember|understand|apply|transfer`), `explanation` und `source`.
+
+## Lizenz
+
+[GNU Affero General Public License v3.0](LICENSE) (oder neuer). Du darfst Lorebook nutzen, verändern und weitergeben. Wer eine veränderte Fassung verbreitet oder als Webdienst anbietet, muss deren Quellcode ebenfalls unter der AGPL offenlegen.
