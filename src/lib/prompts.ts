@@ -67,6 +67,12 @@ const QUESTION_TYPES_DE = `Multiple Choice:
   "explanation": "Warum C stimmt und warum A, B, D falsch sind",
   "source": { "page": 5, "quote": "wörtliches Zitat, das die Antwort belegt" } }
 
+Multiple Choice mit Mehrfachauswahl ("correct" als Liste):
+{ "id": "q4", "objective": "o1", "level": "understand", "type": "mc",
+  "prompt": "Welche Aussagen treffen zu?", "options": ["A", "B", "C", "D"], "correct": [0, 2],
+  "explanation": "A und C stimmen, weil …; B und D sind falsch, weil …",
+  "source": { "page": 5, "quote": "…" } }
+
 Lückentext (Platzhalter ___ genau einmal im prompt):
 { "id": "q2", "objective": "o1", "level": "remember", "type": "cloze",
   "prompt": "Satz mit ___ als Lücke", "answers": ["Begriff", "Synonym"],
@@ -126,7 +132,10 @@ Bearbeite NUR dieses Kapitel. Nutze ausschließlich Inhalte aus dem PDF – kein
 - "review": 8–15 zusätzliche Fragen für die Wiederholung, gemischt.
 - Mindestens 30 % aller Fragen haben "level" "apply" oder "transfer".
 - Transfer = ein NEUES Szenario aus einem anderen Lebens- oder Fachbereich, nicht aus der Story und nicht aus den Beispielen im PDF. Die Antwort muss zwingend aus dem Konzept folgen, nicht nur plausibel sein.
-- Multiple Choice: 4 Optionen, genau eine richtig, Ablenker aus typischen Missverständnissen. Position der richtigen Antwort variieren ("correct" ist der Index ab 0).
+- Multiple Choice: 4–5 Optionen, Ablenker aus typischen Missverständnissen. Zwei Formen mischen:
+  - Einfachauswahl: "correct" ist eine Zahl, genau eine Option ist richtig.
+  - Mehrfachauswahl: "correct" ist eine Liste, z. B. [0, 2]. Es dürfen 1 bis alle Optionen richtig sein; der Lernende sieht nur „mehrere Antworten möglich“, nicht wie viele. Etwa ein Drittel der Multiple-Choice-Fragen so stellen, vor allem bei Aufzählungen, Merkmalen, Voraussetzungen und Abgrenzungen.
+  - Jede Option muss für sich eindeutig richtig oder falsch sein. Position der richtigen Antworten variieren ("correct" zählt ab 0). "explanation" begründet jede Option.
 - Jede Frage hat "explanation" und "source" mit wörtlichem Zitat, das die Antwort belegt.
 - Frage-IDs eindeutig über alle Listen: "q1", "q2", …
 - Wenn du dir bei einer Frage nicht sicher bist, lass sie weg.
@@ -150,7 +159,7 @@ function verifyDe(): string {
 ## Prüfe
 1. Jedes Zitat ("quote") steht wörtlich auf der angegebenen PDF-Seite (erste Seite der Datei = 1). Falsche Seite → korrigieren. Zitat nicht auffindbar → durch echtes Zitat ersetzen oder Element entfernen.
 2. Jede Musterlösung ist durch das Zitat bzw. das PDF gedeckt.
-3. Multiple Choice: genau EINE Option ist richtig, "correct" zeigt auf sie, keine Option ist "auch irgendwie richtig".
+3. Multiple Choice: Bei einer Zahl in "correct" ist genau EINE Option richtig. Bei einer Liste sind genau die gelisteten Optionen richtig und alle anderen eindeutig falsch. Keine Option ist "auch irgendwie richtig".
 4. Lückentext: alle in "answers" genannten Begriffe passen, wichtige Synonyme fehlen nicht.
 5. Transferfragen: Die Musterantwort folgt ZWINGEND aus dem Konzept. Nur plausibel oder strittig → umformulieren oder entfernen.
 6. Story und "concept"-Texte enthalten keine fachlich falschen oder irreführenden Aussagen.
@@ -203,6 +212,12 @@ const QUESTION_TYPES_EN = `Multiple choice:
   "prompt": "Question", "options": ["A", "B", "C", "D"], "correct": 2,
   "explanation": "Why C is right and why A, B, D are wrong",
   "source": { "page": 5, "quote": "verbatim quote that supports the answer" } }
+
+Multiple choice with multiple answers ("correct" as a list):
+{ "id": "q4", "objective": "o1", "level": "understand", "type": "mc",
+  "prompt": "Which statements are true?", "options": ["A", "B", "C", "D"], "correct": [0, 2],
+  "explanation": "A and C are true because …; B and D are wrong because …",
+  "source": { "page": 5, "quote": "…" } }
 
 Cloze (placeholder ___ exactly once in the prompt):
 { "id": "q2", "objective": "o1", "level": "remember", "type": "cloze",
@@ -263,7 +278,10 @@ Work on THIS chapter ONLY. Use only content from the PDF – no outside knowledg
 - "review": 8–15 additional questions for review, mixed.
 - At least 30 % of all questions have "level" "apply" or "transfer".
 - Transfer = a NEW scenario from a different area of life or field, not from the story and not from the examples in the PDF. The answer must follow necessarily from the concept, not merely be plausible.
-- Multiple choice: 4 options, exactly one correct, distractors based on typical misconceptions. Vary the position of the correct answer ("correct" is the 0-based index).
+- Multiple choice: 4–5 options, distractors based on typical misconceptions. Mix two forms:
+  - Single answer: "correct" is a number, exactly one option is correct.
+  - Multiple answers: "correct" is a list, e.g. [0, 2]. Anywhere from 1 to all options may be correct; the learner only sees "more than one answer possible", not how many. Make about a third of the multiple-choice questions like this, especially for lists, characteristics, conditions and distinctions.
+  - Each option must be clearly right or wrong on its own. Vary the position of the correct answers ("correct" is 0-based). "explanation" justifies every option.
 - Every question has "explanation" and "source" with a verbatim quote that supports the answer.
 - Question IDs unique across all lists: "q1", "q2", …
 - If you are not sure about a question, leave it out.
@@ -287,7 +305,7 @@ function verifyEn(): string {
 ## Check
 1. Every quote ("quote") appears verbatim on the stated PDF page (first page of the file = 1). Wrong page → fix it. Quote not found → replace it with a real quote or remove the item.
 2. Every model answer is supported by the quote or the PDF.
-3. Multiple choice: exactly ONE option is correct, "correct" points to it, no option is "sort of correct too".
+3. Multiple choice: if "correct" is a number, exactly ONE option is correct. If it is a list, exactly the listed options are correct and all others clearly wrong. No option is "sort of correct too".
 4. Cloze: all terms in "answers" fit, important synonyms are not missing.
 5. Transfer questions: the model answer follows NECESSARILY from the concept. Merely plausible or debatable → rephrase or remove.
 6. The story and "concept" texts contain no technically wrong or misleading statements.

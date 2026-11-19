@@ -5,7 +5,7 @@ import { SourceButton } from '../components/Source';
 import { completeChapter, scoreOf } from '../lib/courses';
 import { db, type AnswerRecord, type ChapterRow } from '../lib/db';
 import { addXp } from '../lib/progress';
-import type { Question } from '../lib/schema';
+import { correctSet, parseGiven, type Question } from '../lib/schema';
 import { href } from '../router';
 import { tr } from '../lib/i18n';
 import { SpeakButton } from '../components/Speech';
@@ -296,8 +296,8 @@ function Result({ ch }: { ch: ChapterRow }) {
         <ul className="pre-list">
           {content.pretest.map((q) => {
             const a = ch.preAnswers[q.id];
-            const right = q.type === 'mc' ? q.options[q.correct] : q.type === 'cloze' ? q.answers[0] : q.modelAnswer;
-            const givenText = !a?.given ? tr('weiß ich nicht', "don't know") : q.type === 'mc' ? q.options[Number(a.given)] : a.given;
+            const right = q.type === 'mc' ? correctSet(q).map((i) => q.options[i]).join(' · ') : q.type === 'cloze' ? q.answers[0] : q.modelAnswer;
+            const givenText = !a?.given ? tr('weiß ich nicht', "don't know") : q.type === 'mc' ? parseGiven(a.given).map((i) => q.options[i]).join(' · ') : a.given;
             return (
               <li key={q.id}>
                 <p><strong><Rich text={q.prompt} /></strong></p>

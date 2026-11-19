@@ -70,3 +70,32 @@ export function parseRating(spoken: string): Grade | undefined {
   if (/\b(gut|richtig|good|right|correct|ok|okay)\b/.test(s)) return Rating.Good;
   return undefined;
 }
+
+const FILLER = new Set(['und', 'and', 'sowie', 'plus', 'komma', 'oder', 'antwort', 'antworten', 'answer', 'answers', 'option', 'optionen', 'options', 'ich', 'nehme', 'sage', 'i', 'say', 'pick', 'choose', 'auch', 'also', 'die', 'der', 'the', 'buchstabe', 'letter']);
+
+/** Mehrfachauswahl: „A und C“, „die erste und die dritte“ oder Inhalte. Leere Liste = nicht verstanden. */
+export function parseChoices(spoken: string, options: string[]): number[] {
+  const words = norm(spoken).split(' ').filter(Boolean);
+  if (words.length === 0) return [];
+  const found = new Set<number>();
+  let unknown = 0;
+  for (const w of words) {
+    const li = LETTERS.findIndex((l) => l.includes(w));
+    const oi = ORDINALS.findIndex((l) => l.includes(w));
+    if (li >= 0 && li < options.length) found.add(li);
+    else if (oi >= 0 && oi < options.length) found.add(oi);
+    else if (!FILLER.has(w)) unknown++;
+  }
+  // nur Buchstaben/Ordinalzahlen mit Füllwörtern → eindeutig
+  if (found.size && unknown === 0) return [...found].sort((a, b) => a - b);
+  // sonst Inhalte: jede Option, deren Wörter überwiegend genannt wurden
+  const said = new Set(words.filter((w) => w.length > 2));
+  const byContent = options
+    .map((o, i) => {
+      const ow = norm(o).split(' ').filter((w) => w.length > 2);
+      return ow.length && ow.filter((w) => said.has(w)).length / ow.length >= 0.5 ? i : -1;
+    })
+    .filter((i) => i >= 0);
+  if (byContent.length) return byContent;
+  return found.size ? [...found].sort((a, b) => a - b) : [];
+}

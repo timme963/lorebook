@@ -2,10 +2,10 @@ import { useEffect, useRef, useState } from 'react';
 import { checkAuto } from '../lib/courses';
 import type { CardRow, ChapterRow } from '../lib/db';
 import { tr } from '../lib/i18n';
-import type { Question } from '../lib/schema';
+import { correctSet, encodeGiven, isMulti, type Question } from '../lib/schema';
 import { detectLang, listenOnce, speak, stopListening, stopSpeaking, type SpeechLang } from '../lib/speech';
 import { Rating, type Grade } from '../lib/srs';
-import { isDontKnow, isStop, parseChoice, parseRating } from '../lib/voiceAnswer';
+import { isDontKnow, isStop, parseChoice, parseChoices, parseRating } from '../lib/voiceAnswer';
 import Rich from './Rich';
 
 export interface HandsFreeItem {
@@ -19,7 +19,8 @@ type Phase = 'speaking' | 'listening' | 'feedback';
 const L = (lang: SpeechLang, de: string, en: string) => (lang === 'en' ? en : de);
 
 function promptText(q: Question, lang: SpeechLang): string {
-  if (q.type === 'mc') return `${q.prompt} ${q.options.map((o, i) => `${String.fromCharCode(65 + i)}: ${o}.`).join(' ')}`;
+  if (q.type === 'mc')
+    return `${q.prompt} ${q.options.map((o, i) => `${String.fromCharCode(65 + i)}: ${o}.`).join(' ')}${isMulti(q) ? ' ' + L(lang, 'Mehrere Antworten möglich.', 'More than one answer possible.') : ''}`;
   if (q.type === 'cloze') return q.prompt.replace('___', L(lang, ' … Lücke … ', ' … blank … '));
   return q.prompt;
 }
@@ -130,7 +131,15 @@ export default function HandsFree({
           }
           break;
         }
-        if (q.type === 'mc') {
+        if (q.type === 'mc' && isMulti(q)) {
+          const idx = parseChoices(answer, q.options);
+          if (idx.length === 0) {
+            if (tries === 0 && !(await say(L(lang, 'Nicht verstanden. Sag zum Beispiel: A und C.', "Didn't catch that. Say for example: A and C.")))) return 'stop';
+            continue;
+          }
+          understood = true;
+          correct = checkAuto(q, encodeGiven(idx));
+        } else if (q.type === 'mc') {
           const idx = parseChoice(answer, q.options);
           if (idx < 0) {
             if (tries === 0 && !(await say(L(lang, 'Nicht verstanden. Sag A, B, C oder D.', "Didn't catch that. Say A, B, C or D.")))) return 'stop';
@@ -143,7 +152,7 @@ export default function HandsFree({
           correct = checkAuto(q, answer);
         }
       }
-      const right = q.type === 'mc' ? `${String.fromCharCode(65 + q.correct)}: ${q.options[q.correct]}` : q.answers[0];
+      const right = q.type === 'mc' ? correctSet(q).map((i) => `${String.fromCharCode(65 + i)}: ${q.options[i]}`).join('; ') : q.answers[0];
       setVerdict(correct ? tr('Richtig!', 'Correct!') : `${tr('Richtig wäre:', 'Correct would be:')} ${right}`);
       setPhase('feedback');
       const feedback = correct
@@ -179,7 +188,9 @@ export default function HandsFree({
       {verdict && <p className="verdict"><Rich text={verdict} /></p>}
       {error && <p className="error small">{error}</p>}
       <p className="muted small">
-        {q.type === 'mc'
+        {q.type === 'mc' && isMulti(q)
+          ? tr('Mehrere Antworten möglich: sag z. B. „A und C“ – oder „weiß ich nicht“. „Stopp“ beendet.', 'More than one answer possible: say e.g. "A and C" – or "don\'t know". "Stop" ends.')
+          : q.type === 'mc'
           ? tr('Sag „A“, „B“, „C“ oder „D“ – oder „weiß ich nicht“. „Stopp“ beendet.', 'Say "A", "B", "C" or "D" – or "don\'t know". "Stop" ends.')
           : q.type === 'cloze'
             ? tr('Sag das fehlende Wort – oder „weiß ich nicht“. „Stopp“ beendet.', 'Say the missing word – or "don\'t know". "Stop" ends.')

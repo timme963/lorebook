@@ -4,7 +4,7 @@ import { setLang } from './i18n';
 import { parseChapterFile } from './importer';
 import { fixInvalidEscapes, hasMath, repairMath, splitMath, stripMath } from './math';
 import { Rating } from './srs';
-import { isDontKnow, isStop, parseChoice, parseRating } from './voiceAnswer';
+import { isDontKnow, isStop, parseChoice, parseChoices, parseRating } from './voiceAnswer';
 
 const BS = '\\';
 
@@ -85,5 +85,34 @@ describe('Änderungs-Listener', () => {
     offA();
     offB();
     expect(a + b).toBe(0);
+  });
+});
+
+describe('Mehrfachauswahl', () => {
+  it('wertet Einfach- und Mehrfachauswahl aus', async () => {
+    const { mcCorrect, mcScore, isMulti, ChapterFileSchema } = await import('./schema');
+    const single = { correct: 1, options: ['a', 'b', 'c', 'd'] };
+    const multi = { correct: [0, 2], options: ['a', 'b', 'c', 'd'] };
+    expect(isMulti(single)).toBe(false);
+    expect(mcCorrect(single, '1')).toBe(true);
+    expect(mcScore(single, '2')).toBe(0);
+    expect(mcCorrect(multi, '2,0')).toBe(true);
+    expect(mcCorrect(multi, '0')).toBe(false);
+    expect(mcScore(multi, '0')).toBe(0.5);
+    expect(mcScore(multi, '0,1')).toBe(0);
+    expect(mcScore(multi, '0,1,2')).toBe(0.5);
+    // Schema: Liste mit ungültigem Index wird abgelehnt
+    const file = structuredClone(DEMO_CHAPTER) as any;
+    file.chapter.pretest[0].correct = [0, 7];
+    expect(ChapterFileSchema.safeParse(file).success).toBe(false);
+    file.chapter.pretest[0].correct = [0, 2];
+    expect(ChapterFileSchema.safeParse(file).success).toBe(true);
+  });
+  it('versteht mehrere gesprochene Antworten', () => {
+    const opts = ['Karteikarten abfragen', 'Markieren', 'Leeres Blatt', 'Wiederlesen'];
+    expect(parseChoices('A und C', opts)).toEqual([0, 2]);
+    expect(parseChoices('die erste und die dritte', opts)).toEqual([0, 2]);
+    expect(parseChoices('bee and dee', opts)).toEqual([1, 3]);
+    expect(parseChoices('blabla nichts', opts)).toEqual([]);
   });
 });

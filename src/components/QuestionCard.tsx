@@ -1,7 +1,7 @@
 import { useState, type ReactNode } from 'react';
 import { checkAuto } from '../lib/courses';
 import type { AnswerRecord } from '../lib/db';
-import { LEVEL_LABEL, type Question } from '../lib/schema';
+import { correctSet, encodeGiven, isMulti, LEVEL_LABEL, mcScore, parseGiven, type Question } from '../lib/schema';
 import { SourceButton } from './Source';
 import { tr } from '../lib/i18n';
 import { DictateButton, SpeakButton } from './Speech';
@@ -31,7 +31,8 @@ export default function QuestionCard({ q, courseId, mode, onDone, after, meta }:
       return;
     }
     const correct = value !== '' && checkAuto(q, value);
-    const r: AnswerRecord = { given: value, correct, score: correct ? 1 : 0 };
+    const score = q.type === 'mc' ? mcScore(q, value) : correct ? 1 : 0;
+    const r: AnswerRecord = { given: value, correct, score };
     if (mode === 'silent') return onDone(r);
     setRecord(r);
   }
@@ -43,11 +44,22 @@ export default function QuestionCard({ q, courseId, mode, onDone, after, meta }:
   }
 
   const locked = !!record || revealed;
+  const multi = q.type === 'mc' && isMulti(q);
+  const right = q.type === 'mc' ? correctSet(q) : [];
+  const picked = parseGiven(record ? record.given : given);
+  const multiHint = tr('Mehrere Antworten möglich', 'More than one answer possible');
+
+  function clickOption(i: number) {
+    if (multi) return setGiven(encodeGiven(picked.includes(i) ? picked.filter((x) => x !== i) : [...picked, i]));
+    if (mode === 'silent') return submit(String(i));
+    setGiven(String(i));
+  }
 
   // Vorlesetext: Frage, bei Lückentext „Lücke“, bei Multiple Choice die Optionen mit Buchstaben
   const promptText =
     (q.type === 'cloze' ? q.prompt.replace('___', tr(' … Lücke … ', ' … blank … ')) : q.prompt) +
-    (q.type === 'mc' ? ' ' + q.options.map((o, i) => `${String.fromCharCode(65 + i)}: ${o}.`).join(' ') : '');
+    (q.type === 'mc' ? ' ' + q.options.map((o, i) => `${String.fromCharCode(65 + i)}: ${o}.`).join(' ') : '') +
+    (multi ? ` ${multiHint}.` : '');
 
   return (
     <article className="card question">
@@ -59,19 +71,25 @@ export default function QuestionCard({ q, courseId, mode, onDone, after, meta }:
         <h3 className="q-prompt"><Rich text={q.type === 'cloze' ? q.prompt.replace('___', '_____') : q.prompt} /></h3>
         <SpeakButton text={promptText} />
       </div>
+      {multi && <p className="multi-hint">☑ {multiHint}</p>}
 
       {q.type === 'mc' && (
         <div className="options">
           {q.options.map((opt, i) => {
-            let cls = 'option';
+            let cls = multi ? 'option multi' : 'option';
             if (record) {
-              if (i === q.correct) cls += ' correct';
-              else if (String(i) === record.given) cls += ' wrong';
-            } else if (String(i) === given) cls += ' selected';
+              const isRight = right.includes(i);
+              const chosen = picked.includes(i);
+              if (isRight) cls += chosen || !multi ? ' correct' : ' correct missed';
+              else if (chosen) cls += ' wrong';
+            } else if (picked.includes(i)) cls += ' selected';
             return (
-              <button key={i} type="button" className={cls} disabled={locked} onClick={() => (mode === 'silent' ? submit(String(i)) : setGiven(String(i)))}>
-                <span className="opt-letter">{String.fromCharCode(65 + i)}</span>
-                <span><Rich text={opt} /></span>
+              <button key={i} type="button" className={cls} disabled={locked} aria-pressed={multi ? picked.includes(i) : undefined} onClick={() => clickOption(i)}>
+                <span className="opt-letter">{multi && picked.includes(i) ? '✓' : String.fromCharCode(65 + i)}</span>
+                <span>
+                  <Rich text={opt} />
+                  {record && multi && right.includes(i) && !picked.includes(i) && <em className="missed-label"> – {tr('übersehen', 'missed')}</em>}
+                </span>
               </button>
             );
           })}
@@ -104,7 +122,7 @@ export default function QuestionCard({ q, courseId, mode, onDone, after, meta }:
 
       {!locked && (
         <div className="row gap wrap actions">
-          {(q.type !== 'mc' || mode === 'feedback') && (
+          {(q.type !== 'mc' || mode === 'feedback' || multi) && (
             <button className="btn primary" disabled={!given.trim()} onClick={() => submit(given.trim())}>
               {q.type === 'open' && mode === 'feedback' ? tr('Musterantwort zeigen', 'Show model answer') : mode === 'silent' ? tr('Weiter', 'Next') : tr('Prüfen', 'Check')}
             </button>
@@ -142,7 +160,12 @@ export default function QuestionCard({ q, courseId, mode, onDone, after, meta }:
               ? tr(`${Math.round(record.score * 100)} % der Kernpunkte`, `${Math.round(record.score * 100)} % of key points`)
               : record.correct
                 ? tr('Richtig!', 'Correct!')
-                : tr('Nicht ganz.', 'Not quite.')}
+                : multi && record.score > 0
+                  ? tr(`Teilweise richtig (${Math.round(record.score * 100)} %).`, `Partly correct (${Math.round(record.score * 100)} %).`)
+                  : tr('Nicht ganz.', 'Not quite.')}
+            {multi && !record.correct && (
+              <> {tr('Richtig sind:', 'Correct are:')} <strong>{right.map((i) => String.fromCharCode(65 + i)).join(', ')}</strong></>
+            )}
             {q.type === 'cloze' && !record.correct && <> {tr('Richtig wäre:', 'Correct would be:')} <strong>{q.answers[0]}</strong></>}
           </p>
           {q.type === 'open' && record.given && (

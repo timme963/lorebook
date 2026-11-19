@@ -2,6 +2,7 @@ import { db, slug, type ChapterRow, type CourseRow } from './db';
 import { addXp } from './progress';
 import { chapterQuestions, createCardsForChapter } from './srs';
 import type { ChapterFile, Question } from './schema';
+import { mcCorrect } from './schema';
 
 export async function importChapter(file: ChapterFile, targetCourseId?: string): Promise<{ course: CourseRow; chapter: ChapterRow; replaced: boolean }> {
   return db.transaction('rw', [db.courses, db.chapters, db.cards, db.tombstones], async () => {
@@ -129,7 +130,7 @@ export function isAutoGraded(q: Question): boolean {
 }
 
 export function checkAuto(q: Question, given: string): boolean {
-  if (q.type === 'mc') return Number(given) === q.correct;
+  if (q.type === 'mc') return mcCorrect(q, given);
   if (q.type === 'cloze') return checkCloze(given, q.answers);
   return false;
 }

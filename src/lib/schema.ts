@@ -34,12 +34,49 @@ export const McQuestionSchema = z
     ...base,
     type: z.literal('mc'),
     options: z.array(nonEmpty).min(2, { error: () => tr('mindestens 2 Optionen', 'at least 2 options') }).max(6, { error: () => tr('höchstens 6 Optionen', 'at most 6 options') }),
-    correct: z.number().int().min(0),
+    /** Zahl = Einfachauswahl (genau eine richtig), Liste = Mehrfachauswahl (1 bis alle richtig) */
+    correct: z.union([z.number().int().min(0), z.array(z.number().int().min(0)).min(1)]),
   })
-  .refine((q) => q.correct < q.options.length, {
+  .refine((q) => correctSet(q).every((i) => i < q.options.length), {
     error: () => tr('"correct" zeigt auf keine vorhandene Option', '"correct" does not point to an existing option'),
     path: ['correct'],
+  })
+  .refine((q) => !Array.isArray(q.correct) || new Set(q.correct).size === q.correct.length, {
+    error: () => tr('"correct" enthält eine Option doppelt', '"correct" lists an option twice'),
+    path: ['correct'],
   });
+
+// ---------- Multiple Choice: Einfach- und Mehrfachauswahl ----------
+
+type McLike = { correct: number | number[]; options: string[] };
+
+/** Mehrfachauswahl („mehrere Antworten möglich“)? */
+export const isMulti = (q: McLike): boolean => Array.isArray(q.correct);
+
+/** Indizes der richtigen Optionen, sortiert */
+export const correctSet = (q: McLike): number[] => (Array.isArray(q.correct) ? [...q.correct] : [q.correct]).sort((a, b) => a - b);
+
+/** Gespeicherte Antwort „0,2“ → [0, 2] */
+export const parseGiven = (given: string): number[] =>
+  given.trim() === '' ? [] : [...new Set(given.split(',').map(Number).filter((n) => Number.isInteger(n) && n >= 0))].sort((a, b) => a - b);
+
+export const encodeGiven = (idx: number[]): string => [...new Set(idx)].sort((a, b) => a - b).join(',');
+
+/** Punkte 0..1: Einfachauswahl ganz oder gar nicht; Mehrfachauswahl (Treffer − Fehlgriffe) / Anzahl richtiger, mindestens 0. */
+export function mcScore(q: McLike, given: string): number {
+  const right = correctSet(q);
+  const picked = parseGiven(given);
+  if (!isMulti(q)) return picked.length === 1 && picked[0] === right[0] ? 1 : 0;
+  const hits = picked.filter((i) => right.includes(i)).length;
+  return Math.max(0, (hits - (picked.length - hits)) / right.length);
+}
+
+/** Exakt richtig? (Mehrfachauswahl: genau die richtigen Optionen gewählt) */
+export function mcCorrect(q: McLike, given: string): boolean {
+  const right = correctSet(q);
+  const picked = parseGiven(given);
+  return picked.length === right.length && picked.every((v, i) => v === right[i]);
+}
 
 export const ClozeQuestionSchema = z
   .object({

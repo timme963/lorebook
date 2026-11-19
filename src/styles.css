@@ -355,3 +355,16 @@ details summary { cursor: pointer; color: var(--muted); margin-bottom: 8px; }
 
 /* Story anhören */
 .listen-bar { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+
+/* Mehrfachauswahl */
+.multi-hint { margin: -4px 0 0; font-size: 0.85rem; font-weight: 600; color: var(--accent); }
+.option.correct.missed { border-style: dashed; opacity: 0.85; }
+.missed-label { font-size: 0.85em; color: var(--good); }
+/* Mehrfachauswahl: Buchstabe als Kästchen, gewählt = gefüllt mit Haken; Einfachauswahl rund */
+.option:not(.multi) .opt-letter { border-radius: 50%; }
+.option.multi .opt-letter { border: 2px solid var(--line); background: transparent; border-radius: 5px; }
+.option.multi.selected .opt-letter,
+.option.multi.correct:not(.missed) .opt-letter,
+.option.multi.wrong .opt-letter { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
+.option.multi.wrong .opt-letter { background: var(--bad); border-color: var(--bad); }
+.option.multi.correct:not(.missed) .opt-letter { background: var(--good); border-color: var(--good); }

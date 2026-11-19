@@ -86,4 +86,4 @@ Projekt `lorebook` (`pvzzxmwtaokcefkuyevn`, Frankfurt).
 }
 ```
 
-Fragetypen: `mc` (`options`, `correct`), `cloze` (`___` im `prompt`, `answers`), `open` (`modelAnswer`, `rubric`). Jede Frage hat `id`, `objective`, `level` (`remember|understand|apply|transfer`), `explanation` und `source`.
+Fragetypen: `mc` (`options`, `correct` als Zahl = Einfachauswahl oder Liste wie `[0, 2]` = Mehrfachauswahl, „mehrere Antworten möglich“), `cloze` (`___` im `prompt`, `answers`), `open` (`modelAnswer`, `rubric`). Jede Frage hat `id`, `objective`, `level` (`remember|understand|apply|transfer`), `explanation` und `source`.
