@@ -86,7 +86,7 @@ function CourseCard({ course: c, chapterCount, done, dueCount, draggable }: Cour
 
   return (
     <div ref={setNodeRef} style={style} className={classes.join(' ')}>
-      <div className="row between gap">
+      <div className="course-head">
         {draggable && (
           <button
             ref={setActivatorNodeRef}
@@ -99,7 +99,7 @@ function CourseCard({ course: c, chapterCount, done, dueCount, draggable }: Cour
             ⠿
           </button>
         )}
-        <h3 className="grow">
+        <h3>
           <a className="course-link" href={href({ name: 'course', id: c.id })}>
             {c.title}
           </a>
