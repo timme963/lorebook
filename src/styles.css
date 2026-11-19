@@ -302,6 +302,29 @@ code {
   color: var(--muted);
   cursor: pointer;
 }
+.drag-handle {
+  background: none;
+  border: 0;
+  padding: 0 2px;
+  min-width: 28px;
+  min-height: 36px;
+  font-size: 1.2rem;
+  line-height: 1;
+  color: var(--muted);
+  cursor: grab;
+  touch-action: none;
+}
+.drag-handle:active {
+  cursor: grabbing;
+}
+.course-card.dragging {
+  z-index: 2;
+  box-shadow: 0 8px 28px rgb(31 27 46 / 18%);
+  cursor: grabbing;
+}
+.course-card.dragging:hover {
+  transform: none;
+}
 .star-btn[aria-pressed='true'],
 .star-btn:hover {
   color: var(--accent);

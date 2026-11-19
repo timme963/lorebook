@@ -16,6 +16,10 @@ Erzeugt von `npm run licenses` aus `package-lock.json` und den Gradle-Dateien; n
 | @capacitor/local-notifications | 8.3.1 | MIT | <https://github.com/ionic-team/capacitor-local-notifications> |
 | @capacitor/share | 8.0.3 | MIT | <https://github.com/ionic-team/capacitor-plugins> |
 | @capacitor/synapse | 1.0.4 | ISC | <https://www.npmjs.com/package/@capacitor/synapse> |
+| @dnd-kit/accessibility | 3.1.1 | MIT | <https://github.com/clauderic/dnd-kit> |
+| @dnd-kit/core | 6.3.1 | MIT | <https://github.com/clauderic/dnd-kit> |
+| @dnd-kit/sortable | 10.0.0 | MIT | <https://github.com/clauderic/dnd-kit> |
+| @dnd-kit/utilities | 3.2.2 | MIT | <https://github.com/clauderic/dnd-kit> |
 | @open-spaced-repetition/srs-kit | 1.0.0 | BSD-3-Clause | <https://github.com/open-spaced-repetition/ts-fsrs> |
 | @supabase/auth-js | 2.119.2 | MIT | <https://github.com/supabase/supabase-js> |
 | @supabase/functions-js | 2.119.2 | MIT | <https://github.com/supabase/supabase-js> |

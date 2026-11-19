@@ -1,9 +1,10 @@
 import { useLiveQuery } from 'dexie-react-hooks';
 import { useState } from 'react';
-import { importChapter, moveCourse, sortCourses, toggleStar } from '../lib/courses';
-import { db, type CourseRow } from '../lib/db';
+import CourseGrid from '../components/CourseGrid';
+import { importChapter, sortCourses } from '../lib/courses';
+import { db } from '../lib/db';
 import { demoChapter, findDemoCourse, localizeDemo } from '../lib/demo';
-import { plural, tr } from '../lib/i18n';
+import { tr } from '../lib/i18n';
 import { currentStreak, levelFor, levelTitle, totalXp } from '../lib/progress';
 import { dueCards } from '../lib/srs';
 import { go, href } from '../router';
@@ -20,7 +21,6 @@ export default function Home() {
     return { courses: sortCourses(courses), chapters, due, xp, streak };
   });
   const [loadingDemo, setLoadingDemo] = useState(false);
-  const [reordering, setReordering] = useState(false);
 
   if (!data) return null;
   const { courses, chapters, due, xp, streak } = data;
@@ -77,16 +77,9 @@ export default function Home() {
 
       <div className="row between">
         <h2>{tr('Deine Kurse', 'Your courses')}</h2>
-        <div className="row gap wrap">
-          {courses.length > 1 && (
-            <button className={`btn ${reordering ? 'primary' : 'ghost'}`} onClick={() => setReordering((r) => !r)}>
-              {reordering ? tr('Fertig', 'Done') : tr('↕ Sortieren', '↕ Reorder')}
-            </button>
-          )}
-          <a className="btn" href={href({ name: 'import' })}>
-            {tr('+ Kapitel importieren', '+ Import chapter')}
-          </a>
-        </div>
+        <a className="btn" href={href({ name: 'import' })}>
+          {tr('+ Kapitel importieren', '+ Import chapter')}
+        </a>
       </div>
 
       {courses.length === 0 && (
@@ -115,66 +108,7 @@ export default function Home() {
         </section>
       )}
 
-      <div className="grid">
-        {courses.map((c, i) => {
-          const chs = chapters.filter((ch) => ch.courseId === c.id);
-          const done = chs.filter((ch) => ch.phase === 'done').length;
-          const dueHere = due.filter((d) => d.courseId === c.id).length;
-          // moving stays within the starred or the unstarred group
-          const sameGroup = (other: CourseRow | undefined) => other !== undefined && !!other.starred === !!c.starred;
-          const canUp = sameGroup(courses[i - 1]);
-          const canDown = sameGroup(courses[i + 1]);
-          return (
-            <div key={c.id} className={`card course-card${c.starred ? ' starred' : ''}`}>
-              <div className="row between gap">
-                <h3>
-                  <a className="course-link" href={href({ name: 'course', id: c.id })}>
-                    {c.title}
-                  </a>
-                </h3>
-                <button
-                  className="star-btn"
-                  aria-pressed={!!c.starred}
-                  title={
-                    c.starred ? tr('Stern entfernen', 'Remove star') : tr('Mit Stern nach oben', 'Star and pin to top')
-                  }
-                  onClick={() => toggleStar(c.id)}
-                >
-                  {c.starred ? '★' : '☆'}
-                </button>
-              </div>
-              <p className="muted small">
-                {plural(chs.length, 'Kapitel', 'Kapitel', 'chapter', 'chapters')} · {done}{' '}
-                {tr('abgeschlossen', 'completed')}
-                {dueHere ? ` · ${dueHere} ${tr('fällig', 'due')}` : ''}
-              </p>
-              <div className="bar">
-                <div style={{ width: chs.length ? `${(done / chs.length) * 100}%` : '0%' }} />
-              </div>
-              {reordering && (
-                <div className="row gap reorder">
-                  <button
-                    className="btn small"
-                    disabled={!canUp}
-                    onClick={() => moveCourse(c.id, -1)}
-                    aria-label={tr(`${c.title} nach oben`, `Move ${c.title} up`)}
-                  >
-                    ↑
-                  </button>
-                  <button
-                    className="btn small"
-                    disabled={!canDown}
-                    onClick={() => moveCourse(c.id, 1)}
-                    aria-label={tr(`${c.title} nach unten`, `Move ${c.title} down`)}
-                  >
-                    ↓
-                  </button>
-                </div>
-              )}
-            </div>
-          );
-        })}
-      </div>
+      <CourseGrid courses={courses} chapters={chapters} due={due} />
     </div>
   );
 }

@@ -103,27 +103,27 @@ export function sortCourses(courses: readonly CourseRow[]): CourseRow[] {
   return [...courses].sort((a, b) => Number(!!b.starred) - Number(!!a.starred) || orderKey(a) - orderKey(b));
 }
 
-/** Course IDs in display order after moving `id` one place up (-1) or down (1); unchanged at a group boundary. */
-export function reorderedIds(courses: readonly CourseRow[], id: string, delta: -1 | 1): string[] {
+/** Course IDs in display order after dropping `activeId` onto `overId`; unchanged across the starred/unstarred boundary. */
+export function reorderedIds(courses: readonly CourseRow[], activeId: string, overId: string): string[] {
   const list = sortCourses(courses);
-  const i = list.findIndex((c) => c.id === id);
-  const current = list[i];
-  const neighbour = list[i + delta];
-  // starred and unstarred courses are separate groups; a course cannot be moved across the boundary
-  if (current && neighbour && !!current.starred === !!neighbour.starred) {
-    list[i] = neighbour;
-    list[i + delta] = current;
+  const from = list.findIndex((c) => c.id === activeId);
+  const to = list.findIndex((c) => c.id === overId);
+  const moving = list[from];
+  const target = list[to];
+  // starring decides the group, so dragging cannot move a course into the other group
+  if (moving && target && !!moving.starred === !!target.starred) {
+    list.splice(from, 1);
+    list.splice(to, 0, moving);
   }
   return list.map((c) => c.id);
 }
 
-export async function moveCourse(id: string, delta: -1 | 1): Promise<void> {
+export async function moveCourse(activeId: string, overId: string): Promise<void> {
   await db.transaction('rw', db.courses, async () => {
     const courses = await db.courses.toArray();
-    const ids = reorderedIds(courses, id, delta);
-    const byId = new Map(courses.map((c) => [c.id, c]));
-    for (const [position, courseId] of ids.entries()) {
-      if (byId.get(courseId)?.position !== position) await db.courses.update(courseId, { position });
+    const positions = new Map(courses.map((c) => [c.id, c.position]));
+    for (const [position, id] of reorderedIds(courses, activeId, overId).entries()) {
+      if (positions.get(id) !== position) await db.courses.update(id, { position });
     }
   });
 }
