@@ -1,0 +1,9 @@
+[extend]
+useDefault = true
+
+# The Supabase publishable key is meant for client code and ships in the web bundle anyway;
+# access to data is enforced by row level security. Secret keys (sb_secret_…) are still reported.
+[allowlist]
+description = "Supabase publishable key (public by design)"
+regexTarget = "match"
+regexes = ['''sb_publishable_[A-Za-z0-9_-]+''']
