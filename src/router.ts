@@ -14,10 +14,10 @@ export type Route =
   | { name: 'datenschutz' };
 
 export function parseHash(hash: string): Route {
-  const [path, query = ''] = hash.replace(/^#/, '').split('?');
+  const [path = '', query = ''] = hash.replace(/^#/, '').split('?');
   const parts = path.split('/').filter(Boolean).map(decodeURIComponent);
   const params = new URLSearchParams(query);
-  switch (parts[0]) {
+  switch (parts[0] ?? '') {
     case 'import':
       return { name: 'import', courseId: params.get('course') ?? undefined };
     case 'course':

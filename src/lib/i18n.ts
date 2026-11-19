@@ -1,9 +1,9 @@
 import { useSyncExternalStore } from 'react';
 
 /**
- * Zwei Sprachen, inline übersetzt: tr('Weiter', 'Next').
- * Die Wahl liegt pro Gerät in localStorage (wird nicht synchronisiert). Standard: Browsersprache.
- * App() abonniert die Sprache, dadurch rendert beim Umschalten der ganze Baum neu.
+ * Two languages, translated inline: tr('Weiter', 'Next').
+ * The choice is stored per device in localStorage (not synced). Default: browser language.
+ * App() subscribes to the language, so the whole tree re-renders on a switch.
  */
 export type Lang = 'de' | 'en';
 
@@ -15,7 +15,7 @@ function initial(): Lang {
     const v = localStorage.getItem(KEY);
     if (v === 'de' || v === 'en') return v;
   } catch {
-    /* privater Modus */
+    /* private mode */
   }
   return (navigator.language || 'de').toLowerCase().startsWith('de') ? 'de' : 'en';
 }
@@ -30,7 +30,7 @@ export function setLang(l: Lang): void {
   try {
     localStorage.setItem(KEY, l);
   } catch {
-    /* egal */
+    /* not critical */
   }
   if (typeof document !== 'undefined') document.documentElement.lang = l;
   subs.forEach((f) => f());
@@ -47,21 +47,21 @@ export function useLang(): Lang {
   );
 }
 
-/** Wird nach jedem Umschalten aufgerufen */
+/** Called after every language switch */
 export function onLangChange(fn: () => void): () => void {
   subs.add(fn);
   return () => subs.delete(fn);
 }
 
-/** Inline-Übersetzung */
+/** Inline translation */
 export function tr<T>(de: T, en: T): T {
   return current === 'en' ? en : de;
 }
 
-/** Locale für Datums- und Zahlenformat */
+/** Locale for date and number formatting */
 export const locale = (): string => (current === 'en' ? 'en-GB' : 'de-DE');
 
-/** Einzahl/Mehrzahl: plural(n, 'Karte', 'Karten', 'card', 'cards') → "3 Karten" */
+/** Singular/plural: plural(n, 'Karte', 'Karten', 'card', 'cards') → "3 Karten" */
 export function plural(n: number, deOne: string, deMany: string, enOne: string, enMany: string): string {
   return `${n} ${n === 1 ? tr(deOne, enOne) : tr(deMany, enMany)}`;
 }

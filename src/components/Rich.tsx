@@ -6,7 +6,7 @@ type Katex = { renderToString: (tex: string, opts: { displayMode: boolean; throw
 let katex: Katex | undefined;
 let loading: Promise<void> | undefined;
 
-/** KaTeX nur laden, wenn ein Text wirklich Formeln enthält */
+/** Loads KaTeX only once a text actually contains formulas. */
 function loadKatex(): Promise<void> {
   loading ??= Promise.all([import('katex'), import('katex/dist/katex.min.css')]).then(([m]) => {
     katex = (m as unknown as { default: Katex }).default;
@@ -14,13 +14,16 @@ function loadKatex(): Promise<void> {
   return loading;
 }
 
-/** Text mit Formeln (\( … \) und \[ … \]) – ohne Formeln einfach der Text. */
+/** Text with formulas (\( … \) and \[ … \]); without formulas just the text. */
 export default function Rich({ text }: { text: string }) {
   const need = hasMath(text);
   const [, setReady] = useState(!!katex);
 
   useEffect(() => {
-    if (need && !katex) loadKatex().then(() => setReady(true)).catch(() => undefined);
+    if (need && !katex)
+      loadKatex()
+        .then(() => setReady(true))
+        .catch(() => undefined);
   }, [need]);
 
   if (!need) return <>{text}</>;
@@ -28,12 +31,19 @@ export default function Rich({ text }: { text: string }) {
     <>
       {splitMath(text).map((p, i) => {
         if (!p.math) return <span key={i}>{p.text}</span>;
-        if (!katex) return <span key={i} className="math-fallback">{texToPlain(p.tex)}</span>;
+        if (!katex)
+          return (
+            <span key={i} className="math-fallback">
+              {texToPlain(p.tex)}
+            </span>
+          );
         return (
           <span
             key={i}
             className={p.display ? 'math-display' : 'math-inline'}
-            dangerouslySetInnerHTML={{ __html: katex.renderToString(p.tex, { displayMode: p.display, throwOnError: false }) }}
+            dangerouslySetInnerHTML={{
+              __html: katex.renderToString(p.tex, { displayMode: p.display, throwOnError: false }),
+            }}
           />
         );
       })}

@@ -1,3 +1,4 @@
+import { errorMessage } from '../lib/errors';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { useEffect, useRef, useState } from 'react';
 import { db } from '../lib/db';
@@ -33,7 +34,7 @@ function PdfModal({ courseId, source, onClose }: { courseId: string; source: Sou
     const width = Math.min(820, window.innerWidth - 48);
     renderPage(pdf.blob, page, canvasRef.current, width)
       .then(setTotal)
-      .catch((e) => setError(String(e?.message ?? e)));
+      .catch((e: unknown) => setError(errorMessage(e)));
   }, [pdf, page]);
 
   useEffect(() => {
@@ -46,21 +47,45 @@ function PdfModal({ courseId, source, onClose }: { courseId: string; source: Sou
     <div className="modal-backdrop" onClick={onClose}>
       <div className="modal" onClick={(e) => e.stopPropagation()} role="dialog" aria-label={tr('Quelle', 'Source')}>
         <div className="modal-head">
-          <strong>{tr('Quelle · Seite', 'Source · page')} {page}{total ? ` / ${total}` : ''}</strong>
-          <button className="btn ghost" onClick={onClose} aria-label={tr('Schließen', 'Close')}>✕</button>
+          <strong>
+            {tr('Quelle · Seite', 'Source · page')} {page}
+            {total ? ` / ${total}` : ''}
+          </strong>
+          <button className="btn ghost" onClick={onClose} aria-label={tr('Schließen', 'Close')}>
+            ✕
+          </button>
         </div>
         <blockquote className="quote">„{source.quote}“</blockquote>
         {pdf === undefined ? null : pdf === null ? (
-          <p className="muted">{tr('Für diesen Kurs ist kein PDF hinterlegt. Auf der Kursseite kannst du das PDF hinzufügen, dann siehst du hier die Originalseite.', 'No PDF is attached to this course. Add the PDF on the course page to see the original page here.')}</p>
+          <p className="muted">
+            {tr(
+              'Für diesen Kurs ist kein PDF hinterlegt. Auf der Kursseite kannst du das PDF hinzufügen, dann siehst du hier die Originalseite.',
+              'No PDF is attached to this course. Add the PDF on the course page to see the original page here.',
+            )}
+          </p>
         ) : (
           <>
             <div className="row gap">
-              <button className="btn small" disabled={page <= 1} onClick={() => setPage((p) => p - 1)}>← {tr('Seite', 'Page')}</button>
-              <button className="btn small" disabled={!!total && page >= total} onClick={() => setPage((p) => p + 1)}>{tr('Seite', 'Page')} →</button>
-              {page !== source.page && <button className="btn small ghost" onClick={() => setPage(source.page)}>{tr('zur Quellseite', 'back to source page')}</button>}
+              <button className="btn small" disabled={page <= 1} onClick={() => setPage((p) => p - 1)}>
+                ← {tr('Seite', 'Page')}
+              </button>
+              <button className="btn small" disabled={!!total && page >= total} onClick={() => setPage((p) => p + 1)}>
+                {tr('Seite', 'Page')} →
+              </button>
+              {page !== source.page && (
+                <button className="btn small ghost" onClick={() => setPage(source.page)}>
+                  {tr('zur Quellseite', 'back to source page')}
+                </button>
+              )}
             </div>
-            {error && <p className="error">{tr('PDF konnte nicht angezeigt werden:', 'Could not display PDF:')} {error}</p>}
-            <div className="pdf-frame"><canvas ref={canvasRef} /></div>
+            {error && (
+              <p className="error">
+                {tr('PDF konnte nicht angezeigt werden:', 'Could not display PDF:')} {error}
+              </p>
+            )}
+            <div className="pdf-frame">
+              <canvas ref={canvasRef} />
+            </div>
           </>
         )}
       </div>

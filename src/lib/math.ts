@@ -1,6 +1,6 @@
 /**
- * Formeln in Lerninhalten: LaTeX zwischen \( … \) (im Text) und \[ … \] (abgesetzt).
- * Keine $-Begrenzer, damit Geldbeträge in BWL-Texten nicht als Formel gelten.
+ * Formulas in study content: LaTeX between \( … \) (inline) and \[ … \] (display).
+ * No $ delimiters, so amounts of money in business texts are not taken for formulas.
  */
 
 export const MATH_RE = /\\\(([\s\S]+?)\\\)|\\\[([\s\S]+?)\\\]/g;
@@ -13,31 +13,78 @@ export function splitMath(s: string): Part[] {
   const parts: Part[] = [];
   let last = 0;
   for (const m of s.matchAll(MATH_RE)) {
-    if (m.index! > last) parts.push({ math: false, text: s.slice(last, m.index) });
-    parts.push(m[1] !== undefined ? { math: true, tex: m[1], display: false } : { math: true, tex: m[2], display: true });
-    last = m.index! + m[0].length;
+    if (m.index > last) parts.push({ math: false, text: s.slice(last, m.index) });
+    parts.push(
+      m[1] !== undefined ? { math: true, tex: m[1], display: false } : { math: true, tex: m[2] ?? '', display: true },
+    );
+    last = m.index + m[0].length;
   }
   if (last < s.length) parts.push({ math: false, text: s.slice(last) });
   return parts;
 }
 
-/** Formel als lesbarer Text – für die Anzeige, solange KaTeX lädt, und fürs Vorlesen. */
+/** Formula as readable text – shown while KaTeX loads, and used for read-aloud. */
 export function texToPlain(tex: string): string {
   let t = tex;
   for (let i = 0; i < 3; i++) {
     t = t.replace(/\\[dt]?frac\{([^{}]*)\}\{([^{}]*)\}/g, '($1)/($2)').replace(/\\sqrt\{([^{}]*)\}/g, '√($1)');
   }
   const sym: Record<string, string> = {
-    cdot: '·', times: '×', div: '÷', pm: '±', le: '≤', leq: '≤', ge: '≥', geq: '≥', neq: '≠', ne: '≠', approx: '≈',
-    sum: 'Σ', prod: 'Π', int: '∫', infty: '∞', alpha: 'α', beta: 'β', gamma: 'γ', delta: 'δ', Delta: 'Δ', epsilon: 'ε',
-    lambda: 'λ', mu: 'μ', pi: 'π', rho: 'ρ', sigma: 'σ', Sigma: 'Σ', theta: 'θ', phi: 'φ', omega: 'ω', rightarrow: '→',
-    to: '→', Rightarrow: '⇒', leftarrow: '←', in: '∈', partial: '∂', ldots: '…', dots: '…', percent: '%',
+    cdot: '·',
+    times: '×',
+    div: '÷',
+    pm: '±',
+    le: '≤',
+    leq: '≤',
+    ge: '≥',
+    geq: '≥',
+    neq: '≠',
+    ne: '≠',
+    approx: '≈',
+    sum: 'Σ',
+    prod: 'Π',
+    int: '∫',
+    infty: '∞',
+    alpha: 'α',
+    beta: 'β',
+    gamma: 'γ',
+    delta: 'δ',
+    Delta: 'Δ',
+    epsilon: 'ε',
+    lambda: 'λ',
+    mu: 'μ',
+    pi: 'π',
+    rho: 'ρ',
+    sigma: 'σ',
+    Sigma: 'Σ',
+    theta: 'θ',
+    phi: 'φ',
+    omega: 'ω',
+    rightarrow: '→',
+    to: '→',
+    Rightarrow: '⇒',
+    leftarrow: '←',
+    in: '∈',
+    partial: '∂',
+    ldots: '…',
+    dots: '…',
+    percent: '%',
   };
-  t = t.replace(/\\([a-zA-Z]+)/g, (_, name: string) => sym[name] ?? (/^(left|right|mathrm|text|operatorname|mathit|mathbf|quad|qquad|displaystyle)$/.test(name) ? '' : name));
-  return t.replace(/\\%/g, '%').replace(/\\[,;: ]/g, ' ').replace(/[{}]/g, '').replace(/\s+/g, ' ').trim();
+  t = t.replace(
+    /\\([a-zA-Z]+)/g,
+    (_, name: string) =>
+      sym[name] ??
+      (/^(left|right|mathrm|text|operatorname|mathit|mathbf|quad|qquad|displaystyle)$/.test(name) ? '' : name),
+  );
+  return t
+    .replace(/\\%/g, '%')
+    .replace(/\\[,;: ]/g, ' ')
+    .replace(/[{}]/g, '')
+    .replace(/\s+/g, ' ')
+    .trim();
 }
 
-/** Ganzer Text mit Formeln als lesbarer Text */
+/** Whole text with formulas as readable text */
 export function stripMath(s: string): string {
   if (!hasMath(s)) return s;
   return splitMath(s)
@@ -45,24 +92,29 @@ export function stripMath(s: string): string {
     .join('');
 }
 
-// ---------------------------------------------------------------- Reparatur beim Import
+// ---------------------------------------------------------------- Repair on import
 
 /**
- * KI-Modelle vergessen oft, Backslashes im JSON zu verdoppeln. "\(" ist kein gültiges JSON-Escape → Parse-Fehler.
- * Ungültige Escapes werden zu einem echten Backslash.
+ * AI models often forget to double backslashes in JSON. "\(" is no valid JSON escape → parse error.
+ * Invalid escapes become a literal backslash.
  */
 export function fixInvalidEscapes(json: string): string {
   return json.replace(/\\(.)/gs, (m, c: string) => ('"\\/bfnrtu'.includes(c) ? m : `\\\\${c}`));
 }
 
 /**
- * Gültige, aber falsch gemeinte Escapes in Formeln zurückholen: "\frac" wird beim Parsen zu Seitenvorschub + "rac",
- * "\times" zu Tab + "imes", "\beta" zu Backspace, "\rho" zu CR, "\nu" zu Zeilenumbruch.
+ * Restores valid but unintended escapes inside formulas: "\frac" parses to form feed + "rac",
+ * "\times" to tab + "imes", "\beta" to backspace, "\rho" to CR, "\nu" to newline.
  */
 function repairMathString(s: string): string {
   if (!hasMath(s)) return s;
   return s.replace(MATH_RE, (seg) =>
-    seg.replace(/\f/g, '\\f').replace(/\t/g, '\\t').replace(/\x08/g, '\\b').replace(/\r/g, '\\r').replace(/\n/g, '\\n'),
+    seg
+      .replaceAll('\f', '\\f')
+      .replaceAll('\t', '\\t')
+      .replaceAll('\b', '\\b')
+      .replaceAll('\r', '\\r')
+      .replaceAll('\n', '\\n'),
   );
 }
 

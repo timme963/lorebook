@@ -10,21 +10,21 @@ import { onLangChange } from './lib/i18n';
 import { localizeDemo } from './lib/demo';
 import './styles.css';
 
-// In der Android-App liegen alle Dateien in der APK, ein Service Worker wäre dort nur im Weg
+// the Android app ships all files in the APK, a service worker would only get in the way there
 if (!isNative) registerSW({ immediate: true });
 
-// Nach Klick auf den Bestätigungslink hängt Supabase Tokens/Fehler an den Hash – der würde den Router stören
+// after the confirmation link Supabase appends tokens/errors to the hash, which would confuse the router
 if (/access_token=|error_description=|type=signup/.test(location.hash)) {
   history.replaceState(null, '', `${location.pathname}#/account`);
 }
 
-// Browser bitten, die lokalen Daten nicht automatisch zu löschen
+// ask the browser not to evict the local data
 navigator.storage?.persist?.().catch(() => undefined);
 
 migrateLegacyProgress()
   .catch((e) => console.error('[lorebook] Migration', e))
   .finally(() => {
-    // Demo-Kapitel folgt der eingestellten Sprache
+    // the demo chapter follows the selected language
     void localizeDemo().catch((e) => console.error('[lorebook] Demo', e));
     onLangChange(() => void localizeDemo().catch((e) => console.error('[lorebook] Demo', e)));
     void initSync();

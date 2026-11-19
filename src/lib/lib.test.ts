@@ -1,5 +1,6 @@
 import { afterAll, beforeEach, describe, expect, it } from 'vitest';
 import { setLang } from './i18n';
+import { looseDemo } from './testFixtures';
 import { DEMO_CHAPTER, DEMO_CHAPTER_EN } from './demo';
 import { extractJson, parseChapterFile, repairPrompt } from './importer';
 import { buildBoss, checkCloze } from './courses';
@@ -9,7 +10,7 @@ import type { ChapterRow } from './db';
 
 const demoJson = JSON.stringify(DEMO_CHAPTER);
 
-// Tests prüfen deutsche Texte; unabhängig von der Systemsprache (CI läuft auf Englisch)
+// tests check German texts regardless of the system language (CI runs in English)
 beforeEach(() => setLang('de'));
 afterAll(() => setLang('de'));
 
@@ -34,8 +35,9 @@ describe('Import', () => {
   });
 
   it('meldet Schemafehler mit Pfad', () => {
-    const broken = structuredClone(DEMO_CHAPTER) as any;
-    broken.chapter.pretest[0].correct = 9;
+    const broken = looseDemo();
+    const [first] = broken.chapter.pretest;
+    if (first) first.correct = 9;
     delete broken.chapter.story.ending;
     const r = parseChapterFile(JSON.stringify(broken));
     expect(r.ok).toBe(false);
@@ -45,9 +47,11 @@ describe('Import', () => {
   });
 
   it('erkennt Verweise auf unbekannte Lernziele und doppelte IDs', () => {
-    const broken = structuredClone(DEMO_CHAPTER) as any;
-    broken.chapter.posttest[0].objective = 'o99';
-    broken.chapter.review[0].id = 'q1';
+    const broken = looseDemo();
+    const [post] = broken.chapter.posttest;
+    const [review] = broken.chapter.review;
+    if (post) post.objective = 'o99';
+    if (review) review.id = 'q1';
     const r = parseChapterFile(JSON.stringify(broken));
     expect(r.ok).toBe(false);
     expect(r.errors.join('\n')).toMatch(/o99/);
@@ -78,7 +82,7 @@ describe('Fortschritt', () => {
     expect(streakFromDays(days, '2026-11-06')).toBe(3);
     expect(streakFromDays(days, '2026-11-07')).toBe(0);
     expect(streakFromDays([...days, '2026-11-08'], '2026-11-08')).toBe(1);
-    // Lerntage zweier Geräte werden vereinigt
+    // study days of two devices are merged
     expect(streakFromDays(['2026-11-01', '2026-11-03', '2026-11-03', '2026-11-04'], '2026-11-04')).toBe(3);
   });
 
@@ -92,7 +96,19 @@ describe('Fortschritt', () => {
 
 describe('Boss-Fight', () => {
   it('mischt Fragen mit Schwerpunkt Anwendung/Transfer', () => {
-    const ch = { id: 'd:1', content: DEMO_CHAPTER.chapter } as ChapterRow;
+    const ch: ChapterRow = {
+      id: 'd:1',
+      courseId: 'd',
+      number: 1,
+      content: DEMO_CHAPTER.chapter,
+      verified: true,
+      verificationNotes: [],
+      importedAt: 0,
+      phase: 'done',
+      sceneIndex: 0,
+      preAnswers: {},
+      postAnswers: {},
+    };
     const boss = buildBoss([ch], 6);
     expect(boss).toHaveLength(6);
     const deep = boss.filter((b) => b.q.level === 'apply' || b.q.level === 'transfer').length;

@@ -1,7 +1,7 @@
 /**
- * Tägliche Erinnerung an fällige Wiederholungen – nur in der Android-App.
- * Die Benachrichtigungen werden auf dem Gerät für die nächsten 14 Tage geplant (kein Server, geht offline).
- * Für jeden Tag zählt Lorebook, wie viele Karten bis zur Erinnerungszeit fällig sind; Tage ohne fällige Karten werden übersprungen.
+ * Daily reminder about due reviews – Android app only.
+ * Notifications are scheduled on the device for the next 14 days (no server, works offline).
+ * For each day Lorebook counts the cards due by reminder time; days without due cards are skipped.
  */
 import { App as CapApp } from '@capacitor/app';
 import { LocalNotifications } from '@capacitor/local-notifications';
@@ -23,7 +23,7 @@ const ids = () => Array.from({ length: DAYS }, (_, i) => ({ id: BASE_ID + i }));
 export const getReminder = () => getLocal<ReminderSettings>(KEY, { enabled: false, time: '18:00' });
 
 function at(time: string, dayOffset: number): Date {
-  const [h, m] = time.split(':').map(Number);
+  const [h = 0, m = 0] = time.split(':').map(Number);
   const d = new Date();
   d.setDate(d.getDate() + dayOffset);
   d.setHours(h, m, 0, 0);
@@ -54,7 +54,7 @@ async function plan(s: ReminderSettings): Promise<void> {
   if (notifications.length) await LocalNotifications.schedule({ notifications });
 }
 
-/** Speichert die Einstellung und plant neu. Gibt 'denied' zurück, wenn Benachrichtigungen nicht erlaubt sind. */
+/** Saves the setting and reschedules. Returns 'denied' if notifications are not allowed. */
 export async function setReminder(s: ReminderSettings): Promise<'ok' | 'denied'> {
   if (s.enabled) {
     const perm = await LocalNotifications.requestPermissions();
@@ -67,9 +67,19 @@ export async function setReminder(s: ReminderSettings): Promise<'ok' | 'denied'>
 
 export async function testReminder(): Promise<void> {
   const perm = await LocalNotifications.requestPermissions();
-  if (perm.display !== 'granted') throw new Error(tr('Benachrichtigungen sind für Lorebook nicht erlaubt.', 'Notifications are not allowed for Lorebook.'));
+  if (perm.display !== 'granted')
+    throw new Error(
+      tr('Benachrichtigungen sind für Lorebook nicht erlaubt.', 'Notifications are not allowed for Lorebook.'),
+    );
   await LocalNotifications.schedule({
-    notifications: [{ id: TEST_ID, title: 'Lorebook', body: tr('So sieht deine Erinnerung aus.', 'This is what your reminder looks like.'), schedule: { at: new Date(Date.now() + 3000) } }],
+    notifications: [
+      {
+        id: TEST_ID,
+        title: 'Lorebook',
+        body: tr('So sieht deine Erinnerung aus.', 'This is what your reminder looks like.'),
+        schedule: { at: new Date(Date.now() + 3000) },
+      },
+    ],
   });
 }
 
@@ -86,7 +96,7 @@ function refreshSoon(): void {
   timer = setTimeout(() => void refresh().catch((e) => console.error('[lorebook] Erinnerungen', e)), 5000);
 }
 
-/** Beim App-Start: neu planen, bei Rückkehr in die App und nach Änderungen an Karten ebenfalls. */
+/** On app start: reschedule; also when returning to the app and after card changes. */
 export function initReminders(): void {
   if (!isNative) return;
   refreshSoon();

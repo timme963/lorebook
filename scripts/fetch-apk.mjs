@@ -7,7 +7,22 @@ const gh = process.env.GH_BIN || (process.platform === 'win32' ? 'C:/Program Fil
 const repo = 'timme963/lorebook';
 const run = (args) => execFileSync(gh, args, { encoding: 'utf8' }).trim();
 
-const [runId, runNumber] = run(['run', 'list', '-R', repo, '-w', 'Android APK', '-s', 'success', '-L', '1', '--json', 'databaseId,number', '--jq', '.[0] | "\\(.databaseId) \\(.number)"']).split(' ');
+const [runId, runNumber] = run([
+  'run',
+  'list',
+  '-R',
+  repo,
+  '-w',
+  'Android APK',
+  '-s',
+  'success',
+  '-L',
+  '1',
+  '--json',
+  'databaseId,number',
+  '--jq',
+  '.[0] | "\\(.databaseId) \\(.number)"',
+]).split(' ');
 if (!runId) throw new Error('No successful Android build found.');
 rmSync('release', { recursive: true, force: true });
 mkdirSync('release', { recursive: true });

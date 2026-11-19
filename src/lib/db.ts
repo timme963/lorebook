@@ -31,7 +31,7 @@ export interface ChapterRow {
 
 export interface AnswerRecord {
   given: string;
-  correct: boolean | null; // null = selbst bewertet offen
+  correct: boolean | null; // null = self-rated open question
   score: number; // 0..1
 }
 
@@ -41,7 +41,7 @@ export interface CardRow {
   chapterId: string;
   questionId: string;
   fsrs: Card;
-  due: number; // ms – für Index
+  due: number; // ms, indexed
   suspended: boolean;
   flagged?: string;
 }
@@ -65,13 +65,13 @@ export interface MetaRow {
   value: unknown;
 }
 
-/** Gerätelokale Werte (Sync-Stand, Geräte-ID) – werden nie synchronisiert. */
+/** Device-local values (sync state, device ID); never synced. */
 export interface LocalRow {
   key: string;
   value: unknown;
 }
 
-/** Merkt sich gelöschte Zeilen, damit die Löschung auch auf anderen Geräten ankommt. */
+/** Remembers deleted rows so the deletion reaches other devices too. */
 export interface TombstoneRow {
   key: string; // `${tbl}:${id}`
   tbl: SyncTable;
@@ -114,21 +114,24 @@ db.version(2)
   .upgrade(async (tx) => {
     const now = Date.now();
     for (const t of SYNC_TABLES) {
-      await tx.table(t).toCollection().modify((row: { _ts?: number }) => {
-        row._ts = now;
-      });
+      await tx
+        .table(t)
+        .toCollection()
+        .modify((row: { _ts?: number }) => {
+          row._ts = now;
+        });
     }
   });
 
-// ---------- Änderungs-Zeitstempel für den Sync ----------
-// Jede lokale Änderung bekommt _ts (ms). Beim Sync gewinnt der höhere _ts.
-// Transaktionen, die Server-Daten einspielen, sind mit __remote markiert und stempeln nicht.
+// ---------- Change timestamps for sync ----------
+// Every local change gets _ts (ms). On sync the higher _ts wins.
+// Transactions that apply server data are marked __remote and do not stamp.
 
 type Tx = { __remote?: boolean; storeNames: string[]; table: (n: string) => { put: (v: unknown) => unknown } };
 const changeListeners = new Set<() => void>();
 const changeListener = { current: () => changeListeners.forEach((f) => f()) };
 
-/** Wird bei jeder lokalen Änderung an synchronisierten Tabellen aufgerufen (Sync, Erinnerungen …). */
+/** Called on every local change to synced tables (sync, reminders, …). */
 export function onLocalChange(fn: () => void): () => void {
   changeListeners.add(fn);
   return () => changeListeners.delete(fn);
@@ -150,10 +153,14 @@ for (const t of SYNC_TABLES) {
     const trans = tx as unknown as Tx;
     if (trans.__remote) return;
     if (!trans.storeNames.includes('tombstones')) {
-      console.warn(`[lorebook] Löschung in ${t} ohne tombstones-Tabelle in der Transaktion – wird nicht synchronisiert`);
+      console.warn(
+        `[lorebook] Löschung in ${t} ohne tombstones-Tabelle in der Transaktion – wird nicht synchronisiert`,
+      );
       return;
     }
-    trans.table('tombstones').put({ key: `${t}:${pk}`, tbl: t, id: String(pk), _ts: Math.max(Date.now(), (obj?._ts ?? 0) + 1) });
+    // primary keys of the synced tables are always strings
+    const id = typeof pk === 'string' ? pk : JSON.stringify(pk);
+    trans.table('tombstones').put({ key: `${t}:${id}`, tbl: t, id, _ts: Math.max(Date.now(), (obj?._ts ?? 0) + 1) });
     changeListener.current();
   });
 }

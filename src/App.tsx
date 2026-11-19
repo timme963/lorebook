@@ -46,19 +46,37 @@ function TopBar() {
         <span>Lorebook</span>
       </a>
       <nav className="topnav">
-        <a href={href({ name: 'review' })} className="pill" title={tr('Heute fällige Wiederholungen', 'Reviews due today')}>
+        <a
+          href={href({ name: 'review' })}
+          className="pill"
+          title={tr('Heute fällige Wiederholungen', 'Reviews due today')}
+        >
           ↻ <strong>{due}</strong>
         </a>
-        <span className="pill" title={tr('Lernserie (ein Tag Pause ist erlaubt)', 'Study streak (one day off is allowed)')}>
+        <span
+          className="pill"
+          title={tr('Lernserie (ein Tag Pause ist erlaubt)', 'Study streak (one day off is allowed)')}
+        >
           🔥 <strong>{streak}</strong>
         </span>
         <span className="pill" title={`${xp} XP`}>
           Lv <strong>{lvl.level}</strong>
         </span>
-        <a href={href({ name: 'account' })} className={`pill sync sync-${sync.state}`} title={syncTitle} aria-label={syncTitle}>
+        <a
+          href={href({ name: 'account' })}
+          className={`pill sync sync-${sync.state}`}
+          title={syncTitle}
+          aria-label={syncTitle}
+        >
           {SYNC_ICON[sync.state]}
         </a>
-        <button type="button" className="pill theme-toggle" onClick={cycleTheme} title={`${THEME_LABEL()[theme]} – ${tr('klicken zum Wechseln', 'click to change')}`} aria-label={THEME_LABEL()[theme]}>
+        <button
+          type="button"
+          className="pill theme-toggle"
+          onClick={cycleTheme}
+          title={`${THEME_LABEL()[theme]} – ${tr('klicken zum Wechseln', 'click to change')}`}
+          aria-label={THEME_LABEL()[theme]}
+        >
           {THEME_ICON[theme]}
         </button>
         <button
@@ -70,7 +88,9 @@ function TopBar() {
         >
           {lang === 'de' ? 'EN' : 'DE'}
         </button>
-        <a href={href({ name: 'help' })} className="pill" title={tr('Hilfe', 'Help')}>?</a>
+        <a href={href({ name: 'help' })} className="pill" title={tr('Hilfe', 'Help')}>
+          ?
+        </a>
       </nav>
     </header>
   );
@@ -78,10 +98,10 @@ function TopBar() {
 
 export default function App() {
   const route = useRoute();
-  // Seitenwechsel beendet das Vorlesen
+  // leaving a page stops read-aloud
   useEffect(() => stopSpeaking(), [route]);
   const sync = useSyncStatus();
-  useLang(); // beim Umschalten alles neu rendern
+  useLang(); // re-render the whole tree when the language changes
   let page;
   switch (route.name) {
     case 'home':
@@ -140,9 +160,14 @@ export default function App() {
         <span>·</span>
         <a href={href({ name: 'datenschutz' })}>{tr('Datenschutz', 'Privacy')}</a>
         <span>·</span>
-        <span>{sync.state === 'off'
-            ? tr('Ohne Account bleiben alle Daten in diesem Browser.', 'Without an account, all data stays in this browser.')
-            : tr('PDFs bleiben immer nur auf diesem Gerät.', 'PDFs always stay on this device only.')}</span>
+        <span>
+          {sync.state === 'off'
+            ? tr(
+                'Ohne Account bleiben alle Daten in diesem Browser.',
+                'Without an account, all data stays in this browser.',
+              )
+            : tr('PDFs bleiben immer nur auf diesem Gerät.', 'PDFs always stay on this device only.')}
+        </span>
       </footer>
     </>
   );

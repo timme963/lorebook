@@ -1,10 +1,10 @@
 import { Capacitor } from '@capacitor/core';
 
-/** true in der Android-App (Capacitor), false im Browser / als PWA */
+/** true in the Android app (Capacitor), false in the browser / as PWA */
 export const isNative = Capacitor.isNativePlatform();
 
-/** Öffentliche Adresse der Website. Die App braucht sie für Links nach außen und den Update-Check. */
+/** Public address of the website. The app needs it for outgoing links and the update check. */
 export const PUBLIC_URL = 'https://lorebook-9yf.pages.dev';
 
-/** Download der Android-App (wird beim Deploy aus dem letzten GitHub-Build kopiert) */
+/** Android app download (copied from the latest GitHub build on deploy) */
 export const APK_URL = `${PUBLIC_URL}/lorebook.apk`;

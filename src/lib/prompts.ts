@@ -5,35 +5,95 @@ export interface PromptVars {
   course: string;
   chapterNumber: string;
   chapterTitle: string;
-  /** leer = KI wählt das passende Genre */
+  /** empty = the AI picks a fitting genre */
   style: string;
 }
 
 export interface StoryStyle {
-  /** Wert, der in den Prompt kommt ('' = KI wählt) */
+  /** Value inserted into the prompt ('' = the AI picks) */
   value: string;
   label: string;
-  /** wofür der Stil gut passt */
+  /** What the style suits well */
   fits: string;
 }
 
-/** Vorschläge für den Story-Stil. Eigener Stil bleibt immer möglich. */
+/** Story style suggestions. A custom style is always possible. */
 export const STORY_STYLES = (): StoryStyle[] => [
-  { value: '', label: tr('✨ Passend zum Stoff', '✨ Fits the material'), fits: tr('Die KI wählt das Genre, das den Inhalt am besten trägt.', 'The AI picks the genre that carries the content best.') },
-  { value: tr('Mentor und Lehrling', 'Mentor and apprentice'), label: tr('Mentor & Lehrling', 'Mentor & apprentice'), fits: tr('Methoden, Lerntechniken, Soft Skills, Pädagogik', 'methods, study skills, soft skills, education') },
-  { value: tr('Start-up-Gründung', 'Start-up founding'), label: tr('Start-up', 'Start-up'), fits: tr('BWL, Kostenrechnung, Marketing, VWL, Management', 'business, accounting, marketing, economics, management') },
-  { value: tr('Krimi / Ermittlung', 'Crime / investigation'), label: tr('Krimi', 'Crime'), fits: tr('Ursachen finden, Diagnose, Fehlersuche, Statistik', 'finding causes, diagnosis, debugging, statistics') },
-  { value: tr('Gerichtsdrama', 'Courtroom drama'), label: tr('Gerichtsdrama', 'Courtroom drama'), fits: tr('Jura, Argumentation, Ethik, Abwägungen', 'law, argumentation, ethics, trade-offs') },
-  { value: tr('Krankenhausserie', 'Hospital drama'), label: tr('Krankenhaus', 'Hospital'), fits: tr('Psychologie, Medizin, Biologie, Pflege', 'psychology, medicine, biology, nursing') },
-  { value: tr('Heist (Coup-Planung)', 'Heist (planning the job)'), label: 'Heist', fits: tr('Abläufe, Planung, Projektmanagement, Algorithmen', 'processes, planning, project management, algorithms') },
-  { value: tr('Expedition / Abenteuer', 'Expedition / adventure'), label: tr('Expedition', 'Expedition'), fits: tr('Schritt-für-Schritt-Verfahren, Naturwissenschaften, Geografie', 'step-by-step procedures, natural sciences, geography') },
-  { value: tr('Science-Fiction auf einer Raumstation', 'Science fiction on a space station'), label: 'Sci-Fi', fits: tr('Physik, Technik, Informatik, Systeme', 'physics, engineering, computer science, systems') },
-  { value: tr('Fantasy mit Magiesystem, dessen Regeln dem Stoff entsprechen', 'Fantasy with a magic system whose rules mirror the material'), label: 'Fantasy', fits: tr('abstrakte Regeln: Mathe, Logik, Grammatik, Formeln', 'abstract rules: maths, logic, grammar, formulas') },
-  { value: tr('Zeitreise / Historischer Roman', 'Time travel / historical novel'), label: tr('Zeitreise', 'Time travel'), fits: tr('Geschichte, Theorien mit Entstehungsgeschichte', 'history, theories and how they came about') },
-  { value: tr('Strategie und Verhandlung', 'Strategy and negotiation'), label: tr('Strategie', 'Strategy'), fits: tr('Spieltheorie, Politik, Verhandlung, Führung', 'game theory, politics, negotiation, leadership') },
+  {
+    value: '',
+    label: tr('✨ Passend zum Stoff', '✨ Fits the material'),
+    fits: tr(
+      'Die KI wählt das Genre, das den Inhalt am besten trägt.',
+      'The AI picks the genre that carries the content best.',
+    ),
+  },
+  {
+    value: tr('Mentor und Lehrling', 'Mentor and apprentice'),
+    label: tr('Mentor & Lehrling', 'Mentor & apprentice'),
+    fits: tr('Methoden, Lerntechniken, Soft Skills, Pädagogik', 'methods, study skills, soft skills, education'),
+  },
+  {
+    value: tr('Start-up-Gründung', 'Start-up founding'),
+    label: tr('Start-up', 'Start-up'),
+    fits: tr(
+      'BWL, Kostenrechnung, Marketing, VWL, Management',
+      'business, accounting, marketing, economics, management',
+    ),
+  },
+  {
+    value: tr('Krimi / Ermittlung', 'Crime / investigation'),
+    label: tr('Krimi', 'Crime'),
+    fits: tr('Ursachen finden, Diagnose, Fehlersuche, Statistik', 'finding causes, diagnosis, debugging, statistics'),
+  },
+  {
+    value: tr('Gerichtsdrama', 'Courtroom drama'),
+    label: tr('Gerichtsdrama', 'Courtroom drama'),
+    fits: tr('Jura, Argumentation, Ethik, Abwägungen', 'law, argumentation, ethics, trade-offs'),
+  },
+  {
+    value: tr('Krankenhausserie', 'Hospital drama'),
+    label: tr('Krankenhaus', 'Hospital'),
+    fits: tr('Psychologie, Medizin, Biologie, Pflege', 'psychology, medicine, biology, nursing'),
+  },
+  {
+    value: tr('Heist (Coup-Planung)', 'Heist (planning the job)'),
+    label: 'Heist',
+    fits: tr('Abläufe, Planung, Projektmanagement, Algorithmen', 'processes, planning, project management, algorithms'),
+  },
+  {
+    value: tr('Expedition / Abenteuer', 'Expedition / adventure'),
+    label: tr('Expedition', 'Expedition'),
+    fits: tr(
+      'Schritt-für-Schritt-Verfahren, Naturwissenschaften, Geografie',
+      'step-by-step procedures, natural sciences, geography',
+    ),
+  },
+  {
+    value: tr('Science-Fiction auf einer Raumstation', 'Science fiction on a space station'),
+    label: 'Sci-Fi',
+    fits: tr('Physik, Technik, Informatik, Systeme', 'physics, engineering, computer science, systems'),
+  },
+  {
+    value: tr(
+      'Fantasy mit Magiesystem, dessen Regeln dem Stoff entsprechen',
+      'Fantasy with a magic system whose rules mirror the material',
+    ),
+    label: 'Fantasy',
+    fits: tr('abstrakte Regeln: Mathe, Logik, Grammatik, Formeln', 'abstract rules: maths, logic, grammar, formulas'),
+  },
+  {
+    value: tr('Zeitreise / Historischer Roman', 'Time travel / historical novel'),
+    label: tr('Zeitreise', 'Time travel'),
+    fits: tr('Geschichte, Theorien mit Entstehungsgeschichte', 'history, theories and how they came about'),
+  },
+  {
+    value: tr('Strategie und Verhandlung', 'Strategy and negotiation'),
+    label: tr('Strategie', 'Strategy'),
+    fits: tr('Spieltheorie, Politik, Verhandlung, Führung', 'game theory, politics, negotiation, leadership'),
+  },
 ];
 
-// ---------------------------------------------------------------- Deutsch
+// ---------------------------------------------------------------- German
 
 const EXAMPLE_DE = `{
   "lorebook": ${FORMAT_VERSION},
@@ -325,7 +385,7 @@ Output ONLY the complete corrected JSON in a single \`\`\`json code block, with 
 [PASTE THE JSON FROM THE FIRST STEP HERE]`;
 }
 
-// ---------------------------------------------------------------- Auswahl nach Sprache
+// ---------------------------------------------------------------- Selection by language
 
 export const outlinePrompt = (): string => tr(outlineDe(), outlineEn());
 export const generatePrompt = (v: PromptVars): string => tr(generateDe(v), generateEn(v));

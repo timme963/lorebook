@@ -5,7 +5,7 @@ import { dayKey } from '../lib/progress';
 import { isNative } from '../lib/platform';
 import { tr } from '../lib/i18n';
 
-/** Bausteine der Seite „Account & Daten“ (siehe Account.tsx) */
+/** Building blocks of the "Account & data" page (see Account.tsx) */
 
 export function BackupCard() {
   const [msg, setMsg] = useState<{ ok: boolean; text: string }>();
@@ -13,7 +13,12 @@ export function BackupCard() {
   async function doExport() {
     try {
       await downloadBlob(await exportBackup(), `${tr('lorebook-sicherung', 'lorebook-backup')}-${dayKey()}.json`);
-      setMsg({ ok: true, text: isNative ? tr('Sicherung erstellt.', 'Backup created.') : tr('Sicherung heruntergeladen.', 'Backup downloaded.') });
+      setMsg({
+        ok: true,
+        text: isNative
+          ? tr('Sicherung erstellt.', 'Backup created.')
+          : tr('Sicherung heruntergeladen.', 'Backup downloaded.'),
+      });
     } catch (e) {
       setMsg({ ok: false, text: (e as Error).message });
     }
@@ -21,9 +26,17 @@ export function BackupCard() {
 
   async function doImport(input: HTMLInputElement) {
     const f = input.files?.[0];
-    input.value = ''; // dieselbe Datei soll erneut gewählt werden können
+    input.value = ''; // allow picking the same file again
     if (!f) return;
-    if (!confirm(tr('Die Sicherung ersetzt alle Kurse und deinen Fortschritt auf diesem Gerät. Fortfahren?', 'The backup replaces all courses and your progress on this device. Continue?'))) return;
+    if (
+      !confirm(
+        tr(
+          'Die Sicherung ersetzt alle Kurse und deinen Fortschritt auf diesem Gerät. Fortfahren?',
+          'The backup replaces all courses and your progress on this device. Continue?',
+        ),
+      )
+    )
+      return;
     try {
       await importBackup(await f.text());
       setMsg({ ok: true, text: tr('Sicherung wiederhergestellt.', 'Backup restored.') });
@@ -42,7 +55,9 @@ export function BackupCard() {
         )}
       </p>
       <div className="row gap wrap">
-        <button className="btn primary" onClick={doExport}>{tr('Sicherung herunterladen', 'Download backup')}</button>
+        <button className="btn primary" onClick={doExport}>
+          {tr('Sicherung herunterladen', 'Download backup')}
+        </button>
         <label className="btn">
           {tr('Sicherung einspielen', 'Restore backup')}
           <input type="file" accept=".json,application/json" hidden onChange={(e) => doImport(e.currentTarget)} />
@@ -72,7 +87,9 @@ export function WipeCard({ signedIn }: { signedIn: boolean }) {
   return (
     <section className="card stack">
       <h3>{tr('Daten auf diesem Gerät löschen', 'Delete data on this device')}</h3>
-      <button className="btn danger self-start" onClick={wipe}>{tr('Alle Daten auf diesem Gerät löschen', 'Delete all data on this device')}</button>
+      <button className="btn danger self-start" onClick={wipe}>
+        {tr('Alle Daten auf diesem Gerät löschen', 'Delete all data on this device')}
+      </button>
     </section>
   );
 }

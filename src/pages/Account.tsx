@@ -1,4 +1,4 @@
-import { useState, type FormEvent } from 'react';
+import { useState, type SubmitEvent } from 'react';
 import { supabase } from '../lib/supabase';
 import { clearLocalSyncedData, deleteAccount, signOut, syncNow, useSyncStatus } from '../lib/sync';
 import { href } from '../router';
@@ -29,10 +29,28 @@ const STATE_LABEL = () =>
 
 const AUTH_ERRORS = (): [RegExp, string][] => [
   [/invalid login credentials/i, tr('E-Mail oder Passwort falsch.', 'Wrong email or password.')],
-  [/email not confirmed/i, tr('E-Mail noch nicht bestätigt. Klick zuerst den Link in der Bestätigungsmail.', 'Email not confirmed yet. Click the link in the confirmation email first.')],
-  [/already registered|already been registered/i, tr('Für diese E-Mail gibt es schon einen Account. Melde dich an.', 'An account already exists for this email. Please sign in.')],
-  [/signups? not allowed|signup is disabled/i, tr('Neue Registrierungen sind abgeschaltet.', 'New sign-ups are disabled.')],
-  [/password should be at least/i, tr('Das Passwort muss mindestens 8 Zeichen haben.', 'The password must be at least 8 characters.')],
+  [
+    /email not confirmed/i,
+    tr(
+      'E-Mail noch nicht bestätigt. Klick zuerst den Link in der Bestätigungsmail.',
+      'Email not confirmed yet. Click the link in the confirmation email first.',
+    ),
+  ],
+  [
+    /already registered|already been registered/i,
+    tr(
+      'Für diese E-Mail gibt es schon einen Account. Melde dich an.',
+      'An account already exists for this email. Please sign in.',
+    ),
+  ],
+  [
+    /signups? not allowed|signup is disabled/i,
+    tr('Neue Registrierungen sind abgeschaltet.', 'New sign-ups are disabled.'),
+  ],
+  [
+    /password should be at least/i,
+    tr('Das Passwort muss mindestens 8 Zeichen haben.', 'The password must be at least 8 characters.'),
+  ],
   [/rate limit|too many/i, tr('Zu viele Versuche. Bitte kurz warten.', 'Too many attempts. Please wait a moment.')],
 ];
 
@@ -48,7 +66,7 @@ function Login() {
   const [error, setError] = useState<string>();
   const [info, setInfo] = useState<string>();
 
-  async function submit(e: FormEvent) {
+  async function submit(e: SubmitEvent) {
     e.preventDefault();
     setBusy(true);
     setError(undefined);
@@ -79,11 +97,31 @@ function Login() {
   return (
     <section className="card stack">
       <div className="row gap">
-        <button type="button" className={`btn small ${mode === 'login' ? 'primary' : 'ghost'}`} onClick={() => setMode('login')}>{tr('Anmelden', 'Sign in')}</button>
-        <button type="button" className={`btn small ${mode === 'signup' ? 'primary' : 'ghost'}`} onClick={() => setMode('signup')}>{tr('Account erstellen', 'Create account')}</button>
+        <button
+          type="button"
+          className={`btn small ${mode === 'login' ? 'primary' : 'ghost'}`}
+          onClick={() => setMode('login')}
+        >
+          {tr('Anmelden', 'Sign in')}
+        </button>
+        <button
+          type="button"
+          className={`btn small ${mode === 'signup' ? 'primary' : 'ghost'}`}
+          onClick={() => setMode('signup')}
+        >
+          {tr('Account erstellen', 'Create account')}
+        </button>
       </div>
       <form className="stack" onSubmit={submit}>
-        <input className="input" type="email" required autoComplete="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder={tr('deine@email.de', 'you@example.com')} />
+        <input
+          className="input"
+          type="email"
+          required
+          autoComplete="email"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          placeholder={tr('deine@email.de', 'you@example.com')}
+        />
         <input
           className="input"
           type="password"
@@ -92,15 +130,23 @@ function Login() {
           autoComplete={mode === 'login' ? 'current-password' : 'new-password'}
           value={password}
           onChange={(e) => setPassword(e.target.value)}
-          placeholder={mode === 'login' ? tr('Passwort', 'Password') : tr('Passwort (mind. 8 Zeichen)', 'Password (min. 8 characters)')}
+          placeholder={
+            mode === 'login'
+              ? tr('Passwort', 'Password')
+              : tr('Passwort (mind. 8 Zeichen)', 'Password (min. 8 characters)')
+          }
         />
-        <button className="btn primary self-start" disabled={busy || !email.includes('@') || password.length < (mode === 'signup' ? 8 : 1)}>
+        <button
+          className="btn primary self-start"
+          disabled={busy || !email.includes('@') || password.length < (mode === 'signup' ? 8 : 1)}
+        >
           {mode === 'login' ? tr('Anmelden', 'Sign in') : tr('Account erstellen', 'Create account')}
         </button>
       </form>
       {mode === 'signup' && (
         <p className="muted small">
-          {tr('Mit dem Account gelten die Hinweise in der', 'With an account, the')} <a href={href({ name: 'datenschutz' })}>{tr('Datenschutzerklärung', 'privacy policy')}</a>
+          {tr('Mit dem Account gelten die Hinweise in der', 'With an account, the')}{' '}
+          <a href={href({ name: 'datenschutz' })}>{tr('Datenschutzerklärung', 'privacy policy')}</a>
           {tr('.', ' applies.')}
         </p>
       )}
@@ -134,14 +180,17 @@ export default function AccountPage() {
       <section className="card stack">
         {tr(
           <p>
-            Deine Daten liegen auf diesem Gerät (im Browser bzw. in der App). Mit Account werden <strong>Kurse und Lernfortschritt</strong>
-            zusätzlich in der Cloud gesichert und zwischen deinen Geräten abgeglichen. PDFs bleiben immer nur auf dem jeweiligen Gerät. Ohne
-            Account sind die Daten weg, wenn du den Browserspeicher löschst – dann hilft nur eine Sicherungsdatei.
+            Deine Daten liegen auf diesem Gerät (im Browser bzw. in der App). Mit Account werden{' '}
+            <strong>Kurse und Lernfortschritt</strong>
+            zusätzlich in der Cloud gesichert und zwischen deinen Geräten abgeglichen. PDFs bleiben immer nur auf dem
+            jeweiligen Gerät. Ohne Account sind die Daten weg, wenn du den Browserspeicher löschst – dann hilft nur eine
+            Sicherungsdatei.
           </p>,
           <p>
-            Your data lives on this device (in the browser or the app). With an account, <strong>courses and learning progress</strong> are also
-            backed up to the cloud and synced between your devices. PDFs always stay on the device they were added on. Without an account, the
-            data is gone if you clear the browser storage – then only a backup file helps.
+            Your data lives on this device (in the browser or the app). With an account,{' '}
+            <strong>courses and learning progress</strong> are also backed up to the cloud and synced between your
+            devices. PDFs always stay on the device they were added on. Without an account, the data is gone if you
+            clear the browser storage – then only a backup file helps.
           </p>,
         )}
       </section>
@@ -157,7 +206,11 @@ export default function AccountPage() {
                 {STATE_LABEL()[status.state]} · {tr('zuletzt', 'last')} {timeAgo(status.lastSync)}
               </p>
             </div>
-            <button className="btn" disabled={busy || status.state === 'syncing' || status.state === 'conflict'} onClick={() => run(syncNow)}>
+            <button
+              className="btn"
+              disabled={busy || status.state === 'syncing' || status.state === 'conflict'}
+              onClick={() => run(syncNow)}
+            >
               ↻ {tr('Jetzt synchronisieren', 'Sync now')}
             </button>
           </div>
@@ -165,25 +218,52 @@ export default function AccountPage() {
 
           {status.state === 'conflict' && (
             <div className="feedback neutral">
-              <p className="verdict">{tr('Auf diesem Gerät liegen Daten eines anderen Accounts.', 'This device holds data from another account.')}</p>
-              <p className="small">{tr('Damit nichts vermischt wird, synchronisiert Lorebook erst, wenn du entscheidest.', 'To keep things from mixing, Lorebook won\'t sync until you decide.')}</p>
+              <p className="verdict">
+                {tr(
+                  'Auf diesem Gerät liegen Daten eines anderen Accounts.',
+                  'This device holds data from another account.',
+                )}
+              </p>
+              <p className="small">
+                {tr(
+                  'Damit nichts vermischt wird, synchronisiert Lorebook erst, wenn du entscheidest.',
+                  "To keep things from mixing, Lorebook won't sync until you decide.",
+                )}
+              </p>
               <div className="row gap wrap">
                 <button
                   className="btn primary"
                   disabled={busy}
-                  onClick={() => run(async () => { await clearLocalSyncedData(); await syncNow(); }, tr('Daten dieses Accounts geladen.', 'This account\'s data loaded.'))}
+                  onClick={() =>
+                    run(
+                      async () => {
+                        await clearLocalSyncedData();
+                        await syncNow();
+                      },
+                      tr('Daten dieses Accounts geladen.', "This account's data loaded."),
+                    )
+                  }
                 >
                   {tr('Lokale Daten löschen und diesen Account laden', 'Delete local data and load this account')}
                 </button>
-                <button className="btn" disabled={busy} onClick={() => run(signOut)}>{tr('Abmelden', 'Sign out')}</button>
+                <button className="btn" disabled={busy} onClick={() => run(signOut)}>
+                  {tr('Abmelden', 'Sign out')}
+                </button>
               </div>
             </div>
           )}
 
           <div className="row gap wrap">
-            <button className="btn ghost" disabled={busy} onClick={() => run(signOut)}>{tr('Abmelden', 'Sign out')}</button>
+            <button className="btn ghost" disabled={busy} onClick={() => run(signOut)}>
+              {tr('Abmelden', 'Sign out')}
+            </button>
           </div>
-          <p className="muted small">{tr('Beim Abmelden bleiben die Daten auf diesem Gerät erhalten.', 'Signing out keeps the data on this device.')}</p>
+          <p className="muted small">
+            {tr(
+              'Beim Abmelden bleiben die Daten auf diesem Gerät erhalten.',
+              'Signing out keeps the data on this device.',
+            )}
+          </p>
         </section>
       )}
 
@@ -204,8 +284,21 @@ export default function AccountPage() {
             className="btn danger self-start"
             disabled={busy}
             onClick={() => {
-              if (confirm(tr('Account und alle Cloud-Daten unwiderruflich löschen? Andere Geräte werden dann nicht mehr synchronisiert.', 'Permanently delete your account and all cloud data? Other devices will no longer sync.'))) {
-                run(deleteAccount, tr('Account gelöscht. Die Daten auf diesem Gerät sind noch da.', 'Account deleted. The data on this device is still there.'));
+              if (
+                confirm(
+                  tr(
+                    'Account und alle Cloud-Daten unwiderruflich löschen? Andere Geräte werden dann nicht mehr synchronisiert.',
+                    'Permanently delete your account and all cloud data? Other devices will no longer sync.',
+                  ),
+                )
+              ) {
+                void run(
+                  deleteAccount,
+                  tr(
+                    'Account gelöscht. Die Daten auf diesem Gerät sind noch da.',
+                    'Account deleted. The data on this device is still there.',
+                  ),
+                );
               }
             }}
           >
@@ -217,7 +310,8 @@ export default function AccountPage() {
       <WipeCard signedIn={status.state !== 'off'} />
 
       <p className="muted small">
-        <a href={href({ name: 'datenschutz' })}>{tr('Datenschutzerklärung', 'Privacy policy')}</a> · <a href={href({ name: 'impressum' })}>{tr('Impressum', 'Legal notice')}</a>
+        <a href={href({ name: 'datenschutz' })}>{tr('Datenschutzerklärung', 'Privacy policy')}</a> ·{' '}
+        <a href={href({ name: 'impressum' })}>{tr('Impressum', 'Legal notice')}</a>
       </p>
 
       {msg && <p className="small">{msg}</p>}

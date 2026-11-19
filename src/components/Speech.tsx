@@ -15,8 +15,18 @@ import {
   type VoiceOption,
 } from '../lib/speech';
 
-/** 🔊 Vorlesen / ■ Stopp */
-export function SpeakButton({ text, id, label, className = 'btn small ghost' }: { text: string; id?: string; label?: string; className?: string }) {
+/** 🔊 read aloud / ■ stop */
+export function SpeakButton({
+  text,
+  id,
+  label,
+  className = 'btn small ghost',
+}: {
+  text: string;
+  id?: string;
+  label?: string;
+  className?: string;
+}) {
   const speaking = useSpeakingId();
   if (!ttsSupported()) return null;
   const key = id ?? text;
@@ -36,10 +46,20 @@ export function SpeakButton({ text, id, label, className = 'btn small ghost' }: 
 }
 
 /**
- * 🎤 Antwort einsprechen. Hängt das Gesprochene an den vorhandenen Text an.
- * langHint: Text, aus dem die Sprache der Erkennung abgeleitet wird (z. B. die Frage).
+ * 🎤 Dictate an answer. Appends what was said to the existing text.
+ * langHint: text the recognition language is derived from (e.g. the question).
  */
-export function DictateButton({ value, onChange, langHint, disabled }: { value: string; onChange: (v: string) => void; langHint: string; disabled?: boolean }) {
+export function DictateButton({
+  value,
+  onChange,
+  langHint,
+  disabled,
+}: {
+  value: string;
+  onChange: (v: string) => void;
+  langHint: string;
+  disabled?: boolean;
+}) {
   const [active, setActive] = useState(false);
   const [error, setError] = useState<string>();
   const rec = useRef<Dictation | undefined>(undefined);
@@ -62,8 +82,10 @@ export function DictateButton({ value, onChange, langHint, disabled }: { value: 
       (text) => onChange(base.current ? `${base.current} ${text}` : text),
       (err) => {
         setActive(false);
-        if (err === 'denied' || err === 'not-allowed') setError(tr('Mikrofon nicht erlaubt.', 'Microphone not allowed.'));
-        else if (err === 'unsupported') setError(tr('Spracheingabe wird hier nicht unterstützt.', 'Voice input is not supported here.'));
+        if (err === 'denied' || err === 'not-allowed')
+          setError(tr('Mikrofon nicht erlaubt.', 'Microphone not allowed.'));
+        else if (err === 'unsupported')
+          setError(tr('Spracheingabe wird hier nicht unterstützt.', 'Voice input is not supported here.'));
         else if (err) setError(tr('Spracheingabe fehlgeschlagen.', 'Voice input failed.') + ` (${err})`);
       },
     );
@@ -90,23 +112,29 @@ function VoiceSelect({ lang }: { lang: SpeechLang }) {
   const s = useSpeechSettings();
   const [voices, setVoices] = useState<VoiceOption[]>([]);
   useEffect(() => {
-    listVoices(lang).then(setVoices);
+    listVoices(lang).then(setVoices, () => setVoices([]));
   }, [lang]);
   if (voices.length === 0) return null;
   return (
     <label>
       {lang === 'de' ? tr('Stimme Deutsch', 'German voice') : tr('Stimme Englisch', 'English voice')}
-      <select className="input" value={s.voice[lang]} onChange={(e) => setSpeechSettings({ voice: { ...s.voice, [lang]: e.target.value } })}>
+      <select
+        className="input"
+        value={s.voice[lang]}
+        onChange={(e) => setSpeechSettings({ voice: { ...s.voice, [lang]: e.target.value } })}
+      >
         <option value="">{tr('Automatisch (natürlichste)', 'Automatic (most natural)')}</option>
         {voices.map((v) => (
-          <option key={v.id} value={v.id}>{v.name}</option>
+          <option key={v.id} value={v.id}>
+            {v.name}
+          </option>
         ))}
       </select>
     </label>
   );
 }
 
-/** Einstellungen: Geschwindigkeit, Stimme, Story automatisch vorlesen */
+/** Settings: speed, voice, read the story automatically */
 export function SpeechSettingsCard() {
   const s = useSpeechSettings();
   if (!ttsSupported() && !dictationSupported()) return null;
@@ -142,7 +170,11 @@ export function SpeechSettingsCard() {
             <VoiceSelect lang="en" />
           </div>
           <label className="row gap">
-            <input type="checkbox" checked={s.autoStory} onChange={(e) => setSpeechSettings({ autoStory: e.target.checked })} />
+            <input
+              type="checkbox"
+              checked={s.autoStory}
+              onChange={(e) => setSpeechSettings({ autoStory: e.target.checked })}
+            />
             <span>{tr('Story-Szenen automatisch vorlesen', 'Read story scenes aloud automatically')}</span>
           </label>
           <div className="row gap wrap">
@@ -151,7 +183,12 @@ export function SpeechSettingsCard() {
         </>
       )}
       {!dictationSupported() && (
-        <p className="muted small">{tr('Spracheingabe gibt es in diesem Browser nicht (z. B. Firefox). In Chrome, Edge, Safari und der Android-App geht es.', 'Voice input is not available in this browser (e.g. Firefox). It works in Chrome, Edge, Safari and the Android app.')}</p>
+        <p className="muted small">
+          {tr(
+            'Spracheingabe gibt es in diesem Browser nicht (z. B. Firefox). In Chrome, Edge, Safari und der Android-App geht es.',
+            'Voice input is not available in this browser (e.g. Firefox). It works in Chrome, Edge, Safari and the Android app.',
+          )}
+        </p>
       )}
     </section>
   );

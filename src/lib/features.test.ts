@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import { DEMO_CHAPTER } from './demo';
 import { setLang } from './i18n';
+import { looseDemo } from './testFixtures';
 import { parseChapterFile } from './importer';
 import { fixInvalidEscapes, hasMath, repairMath, splitMath, stripMath } from './math';
 import { Rating } from './srs';
@@ -21,10 +22,12 @@ describe('Formeln', () => {
   });
 
   it('repariert einfache Backslashes aus dem Chat', () => {
-    // So schreiben Modelle es oft: \( und \frac ohne Verdopplung
+    // models often write it like this: \( and \frac without doubling
     const raw = `{"t": "Zins ${BS}(${BS}frac{a}{b} ${BS}times c${BS})"}`;
-    expect(() => JSON.parse(raw)).toThrow();
-    const parsed = JSON.parse(fixInvalidEscapes(raw));
+    expect(() => {
+      JSON.parse(raw);
+    }).toThrow();
+    const parsed = JSON.parse(fixInvalidEscapes(raw)) as { t: string };
     const { value, changed } = repairMath(parsed);
     expect(changed).toBe(true);
     expect(value.t).toBe(`Zins ${BS}(${BS}frac{a}{b} ${BS}times c${BS})`);
@@ -32,11 +35,13 @@ describe('Formeln', () => {
 
   it('importiert ein Kapitel mit unverdoppelten Backslashes und warnt', () => {
     const file = structuredClone(DEMO_CHAPTER);
-    file.chapter.objectives[0].text = 'Formel XFORMEL';
-    const raw = JSON.stringify(file).replace('XFORMEL', `${BS}(${BS}frac{1}{2}${BS})`); // absichtlich ungültiges JSON-Escape
+    const [objective] = file.chapter.objectives;
+    if (!objective) throw new Error('demo chapter has objectives');
+    objective.text = 'Formel XFORMEL';
+    const raw = JSON.stringify(file).replace('XFORMEL', `${BS}(${BS}frac{1}{2}${BS})`); // deliberately invalid JSON escape
     const r = parseChapterFile(raw);
     expect(r.ok).toBe(true);
-    expect(r.data!.chapter.objectives[0].text).toBe(`Formel ${BS}(${BS}frac{1}{2}${BS})`);
+    expect(r.data?.chapter.objectives[0]?.text).toBe(`Formel ${BS}(${BS}frac{1}{2}${BS})`);
     expect(r.warnings.join(' ')).toMatch(/Backslashes/);
   });
 });
@@ -101,11 +106,13 @@ describe('Mehrfachauswahl', () => {
     expect(mcScore(multi, '0')).toBe(0.5);
     expect(mcScore(multi, '0,1')).toBe(0);
     expect(mcScore(multi, '0,1,2')).toBe(0.5);
-    // Schema: Liste mit ungültigem Index wird abgelehnt
-    const file = structuredClone(DEMO_CHAPTER) as any;
-    file.chapter.pretest[0].correct = [0, 7];
+    // schema: a list with an out-of-range index is rejected
+    const file = looseDemo();
+    const [first] = file.chapter.pretest;
+    if (!first) throw new Error('demo chapter has a pretest');
+    first.correct = [0, 7];
     expect(ChapterFileSchema.safeParse(file).success).toBe(false);
-    file.chapter.pretest[0].correct = [0, 2];
+    first.correct = [0, 2];
     expect(ChapterFileSchema.safeParse(file).success).toBe(true);
   });
   it('versteht mehrere gesprochene Antworten', () => {

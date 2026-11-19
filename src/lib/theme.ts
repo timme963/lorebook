@@ -47,7 +47,7 @@ export function useTheme(): [ThemeChoice, () => void] {
       if (choice === 'system') localStorage.removeItem(KEY);
       else localStorage.setItem(KEY, choice);
     } catch {
-      /* privater Modus – dann eben nur für diese Sitzung */
+      /* private mode – then only for this session */
     }
     if (choice !== 'system') return;
     const mq = window.matchMedia('(prefers-color-scheme: dark)');
@@ -56,6 +56,6 @@ export function useTheme(): [ThemeChoice, () => void] {
     return () => mq.removeEventListener('change', on);
   }, [choice]);
 
-  const cycle = () => setChoice((c) => ORDER[(ORDER.indexOf(c) + 1) % ORDER.length]);
+  const cycle = () => setChoice((c) => ORDER[(ORDER.indexOf(c) + 1) % ORDER.length] ?? 'system');
   return [choice, cycle];
 }

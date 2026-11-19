@@ -3,8 +3,8 @@ import { exportBackup } from './backup';
 import { db, getLocal, onLocalChange, setLocal, SYNC_TABLES, type SyncTable } from './db';
 import { supabase } from './supabase';
 
-// Lokal zuerst: IndexedDB bleibt die Hauptquelle. Der Sync gleicht Zeilen mit der Tabelle
-// public.records ab. Konflikte: der höhere Änderungszeitstempel _ts gewinnt (auch serverseitig per Trigger).
+// Local first: IndexedDB stays the primary store. Sync reconciles rows with the table public.records.
+// Conflicts: the higher change timestamp _ts wins (enforced server-side by a trigger as well).
 
 const PK: Record<SyncTable, string> = { courses: 'id', chapters: 'id', cards: 'id', meta: 'key' };
 const CHUNK = 200;
@@ -51,7 +51,8 @@ async function push(userId: string): Promise<number> {
 
   for (const t of SYNC_TABLES) {
     const items = (await db.table(t).where('_ts').above(cursor).toArray()) as Record<string, unknown>[];
-    for (const item of items) rows.push({ user_id: userId, tbl: t, id: String(item[PK[t]]), data: item, deleted: false });
+    for (const item of items)
+      rows.push({ user_id: userId, tbl: t, id: String(item[PK[t]]), data: item, deleted: false });
   }
   const tombs = await db.tombstones.where('_ts').above(cursor).toArray();
   for (const t of tombs) rows.push({ user_id: userId, tbl: t.tbl, id: t.id, data: { _ts: t._ts }, deleted: true });
@@ -71,10 +72,13 @@ export async function applyRemote(records: RemoteRecord[]): Promise<void> {
       if (!SYNC_TABLES.includes(rec.tbl)) continue;
       const table = db.table(rec.tbl);
       const tombKey = `${rec.tbl}:${rec.id}`;
-      const [local, tomb] = await Promise.all([table.get(rec.id) as Promise<{ _ts?: number } | undefined>, db.tombstones.get(tombKey)]);
+      const [local, tomb] = await Promise.all([
+        table.get(rec.id) as Promise<{ _ts?: number } | undefined>,
+        db.tombstones.get(tombKey),
+      ]);
       const localTs = Math.max(local?._ts ?? 0, tomb?._ts ?? 0);
       const remoteTs = Number(rec.data?._ts ?? 0);
-      if (remoteTs < localTs) continue; // lokal neuer → wird beim Push hochgeladen
+      if (remoteTs < localTs) continue; // newer locally → uploaded by the push
       if (rec.deleted) {
         if (local) await table.delete(rec.id);
       } else {
@@ -92,14 +96,19 @@ async function pull(): Promise<number> {
   let maxSeen = cursor;
   let total = 0;
   for (;;) {
-    let q = supabase.from('records').select('tbl,id,data,deleted,updated_at').order('updated_at').order('tbl').order('id');
+    let q = supabase
+      .from('records')
+      .select('tbl,id,data,deleted,updated_at')
+      .order('updated_at')
+      .order('tbl')
+      .order('id');
     if (since) q = q.gt('updated_at', since);
     const { data, error } = await q.range(offset, offset + PAGE - 1);
     if (error) throw new Error(error.message);
     const page = (data ?? []) as RemoteRecord[];
-    if (page.length) {
+    const last = page.at(-1)?.updated_at;
+    if (last) {
       await applyRemote(page);
-      const last = page[page.length - 1].updated_at;
       if (!maxSeen || last > maxSeen) maxSeen = last;
     }
     total += page.length;
@@ -118,14 +127,14 @@ async function syncOnce(): Promise<void> {
 
   const owner = await getLocal<string | null>('sync:user', null);
   if (owner && owner !== session.user.id) {
-    // Lokale Daten gehören zu einem anderen Account – nicht vermischen, erst nachfragen
+    // local data belongs to another account – don't mix, ask first
     return setStatus({ state: 'conflict', email: session.user.email });
   }
 
   setStatus({ state: 'syncing', email: session.user.email, error: undefined });
   try {
     if (!(await getLocal<boolean>('sync:firstDone', false))) {
-      // Vor dem allerersten Abgleich eine lokale Sicherung ablegen
+      // keep a local backup before the very first sync
       await setLocal('backup:pre-sync', await (await exportBackup()).text());
     }
     await setLocal('sync:user', session.user.id);
@@ -166,19 +175,15 @@ function scheduleSync(delay = 3000) {
   debounce = setTimeout(() => void syncNow(), delay);
 }
 
-/** Löscht synchronisierte Daten auf diesem Gerät (ohne Tombstones), z. B. beim Wechsel auf einen anderen Account. */
+/** Deletes synced data on this device (without tombstones), e.g. when switching to another account. */
 export async function clearLocalSyncedData(): Promise<void> {
   await db.transaction('rw', [...SYNC_TABLES.map((t) => db.table(t)), db.tombstones, db.local], async (tx) => {
     (tx as unknown as { __remote: boolean }).__remote = true;
     for (const t of SYNC_TABLES) await db.table(t).clear();
     await db.tombstones.clear();
-    for (const k of ['sync:pushCursor', 'sync:pullCursor', 'sync:firstDone', 'sync:user', 'sync:last']) await db.local.delete(k);
+    for (const k of ['sync:pushCursor', 'sync:pullCursor', 'sync:firstDone', 'sync:user', 'sync:last'])
+      await db.local.delete(k);
   });
-}
-
-/** Welcher Account hat zuletzt auf diesem Gerät synchronisiert? */
-export function lastSyncUser(): Promise<string | null> {
-  return getLocal<string | null>('sync:user', null);
 }
 
 export async function signOut(): Promise<void> {
@@ -186,7 +191,7 @@ export async function signOut(): Promise<void> {
   setStatus({ state: 'off', email: undefined, lastSync: undefined });
 }
 
-/** Löscht Account und alle Cloud-Daten (Server-Funktion), meldet ab. Lokale Daten bleiben. */
+/** Deletes the account and all cloud data (server function) and signs out. Local data stays. */
 export async function deleteAccount(): Promise<void> {
   const { error } = await supabase.rpc('delete_own_account');
   if (error) throw new Error(error.message);
@@ -200,7 +205,7 @@ export async function initSync(): Promise<void> {
   supabase.auth.onAuthStateChange((event, session) => {
     if (!session) return setStatus({ state: 'off', email: undefined });
     setStatus({ email: session.user.email, state: status.state === 'off' ? 'idle' : status.state });
-    // Keine Supabase-Aufrufe direkt im Callback (Deadlock-Gefahr), daher entkoppelt
+    // no Supabase calls inside this callback (risk of deadlock), hence deferred
     if (event === 'INITIAL_SESSION' || event === 'SIGNED_IN') setTimeout(() => void syncNow(), 0);
   });
   window.addEventListener('online', () => scheduleSync(500));

@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import QuestionCard from '../components/QuestionCard';
 import { buildBoss, type BossQuestion, type BossResult } from '../lib/courses';
 import { db, getMeta, setMeta } from '../lib/db';
@@ -11,16 +11,16 @@ export default function BossPage({ courseId }: { courseId: string }) {
   const [scores, setScores] = useState<number[]>([]);
   const [result, setResult] = useState<{ score: number; best: boolean; xp: number }>();
 
-  async function start() {
+  const start = useCallback(async () => {
     const chapters = (await db.chapters.where('courseId').equals(courseId).toArray()).filter((c) => c.phase === 'done');
     setScores([]);
     setResult(undefined);
     setQuestions(buildBoss(chapters));
-  }
+  }, [courseId]);
 
   useEffect(() => {
-    start();
-  }, [courseId]);
+    void start();
+  }, [start]);
 
   if (!questions) return null;
   const back = href({ name: 'course', id: courseId });
@@ -30,7 +30,9 @@ export default function BossPage({ courseId }: { courseId: string }) {
       <div className="card empty">
         <h2>{tr('Noch kein Boss', 'No boss yet')}</h2>
         <p>{tr('Schließe zuerst Kapitel ab.', 'Complete some chapters first.')}</p>
-        <a className="btn" href={back}>{tr('Zurück', 'Back')}</a>
+        <a className="btn" href={back}>
+          {tr('Zurück', 'Back')}
+        </a>
       </div>
     );
   }
@@ -46,7 +48,12 @@ export default function BossPage({ courseId }: { courseId: string }) {
       const prev = await getMeta<BossResult | null>(`boss:${courseId}`, null);
       best = !prev || total > prev.best;
       if (total >= 0.7 && (!prev || prev.best < 0.7)) xp = 100;
-      await setMeta(`boss:${courseId}`, { best: Math.max(total, prev?.best ?? 0), last: total, at: Date.now(), attempts: (prev?.attempts ?? 0) + 1 });
+      await setMeta(`boss:${courseId}`, {
+        best: Math.max(total, prev?.best ?? 0),
+        last: total,
+        at: Date.now(),
+        attempts: (prev?.attempts ?? 0) + 1,
+      });
       await addXp(xp);
     } catch (e) {
       console.error('[lorebook] Boss-Ergebnis speichern', e);
@@ -62,12 +69,29 @@ export default function BossPage({ courseId }: { courseId: string }) {
         <p className="eyebrow">Boss-Fight</p>
         <h2>{won ? tr('⚔ Besiegt!', '⚔ Defeated!') : tr('Der Boss steht noch', 'The boss is still standing')}</h2>
         <div className="compare">
-          <div><span className="big accent">{Math.round(result.score * 100)} %</span><span className="muted small">{result.best ? tr('neuer Bestwert', 'new best') : tr('Ergebnis', 'Result')}</span></div>
+          <div>
+            <span className="big accent">{Math.round(result.score * 100)} %</span>
+            <span className="muted small">
+              {result.best ? tr('neuer Bestwert', 'new best') : tr('Ergebnis', 'Result')}
+            </span>
+          </div>
         </div>
-        <p>{won ? tr('Über 70 % – du kannst das Gelernte auch anwenden.', 'Over 70 % – you can apply what you learned.') : tr('Ab 70 % ist der Boss besiegt. Die Wiederholungen der nächsten Tage bringen dich dahin.', 'At 70 % the boss is defeated. The reviews over the next days will get you there.')} +{result.xp} XP</p>
+        <p>
+          {won
+            ? tr('Über 70 % – du kannst das Gelernte auch anwenden.', 'Over 70 % – you can apply what you learned.')
+            : tr(
+                'Ab 70 % ist der Boss besiegt. Die Wiederholungen der nächsten Tage bringen dich dahin.',
+                'At 70 % the boss is defeated. The reviews over the next days will get you there.',
+              )}{' '}
+          +{result.xp} XP
+        </p>
         <div className="row gap wrap center">
-          <a className="btn primary" href={back}>{tr('Zur Quest-Karte', 'To the quest map')}</a>
-          <button className="btn" onClick={start}>{tr('Neuer Kampf (neue Fragen)', 'New fight (new questions)')}</button>
+          <a className="btn primary" href={back}>
+            {tr('Zur Quest-Karte', 'To the quest map')}
+          </a>
+          <button className="btn" onClick={start}>
+            {tr('Neuer Kampf (neue Fragen)', 'New fight (new questions)')}
+          </button>
         </div>
       </section>
     );
@@ -76,18 +100,28 @@ export default function BossPage({ courseId }: { courseId: string }) {
   const i = scores.length;
   const current = questions[i];
   if (!current) {
-    // letzte Frage beantwortet, Ergebnis wird gerade gespeichert
-    return <section className="card result"><p className="muted">{tr('Auswertung …', 'Scoring …')}</p></section>;
+    // last question answered, result is being saved
+    return (
+      <section className="card result">
+        <p className="muted">{tr('Auswertung …', 'Scoring …')}</p>
+      </section>
+    );
   }
   const hp = 1 - scores.reduce((a, b) => a + b, 0) / questions.length;
 
   return (
     <div className="stack">
-      <a className="back" href={back}>{tr('← Aufgeben', '← Give up')}</a>
+      <a className="back" href={back}>
+        {tr('← Aufgeben', '← Give up')}
+      </a>
       <div className="boss-bar">
         <span>⚔ Boss</span>
-        <div className="bar hp"><div style={{ width: `${hp * 100}%` }} /></div>
-        <span className="muted small">{i + 1} / {questions.length}</span>
+        <div className="bar hp">
+          <div style={{ width: `${hp * 100}%` }} />
+        </div>
+        <span className="muted small">
+          {i + 1} / {questions.length}
+        </span>
       </div>
       <QuestionCard
         key={`${current.chapterId}:${current.q.id}`}

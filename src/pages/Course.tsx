@@ -28,7 +28,11 @@ export default function CoursePage({ id }: { id: string }) {
       dueCards(id),
       db.pdfs.get(id),
       getMeta<BossResult | null>(`boss:${id}`, null),
-      db.cards.where('courseId').equals(id).filter((c) => !!c.flagged).toArray(),
+      db.cards
+        .where('courseId')
+        .equals(id)
+        .filter((c) => !!c.flagged)
+        .toArray(),
     ]);
     return { course, chapters, due, pdf, boss, flagged };
   }, [id]);
@@ -39,7 +43,9 @@ export default function CoursePage({ id }: { id: string }) {
     return (
       <div className="card empty">
         <h2>{tr('Kurs nicht gefunden', 'Course not found')}</h2>
-        <a className="btn" href={href({ name: 'home' })}>{tr('Zur Übersicht', 'To overview')}</a>
+        <a className="btn" href={href({ name: 'home' })}>
+          {tr('Zur Übersicht', 'To overview')}
+        </a>
       </div>
     );
   }
@@ -52,44 +58,69 @@ export default function CoursePage({ id }: { id: string }) {
   }
 
   function questionText(chapterId: string, questionId: string): string {
-    const ch = chapters!.find((c) => c.id === chapterId);
-    const q = ch && [...ch.content.pretest, ...ch.content.posttest, ...ch.content.review].find((x) => x.id === questionId);
+    const ch = chapters?.find((c) => c.id === chapterId);
+    const q =
+      ch && [...ch.content.pretest, ...ch.content.posttest, ...ch.content.review].find((x) => x.id === questionId);
     return q?.prompt ?? questionId;
   }
 
   return (
     <div className="stack">
-      <a className="back" href={href({ name: 'home' })}>{tr('← Übersicht', '← Overview')}</a>
+      <a className="back" href={href({ name: 'home' })}>
+        {tr('← Übersicht', '← Overview')}
+      </a>
       <div className="row between wrap gap">
         <div>
           <h1>{course.title}</h1>
           {course.source && <p className="muted small">{course.source}</p>}
         </div>
         <div className="row gap wrap">
-          {due.length > 0 && <a className="btn primary" href={href({ name: 'review', courseId: id })}>↻ {tr(`${due.length} wiederholen`, `review ${due.length}`)}</a>}
-          <a className="btn" href={href({ name: 'import', courseId: id })}>{tr('+ Kapitel', '+ Chapter')}</a>
+          {due.length > 0 && (
+            <a className="btn primary" href={href({ name: 'review', courseId: id })}>
+              ↻ {tr(`${due.length} wiederholen`, `review ${due.length}`)}
+            </a>
+          )}
+          <a className="btn" href={href({ name: 'import', courseId: id })}>
+            {tr('+ Kapitel', '+ Chapter')}
+          </a>
         </div>
       </div>
 
       <section className="card row between wrap gap">
         <div>
           <strong>{tr('PDF für Quellenansicht', 'PDF for source view')}</strong>
-          <p className="muted small">{pdf ? `📎 ${pdf.name} ${tr('(bleibt nur in diesem Browser)', '(stays in this browser only)')}` : tr('Optional: Mit PDF springt „Quelle anzeigen“ direkt zur Originalseite.', 'Optional: with a PDF, "Source" jumps straight to the original page.')}</p>
+          <p className="muted small">
+            {pdf
+              ? `📎 ${pdf.name} ${tr('(bleibt nur in diesem Browser)', '(stays in this browser only)')}`
+              : tr(
+                  'Optional: Mit PDF springt „Quelle anzeigen“ direkt zur Originalseite.',
+                  'Optional: with a PDF, "Source" jumps straight to the original page.',
+                )}
+          </p>
         </div>
         <div className="row gap">
           <label className="btn small">
             {pdf ? tr('Ersetzen', 'Replace') : tr('PDF hinzufügen', 'Add PDF')}
             <input type="file" accept="application/pdf" hidden onChange={(e) => onPdf(e.target.files?.[0])} />
           </label>
-          {pdf && <button className="btn small ghost" onClick={() => db.pdfs.delete(id)}>{tr('Entfernen', 'Remove')}</button>}
+          {pdf && (
+            <button className="btn small ghost" onClick={() => db.pdfs.delete(id)}>
+              {tr('Entfernen', 'Remove')}
+            </button>
+          )}
         </div>
       </section>
 
       <h2>{tr('Quest-Karte', 'Quest map')}</h2>
-      {chapters.length === 0 && <p className="muted">{tr('Noch keine Kapitel. Importiere das erste.', 'No chapters yet. Import the first one.')}</p>}
+      {chapters.length === 0 && (
+        <p className="muted">
+          {tr('Noch keine Kapitel. Importiere das erste.', 'No chapters yet. Import the first one.')}
+        </p>
+      )}
       <ol className="quest-map">
         {chapters.map((ch, i) => {
-          const locked = i > 0 && chapters[i - 1].phase !== 'done';
+          const previous = chapters[i - 1];
+          const locked = previous !== undefined && previous.phase !== 'done';
           return (
             <li key={ch.id} className={`quest ${ch.phase} ${locked ? 'locked' : ''}`}>
               <div className="quest-node">{ch.phase === 'done' ? '★' : locked ? '🔒' : ch.number}</div>
@@ -100,19 +131,41 @@ export default function CoursePage({ id }: { id: string }) {
                       {ch.number}. {ch.content.title}
                     </h3>
                     <p className="muted small">
-                      {PHASE_LABEL()[ch.phase]} · {tr('S.', 'p.')} {ch.content.pages[0]}–{ch.content.pages[1]} · {ch.verified ? tr('✓ geprüft', '✓ verified') : tr('⚠ ungeprüft', '⚠ unverified')}
-                      {ch.phase === 'done' && <> · {tr('vorher', 'before')} {pct(ch.preScore)} → {tr('nachher', 'after')} {pct(ch.postScore)}</>}
+                      {PHASE_LABEL()[ch.phase]} · {tr('S.', 'p.')} {ch.content.pages[0]}–{ch.content.pages[1]} ·{' '}
+                      {ch.verified ? tr('✓ geprüft', '✓ verified') : tr('⚠ ungeprüft', '⚠ unverified')}
+                      {ch.phase === 'done' && (
+                        <>
+                          {' '}
+                          · {tr('vorher', 'before')} {pct(ch.preScore)} → {tr('nachher', 'after')} {pct(ch.postScore)}
+                        </>
+                      )}
                     </p>
                   </div>
-                  <button className="btn small ghost" onClick={() => setMenu(menu === ch.id ? undefined : ch.id)} aria-label={tr('Optionen', 'Options')}>⋯</button>
+                  <button
+                    className="btn small ghost"
+                    onClick={() => setMenu(menu === ch.id ? undefined : ch.id)}
+                    aria-label={tr('Optionen', 'Options')}
+                  >
+                    ⋯
+                  </button>
                 </div>
                 {menu === ch.id && (
                   <div className="row gap wrap menu">
-                    <button className="btn small" onClick={() => resetChapter(ch.id)}>{tr('Ablauf neu starten', 'Restart chapter')}</button>
+                    <button className="btn small" onClick={() => resetChapter(ch.id)}>
+                      {tr('Ablauf neu starten', 'Restart chapter')}
+                    </button>
                     <button
                       className="btn small danger"
                       onClick={() => {
-                        if (confirm(tr(`Kapitel „${ch.content.title}“ samt Wiederholungskarten löschen?`, `Delete chapter "${ch.content.title}" including its review cards?`))) deleteChapter(ch.id);
+                        if (
+                          confirm(
+                            tr(
+                              `Kapitel „${ch.content.title}“ samt Wiederholungskarten löschen?`,
+                              `Delete chapter "${ch.content.title}" including its review cards?`,
+                            ),
+                          )
+                        )
+                          void deleteChapter(ch.id);
                       }}
                     >
                       {tr('Löschen', 'Delete')}
@@ -120,17 +173,35 @@ export default function CoursePage({ id }: { id: string }) {
                     {ch.verificationNotes.length > 0 && (
                       <details className="small">
                         <summary>{tr('Prüfnotizen', 'Verification notes')}</summary>
-                        <ul>{ch.verificationNotes.map((n, j) => <li key={j}>{n}</li>)}</ul>
+                        <ul>
+                          {ch.verificationNotes.map((n, j) => (
+                            <li key={j}>{n}</li>
+                          ))}
+                        </ul>
                       </details>
                     )}
                   </div>
                 )}
                 {!locked && (
-                  <a className={`btn ${ch.phase === 'done' ? 'small' : 'primary'}`} href={href({ name: 'chapter', id: ch.id })}>
-                    {ch.phase === 'new' ? tr('Starten', 'Start') : ch.phase === 'done' ? tr('Story nochmal lesen', 'Read the story again') : tr('Weitermachen', 'Continue')}
+                  <a
+                    className={`btn ${ch.phase === 'done' ? 'small' : 'primary'}`}
+                    href={href({ name: 'chapter', id: ch.id })}
+                  >
+                    {ch.phase === 'new'
+                      ? tr('Starten', 'Start')
+                      : ch.phase === 'done'
+                        ? tr('Story nochmal lesen', 'Read the story again')
+                        : tr('Weitermachen', 'Continue')}
                   </a>
                 )}
-                {locked && <p className="muted small">{tr(`Wird nach Kapitel ${chapters[i - 1].number} freigeschaltet.`, `Unlocks after chapter ${chapters[i - 1].number}.`)}</p>}
+                {locked && (
+                  <p className="muted small">
+                    {tr(
+                      `Wird nach Kapitel ${previous.number} freigeschaltet.`,
+                      `Unlocks after chapter ${previous.number}.`,
+                    )}
+                  </p>
+                )}
               </div>
             </li>
           );
@@ -141,13 +212,28 @@ export default function CoursePage({ id }: { id: string }) {
             <div className="card quest-card">
               <h3>{tr('Boss-Fight: Alles gemischt', 'Boss fight: everything mixed')}</h3>
               <p className="muted small">
-                {tr('Gemischte Fragen aus allen Kapiteln, Schwerpunkt Anwendung und Transfer.', 'Mixed questions from all chapters, focused on application and transfer.')}
-                {boss && <> {tr('Bestwert:', 'Best:')} {pct(boss.best)} ({boss.attempts}×)</>}
+                {tr(
+                  'Gemischte Fragen aus allen Kapiteln, Schwerpunkt Anwendung und Transfer.',
+                  'Mixed questions from all chapters, focused on application and transfer.',
+                )}
+                {boss && (
+                  <>
+                    {' '}
+                    {tr('Bestwert:', 'Best:')} {pct(boss.best)} ({boss.attempts}×)
+                  </>
+                )}
               </p>
               {allDone ? (
-                <a className="btn primary" href={href({ name: 'boss', courseId: id })}>{boss ? tr('Nochmal kämpfen', 'Fight again') : tr('Kampf beginnen', 'Start the fight')}</a>
+                <a className="btn primary" href={href({ name: 'boss', courseId: id })}>
+                  {boss ? tr('Nochmal kämpfen', 'Fight again') : tr('Kampf beginnen', 'Start the fight')}
+                </a>
               ) : (
-                <p className="muted small">{tr('Wird freigeschaltet, wenn alle Kapitel gemeistert sind.', 'Unlocks once all chapters are mastered.')}</p>
+                <p className="muted small">
+                  {tr(
+                    'Wird freigeschaltet, wenn alle Kapitel gemeistert sind.',
+                    'Unlocks once all chapters are mastered.',
+                  )}
+                </p>
               )}
             </div>
           </li>
@@ -173,7 +259,9 @@ export default function CoursePage({ id }: { id: string }) {
                 if (n < 7) return tr(`noch ${days}`, `${days} left`);
                 const w = Math.floor(n / 7);
                 const rest = n % 7;
-                const weeks = plural(w, 'Woche', 'Wochen', 'week', 'weeks') + (rest ? ` ${tr('und', 'and')} ${plural(rest, 'Tag', 'Tage', 'day', 'days')}` : '');
+                const weeks =
+                  plural(w, 'Woche', 'Wochen', 'week', 'weeks') +
+                  (rest ? ` ${tr('und', 'and')} ${plural(rest, 'Tag', 'Tage', 'day', 'days')}` : '');
                 return tr(`noch ${days} · ${weeks}`, `${days} left · ${weeks}`);
               })()}
             </span>
@@ -183,13 +271,24 @@ export default function CoursePage({ id }: { id: string }) {
 
       {flagged.length > 0 && (
         <section className="card stack">
-          <h3>{tr('Gemeldete Fragen', 'Flagged questions')} ({flagged.length})</h3>
-          <p className="muted small">{tr('Diese Fragen sind aus der Wiederholung genommen. Korrigiere sie über einen erneuten Import des Kapitels oder gib sie wieder frei.', 'These questions are excluded from review. Fix them by re-importing the chapter, or release them again.')}</p>
+          <h3>
+            {tr('Gemeldete Fragen', 'Flagged questions')} ({flagged.length})
+          </h3>
+          <p className="muted small">
+            {tr(
+              'Diese Fragen sind aus der Wiederholung genommen. Korrigiere sie über einen erneuten Import des Kapitels oder gib sie wieder frei.',
+              'These questions are excluded from review. Fix them by re-importing the chapter, or release them again.',
+            )}
+          </p>
           <ul className="flag-list">
             {flagged.map((c) => (
               <li key={c.id}>
-                <span className="grow">{questionText(c.chapterId, c.questionId)} <em className="muted small">– {c.flagged}</em></span>
-                <button className="btn small" onClick={() => unflagCard(c.id)}>{tr('Freigeben', 'Release')}</button>
+                <span className="grow">
+                  {questionText(c.chapterId, c.questionId)} <em className="muted small">– {c.flagged}</em>
+                </span>
+                <button className="btn small" onClick={() => unflagCard(c.id)}>
+                  {tr('Freigeben', 'Release')}
+                </button>
               </li>
             ))}
           </ul>
@@ -199,7 +298,14 @@ export default function CoursePage({ id }: { id: string }) {
       <button
         className="btn danger ghost self-start"
         onClick={async () => {
-          if (confirm(tr(`Kurs „${course.title}“ mit allen Kapiteln und deinem Fortschritt löschen?`, `Delete course "${course.title}" with all chapters and your progress?`))) {
+          if (
+            confirm(
+              tr(
+                `Kurs „${course.title}“ mit allen Kapiteln und deinem Fortschritt löschen?`,
+                `Delete course "${course.title}" with all chapters and your progress?`,
+              ),
+            )
+          ) {
             await deleteCourse(id);
             go({ name: 'home' });
           }

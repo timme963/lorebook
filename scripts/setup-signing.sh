@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
-# Einmalig: Signierschlüssel für die Android-App erzeugen und als GitHub-Secrets hinterlegen.
-# Schlüssel + Passwort liegen danach in ~/.lorebook (NICHT löschen – ohne ihn lassen sich Updates nicht installieren).
+# One-off: creates the Android signing key and stores it as GitHub secrets.
+# Key and password end up in ~/.lorebook (do NOT delete – without it updates can no longer be installed).
 set -euo pipefail
 D="$HOME/.lorebook"; mkdir -p "$D"
 REPO=timme963/lorebook

@@ -1,6 +1,6 @@
 /**
- * Angaben für Impressum und Datenschutzerklärung (übernommen aus Quest-Leveling).
- * Leere Felder erscheinen auf der Seite als „[bitte ergänzen]“.
+ * Details for the legal notice (Impressum) and privacy policy.
+ * Empty fields appear on the page as "[bitte ergänzen]".
  */
 export const LEGAL = {
   name: 'Tim Kolitsch',
@@ -10,6 +10,6 @@ export const LEGAL = {
   email: 'tim.kolitsch@web.de',
   /** optional */
   phone: '',
-  /** Stand der Datenschutzerklärung */
+  /** Date of the privacy policy version */
   updated: '17.11.2026',
 };

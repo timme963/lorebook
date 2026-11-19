@@ -1,6 +1,6 @@
 /**
- * Wie gut sitzt welches Lernziel? Grundlage ist die FSRS-Abrufwahrscheinlichkeit (Retrievability) der Karten:
- * die geschätzte Chance, die Antwort jetzt gerade zu wissen.
+ * How well is each objective retained? Based on the FSRS retrievability of its cards:
+ * the estimated chance of knowing the answer right now.
  */
 import { db, type CardRow, type ChapterRow } from './db';
 import { chapterQuestions, retrievabilityOf } from './srs';
@@ -12,11 +12,11 @@ export interface ObjectiveStat {
   objectiveId: string;
   text: string;
   cards: number;
-  /** Karten mit mindestens einer Bewertung */
+  /** Cards rated at least once */
   reviewed: number;
-  /** Ø Abrufwahrscheinlichkeit 0..1 (nur bewertete Karten) */
+  /** Mean retrievability 0..1 (rated cards only) */
   retention?: number;
-  /** wie oft Karten dieses Lernziels vergessen wurden */
+  /** How often cards of this objective were forgotten */
   lapses: number;
 }
 
@@ -34,7 +34,17 @@ export async function objectiveStats(courseId: string, now = new Date()): Promis
     if (ch.phase !== 'done') continue;
     for (const o of ch.content.objectives) {
       const key = `${ch.id}:${o.id}`;
-      stats.set(key, { key, chapterId: ch.id, chapterNumber: ch.number, objectiveId: o.id, text: o.text, cards: 0, reviewed: 0, lapses: 0, sum: 0 });
+      stats.set(key, {
+        key,
+        chapterId: ch.id,
+        chapterNumber: ch.number,
+        objectiveId: o.id,
+        text: o.text,
+        cards: 0,
+        reviewed: 0,
+        lapses: 0,
+        sum: 0,
+      });
     }
   }
   const byId = new Map(chapters.map((c) => [c.id, c]));
@@ -57,12 +67,12 @@ export async function objectiveStats(courseId: string, now = new Date()): Promis
     .sort((a, b) => (a.retention ?? 2) - (b.retention ?? 2) || b.lapses - a.lapses);
 }
 
-/** Lernziele, die trainiert werden sollten: unter 90 % Abrufwahrscheinlichkeit (schwächste zuerst). */
+/** Objectives worth training: below 90 % retrievability (weakest first). */
 export function weakObjectives(stats: ObjectiveStat[]): ObjectiveStat[] {
   return stats.filter((s) => s.retention !== undefined && s.retention < 0.9);
 }
 
-/** Karten fürs Schwachstellen-Training: aus den schwächsten Lernzielen, unsicherste zuerst, höchstens 20. */
+/** Cards for weak-spot training: from the weakest objectives, least certain first, at most 20. */
 export async function weakCards(courseId: string, max = 20): Promise<CardRow[]> {
   const now = new Date();
   const weak = new Set(weakObjectives(await objectiveStats(courseId, now)).map((s) => s.key));

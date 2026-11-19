@@ -23,7 +23,9 @@ function Progress({ phase }: { phase: ChapterRow['phase'] }) {
   return (
     <ol className="phase-steps">
       {steps.map(([p, label], i) => (
-        <li key={p} className={i < idx ? 'past' : i === idx ? 'current' : ''}>{label}</li>
+        <li key={p} className={i < idx ? 'past' : i === idx ? 'current' : ''}>
+          {label}
+        </li>
       ))}
     </ol>
   );
@@ -55,14 +57,20 @@ function QuestionRun({
         <h2>{title}</h2>
         <p className="muted">{intro}</p>
       </div>
-      <div className="bar thin"><div style={{ width: `${(n / questions.length) * 100}%` }} /></div>
+      <div className="bar thin">
+        <div style={{ width: `${(n / questions.length) * 100}%` }} />
+      </div>
       <QuestionCard
         key={next.id}
         q={next}
         courseId={ch.courseId}
         mode={mode}
         onDone={(r) => onAnswer(next, r)}
-        meta={<span className="muted small">{tr(`Frage ${n + 1} von ${questions.length}`, `Question ${n + 1} of ${questions.length}`)}</span>}
+        meta={
+          <span className="muted small">
+            {tr(`Frage ${n + 1} von ${questions.length}`, `Question ${n + 1} of ${questions.length}`)}
+          </span>
+        }
       />
     </div>
   );
@@ -79,21 +87,20 @@ function StoryView({ ch }: { ch: ChapterRow }) {
   const sceneText = scene ? `${scene.title}. ${scene.text}` : `${story.ending}`;
   const sceneKey = `scene:${ch.id}:${i}`;
 
-  // Hörmodus: ganze Story am Stück (Szene, dann „Was steckt dahinter?“, dann nächste Szene, am Ende die Auflösung)
+  // listen mode: the whole story in one go (scene, then "What's behind it?", next scene, finally the resolution)
   const [listening, setListening] = useState(false);
   const listeningRef = useRef(false);
 
-  // Szene wechselt: Vorlesen stoppen, ggf. neue Szene automatisch vorlesen – außer der Hörmodus steuert selbst
+  // scene changes: stop reading, auto-read the new scene if enabled – unless listen mode is in control
   useEffect(() => {
     if (listeningRef.current) return;
     if (getSpeechSettings().autoStory) void speak(sceneText, sceneKey);
     return () => {
       if (!listeningRef.current) stopSpeaking();
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [sceneKey]);
+  }, [sceneKey, sceneText]);
 
-  // Seite verlassen beendet den Hörmodus
+  // leaving the page ends listen mode
   useEffect(
     () => () => {
       listeningRef.current = false;
@@ -116,7 +123,11 @@ function StoryView({ ch }: { ch: ChapterRow }) {
       setConceptOpen(false);
       if (!(await speak(`${sc.title}. ${sc.text}`, `listen:${idx}`)) || !listeningRef.current) break;
       setConceptOpen(true);
-      if (!(await speak(`${tr('Was steckt dahinter?', "What's behind it?")} ${sc.concept}`, `listen:${idx}:c`)) || !listeningRef.current) break;
+      if (
+        !(await speak(`${tr('Was steckt dahinter?', "What's behind it?")} ${sc.concept}`, `listen:${idx}:c`)) ||
+        !listeningRef.current
+      )
+        break;
       idx++;
       await db.chapters.update(ch.id, { sceneIndex: idx });
       window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -140,16 +151,32 @@ function StoryView({ ch }: { ch: ChapterRow }) {
   return (
     <div className="stack">
       <div className="story-head">
-        <p className="eyebrow">{tr('Kapitel', 'Chapter')} {ch.number} · {ch.content.title}</p>
+        <p className="eyebrow">
+          {tr('Kapitel', 'Chapter')} {ch.number} · {ch.content.title}
+        </p>
         <h2 className="story-title">{story.title}</h2>
         {i === 0 && <p className="story-setting">{story.setting}</p>}
         {ttsSupported() && (
           <div className="listen-bar">
             {listening ? (
-              <button className="btn small primary" onClick={stopListen}>■ {tr('Anhören stoppen', 'Stop listening')}</button>
+              <button className="btn small primary" onClick={stopListen}>
+                ■ {tr('Anhören stoppen', 'Stop listening')}
+              </button>
             ) : (
-              <button className="btn small" onClick={() => void listenAll()} title={tr('Story wie ein Hörbuch – Szene für Szene inkl. Erklärung', 'Story like an audiobook – scene by scene including the explanation')}>
-                🎧 {isEnding ? tr('Auflösung anhören', 'Listen to the resolution') : i === 0 ? tr('Ganze Story anhören', 'Listen to the whole story') : tr('Ab hier anhören', 'Listen from here')}
+              <button
+                className="btn small"
+                onClick={() => void listenAll()}
+                title={tr(
+                  'Story wie ein Hörbuch – Szene für Szene inkl. Erklärung',
+                  'Story like an audiobook – scene by scene including the explanation',
+                )}
+              >
+                🎧{' '}
+                {isEnding
+                  ? tr('Auflösung anhören', 'Listen to the resolution')
+                  : i === 0
+                    ? tr('Ganze Story anhören', 'Listen to the whole story')
+                    : tr('Ab hier anhören', 'Listen from here')}
               </button>
             )}
           </div>
@@ -157,7 +184,12 @@ function StoryView({ ch }: { ch: ChapterRow }) {
       </div>
       <div className="scene-dots" aria-label={tr('Fortschritt', 'Progress')}>
         {story.scenes.map((_, j) => (
-          <button key={j} className={j < i ? 'past' : j === i ? 'current' : ''} onClick={() => j <= i && goTo(j)} aria-label={`${tr('Szene', 'Scene')} ${j + 1}`} />
+          <button
+            key={j}
+            className={j < i ? 'past' : j === i ? 'current' : ''}
+            onClick={() => j <= i && goTo(j)}
+            aria-label={`${tr('Szene', 'Scene')} ${j + 1}`}
+          />
         ))}
         <button className={isEnding ? 'current' : ''} aria-label={tr('Ende', 'End')} onClick={() => undefined} />
       </div>
@@ -169,25 +201,33 @@ function StoryView({ ch }: { ch: ChapterRow }) {
             <SpeakButton text={sceneText} id={sceneKey} />
           </div>
           {scene.text.split(/\n+/).map((p, k) => (
-            <p key={k}><Rich text={p} /></p>
+            <p key={k}>
+              <Rich text={p} />
+            </p>
           ))}
           <div className={`concept ${conceptOpen ? 'open' : ''}`}>
             {conceptOpen ? (
               <>
-                <p className="label">{tr('Was steckt dahinter?', 'What\'s behind it?')}</p>
+                <p className="label">{tr('Was steckt dahinter?', "What's behind it?")}</p>
                 <div className="row between gap">
-                  <p><Rich text={scene.concept} /></p>
+                  <p>
+                    <Rich text={scene.concept} />
+                  </p>
                   <SpeakButton text={scene.concept} />
                 </div>
                 {objective && (
                   <div className="row between wrap gap">
-                    <span className="muted small">{tr('Lernziel:', 'Objective:')} <Rich text={objective.text} /></span>
+                    <span className="muted small">
+                      {tr('Lernziel:', 'Objective:')} <Rich text={objective.text} />
+                    </span>
                     <SourceButton courseId={ch.courseId} source={objective.source} />
                   </div>
                 )}
               </>
             ) : (
-              <button className="btn block" onClick={() => setConceptOpen(true)}>💡 {tr('Was steckt dahinter?', 'What\'s behind it?')}</button>
+              <button className="btn block" onClick={() => setConceptOpen(true)}>
+                💡 {tr('Was steckt dahinter?', "What's behind it?")}
+              </button>
             )}
           </div>
         </article>
@@ -200,13 +240,17 @@ function StoryView({ ch }: { ch: ChapterRow }) {
             <SpeakButton text={sceneText} id={sceneKey} />
           </div>
           {story.ending.split(/\n+/).map((p, k) => (
-            <p key={k}><Rich text={p} /></p>
+            <p key={k}>
+              <Rich text={p} />
+            </p>
           ))}
           <div className="concept open">
             <p className="label">{tr('Was du in diesem Kapitel gelernt hast', 'What you learned in this chapter')}</p>
             <ul>
               {objectives.map((o) => (
-                <li key={o.id}><Rich text={o.text} /></li>
+                <li key={o.id}>
+                  <Rich text={o.text} />
+                </li>
               ))}
             </ul>
           </div>
@@ -214,15 +258,26 @@ function StoryView({ ch }: { ch: ChapterRow }) {
       )}
 
       <div className="row between">
-        <button className="btn ghost" disabled={i === 0} onClick={() => goTo(i - 1)}>{tr('← Zurück', '← Back')}</button>
+        <button className="btn ghost" disabled={i === 0} onClick={() => goTo(i - 1)}>
+          {tr('← Zurück', '← Back')}
+        </button>
         {!isEnding ? (
-          <button className="btn primary" disabled={!conceptOpen} title={conceptOpen ? '' : tr('Erst „Was steckt dahinter?“ lesen', 'Read "What\'s behind it?" first')} onClick={() => goTo(i + 1)}>
+          <button
+            className="btn primary"
+            disabled={!conceptOpen}
+            title={conceptOpen ? '' : tr('Erst „Was steckt dahinter?“ lesen', 'Read "What\'s behind it?" first')}
+            onClick={() => goTo(i + 1)}
+          >
             {tr('Weiter →', 'Next →')}
           </button>
         ) : ch.phase === 'done' ? (
-          <a className="btn primary" href={href({ name: 'course', id: ch.courseId })}>{tr('Zur Quest-Karte', 'To the quest map')}</a>
+          <a className="btn primary" href={href({ name: 'course', id: ch.courseId })}>
+            {tr('Zur Quest-Karte', 'To the quest map')}
+          </a>
         ) : (
-          <button className="btn primary" onClick={() => db.chapters.update(ch.id, { phase: 'posttest' })}>{tr('Zu den Nachfragen →', 'To the post-questions →')}</button>
+          <button className="btn primary" onClick={() => db.chapters.update(ch.id, { phase: 'posttest' })}>
+            {tr('Zu den Nachfragen →', 'To the post-questions →')}
+          </button>
         )}
       </div>
     </div>
@@ -266,7 +321,10 @@ function Result({ ch }: { ch: ChapterRow }) {
         </div>
         <p>
           {post > pre
-            ? tr(`+${Math.round((post - pre) * 100)} Prozentpunkte Lernzuwachs.`, `+${Math.round((post - pre) * 100)} percentage points gained.`)
+            ? tr(
+                `+${Math.round((post - pre) * 100)} Prozentpunkte Lernzuwachs.`,
+                `+${Math.round((post - pre) * 100)} percentage points gained.`,
+              )
             : post === pre && post >= 0.99
               ? tr('Du konntest es schon vorher – stark.', 'You knew it already – impressive.')
               : tr(
@@ -282,9 +340,12 @@ function Result({ ch }: { ch: ChapterRow }) {
         <ul className="objective-list">
           {perObjective.map(({ o, pre, post }) => (
             <li key={o.id}>
-              <span className="grow"><Rich text={o.text} /></span>
+              <span className="grow">
+                <Rich text={o.text} />
+              </span>
               <span className="muted small nowrap">
-                {pre === undefined ? '–' : `${Math.round(pre * 100)} %`} → {post === undefined ? '–' : `${Math.round(post * 100)} %`}
+                {pre === undefined ? '–' : `${Math.round(pre * 100)} %`} →{' '}
+                {post === undefined ? '–' : `${Math.round(post * 100)} %`}
               </span>
             </li>
           ))}
@@ -296,13 +357,33 @@ function Result({ ch }: { ch: ChapterRow }) {
         <ul className="pre-list">
           {content.pretest.map((q) => {
             const a = ch.preAnswers[q.id];
-            const right = q.type === 'mc' ? correctSet(q).map((i) => q.options[i]).join(' · ') : q.type === 'cloze' ? q.answers[0] : q.modelAnswer;
-            const givenText = !a?.given ? tr('weiß ich nicht', "don't know") : q.type === 'mc' ? parseGiven(a.given).map((i) => q.options[i]).join(' · ') : a.given;
+            const right =
+              q.type === 'mc'
+                ? correctSet(q)
+                    .map((i) => q.options[i])
+                    .join(' · ')
+                : q.type === 'cloze'
+                  ? (q.answers[0] ?? '')
+                  : q.modelAnswer;
+            const givenText = !a?.given
+              ? tr('weiß ich nicht', "don't know")
+              : q.type === 'mc'
+                ? parseGiven(a.given)
+                    .map((i) => q.options[i])
+                    .join(' · ')
+                : a.given;
             return (
               <li key={q.id}>
-                <p><strong><Rich text={q.prompt} /></strong></p>
+                <p>
+                  <strong>
+                    <Rich text={q.prompt} />
+                  </strong>
+                </p>
                 <p className="small">
-                  {a?.correct ? '✓' : '✗'} {tr('Du:', 'You:')} <Rich text={givenText} /> · {tr('Richtig:', 'Correct:')} <strong><Rich text={right} /></strong>
+                  {a?.correct ? '✓' : '✗'} {tr('Du:', 'You:')} <Rich text={givenText} /> · {tr('Richtig:', 'Correct:')}{' '}
+                  <strong>
+                    <Rich text={right} />
+                  </strong>
                 </p>
               </li>
             );
@@ -311,7 +392,9 @@ function Result({ ch }: { ch: ChapterRow }) {
       </section>
 
       <div className="row gap wrap">
-        <a className="btn primary" href={href({ name: 'course', id: ch.courseId })}>{tr('Zur Quest-Karte', 'To the quest map')}</a>
+        <a className="btn primary" href={href({ name: 'course', id: ch.courseId })}>
+          {tr('Zur Quest-Karte', 'To the quest map')}
+        </a>
         <button
           className="btn"
           onClick={async () => {
@@ -333,7 +416,9 @@ export default function ChapterPage({ id }: { id: string }) {
     return (
       <div className="card empty">
         <h2>{tr('Kapitel nicht gefunden', 'Chapter not found')}</h2>
-        <a className="btn" href={href({ name: 'home' })}>{tr('Zur Übersicht', 'To overview')}</a>
+        <a className="btn" href={href({ name: 'home' })}>
+          {tr('Zur Übersicht', 'To overview')}
+        </a>
       </div>
     );
   }
@@ -362,24 +447,34 @@ export default function ChapterPage({ id }: { id: string }) {
     case 'new':
       body = (
         <section className="card stack intro">
-          <p className="eyebrow">{tr('Kapitel', 'Chapter')} {ch.number} · {tr('S.', 'p.')} {c.pages[0]}–{c.pages[1]}</p>
+          <p className="eyebrow">
+            {tr('Kapitel', 'Chapter')} {ch.number} · {tr('S.', 'p.')} {c.pages[0]}–{c.pages[1]}
+          </p>
           <h1>{c.title}</h1>
           {!ch.verified && (
-            <p className="feedback neutral small">⚠ {tr('Dieses Kapitel wurde nicht mit Prompt B geprüft. Fehler sind wahrscheinlicher – nutze „Quelle“ bei Zweifeln.', 'This chapter was not checked with Prompt B. Errors are more likely – use "Source" when in doubt.')}</p>
+            <p className="feedback neutral small">
+              ⚠{' '}
+              {tr(
+                'Dieses Kapitel wurde nicht mit Prompt B geprüft. Fehler sind wahrscheinlicher – nutze „Quelle“ bei Zweifeln.',
+                'This chapter was not checked with Prompt B. Errors are more likely – use "Source" when in doubt.',
+              )}
+            </p>
           )}
           {tr(
             <p>
-              Zuerst <strong>{c.pretest.length} kurze Fragen</strong>, bevor du etwas liest. Rate ruhig, falsche Antworten sind hier ausdrücklich
-              erwünscht: Das Raten bereitet dein Gehirn auf den Stoff vor. Danach folgt die Story mit {c.story.scenes.length} Szenen, dann die
-              Nachfragen.
+              Zuerst <strong>{c.pretest.length} kurze Fragen</strong>, bevor du etwas liest. Rate ruhig, falsche
+              Antworten sind hier ausdrücklich erwünscht: Das Raten bereitet dein Gehirn auf den Stoff vor. Danach folgt
+              die Story mit {c.story.scenes.length} Szenen, dann die Nachfragen.
             </p>,
             <p>
-              First, <strong>{c.pretest.length} short questions</strong> before you read anything. Just guess – wrong answers are explicitly welcome
-              here: guessing primes your brain for the material. Then comes the story with {c.story.scenes.length} scenes, followed by the
-              post-questions.
+              First, <strong>{c.pretest.length} short questions</strong> before you read anything. Just guess – wrong
+              answers are explicitly welcome here: guessing primes your brain for the material. Then comes the story
+              with {c.story.scenes.length} scenes, followed by the post-questions.
             </p>,
           )}
-          <button className="btn primary self-start" onClick={() => db.chapters.update(id, { phase: 'pretest' })}>{tr('Los geht\'s', 'Let\'s go')}</button>
+          <button className="btn primary self-start" onClick={() => db.chapters.update(id, { phase: 'pretest' })}>
+            {tr("Los geht's", "Let's go")}
+          </button>
         </section>
       );
       break;
@@ -392,7 +487,10 @@ export default function ChapterPage({ id }: { id: string }) {
           mode="silent"
           onAnswer={answerPre}
           title={tr('Was weißt du schon?', 'What do you know already?')}
-          intro={tr('Keine Auflösung jetzt – die gibt es am Ende des Kapitels. Rate einfach.', 'No answers yet – you get them at the end of the chapter. Just guess.')}
+          intro={tr(
+            'Keine Auflösung jetzt – die gibt es am Ende des Kapitels. Rate einfach.',
+            'No answers yet – you get them at the end of the chapter. Just guess.',
+          )}
         />
       );
       break;
@@ -408,7 +506,10 @@ export default function ChapterPage({ id }: { id: string }) {
           mode="feedback"
           onAnswer={answerPost}
           title={tr('Was weißt du jetzt?', 'What do you know now?')}
-          intro={tr('Dieselben Lernziele, neue Fragen. Diesmal mit Auflösung.', 'Same objectives, new questions. This time with answers.')}
+          intro={tr(
+            'Dieselben Lernziele, neue Fragen. Diesmal mit Auflösung.',
+            'Same objectives, new questions. This time with answers.',
+          )}
         />
       );
       break;
@@ -419,7 +520,9 @@ export default function ChapterPage({ id }: { id: string }) {
 
   return (
     <div className="stack">
-      <a className="back" href={href({ name: 'course', id: ch.courseId })}>{tr('← Quest-Karte', '← Quest map')}</a>
+      <a className="back" href={href({ name: 'course', id: ch.courseId })}>
+        {tr('← Quest-Karte', '← Quest map')}
+      </a>
       {ch.phase !== 'new' && <Progress phase={ch.phase} />}
       {body}
     </div>

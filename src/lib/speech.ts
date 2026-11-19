@@ -1,8 +1,9 @@
+import { errorMessage } from './errors';
 /**
- * Vorlesen (Text-to-Speech) und Spracheingabe (Speech-to-Text).
+ * Read-aloud (text-to-speech) and dictation (speech-to-text).
  *  - Browser: Web Speech API (speechSynthesis / SpeechRecognition)
- *  - Android-App: Capacitor-Plugins (Sprachausgabe und Spracherkennung von Android)
- * Keine eigenen Server, keine Kosten. Einstellungen liegen pro Gerät in localStorage.
+ *  - Android app: Capacitor plugins (Android's speech output and recognition)
+ * No own servers, no costs. Settings are stored per device in localStorage.
  */
 import { useSyncExternalStore } from 'react';
 import { TextToSpeech } from '@capacitor-community/text-to-speech';
@@ -16,16 +17,16 @@ export type SpeechLang = 'de' | 'en';
 export interface SpeechSettings {
   /** 0.5 … 2.5, 1 = normal */
   rate: number;
-  /** gewählte Stimme je Sprache ('' = automatisch die beste) */
+  /** Chosen voice per language ('' = best one automatically) */
   voice: Record<SpeechLang, string>;
-  /** Story-Szenen beim Umblättern automatisch vorlesen */
+  /** Read story scenes aloud automatically when turning pages */
   autoStory: boolean;
 }
 
 const KEY = 'lorebook-speech';
 const DEFAULTS: SpeechSettings = { rate: 1, voice: { de: '', en: '' }, autoStory: false };
 
-// ---------------------------------------------------------------- kleiner Store (Einstellungen + was gerade gesprochen wird)
+// ---------------------------------------------------------------- small store (settings + what is being spoken)
 
 const subs = new Set<() => void>();
 const emit = () => subs.forEach((f) => f());
@@ -37,9 +38,12 @@ const subscribe = (f: () => void) => {
 function readSettings(): SpeechSettings {
   try {
     const raw = localStorage.getItem(KEY);
-    if (raw) return { ...DEFAULTS, ...JSON.parse(raw), voice: { ...DEFAULTS.voice, ...JSON.parse(raw).voice } };
+    if (raw) {
+      const saved = JSON.parse(raw) as Partial<SpeechSettings>;
+      return { ...DEFAULTS, ...saved, voice: { ...DEFAULTS.voice, ...saved.voice } };
+    }
   } catch {
-    /* privater Modus */
+    /* private mode */
   }
   return DEFAULTS;
 }
@@ -54,7 +58,7 @@ export function setSpeechSettings(patch: Partial<SpeechSettings>): void {
   try {
     localStorage.setItem(KEY, JSON.stringify(settings));
   } catch {
-    /* egal */
+    /* not critical */
   }
   emit();
 }
@@ -67,12 +71,12 @@ function setSpeaking(id: string | null) {
   emit();
 }
 
-// ---------------------------------------------------------------- Sprache des Textes erkennen
+// ---------------------------------------------------------------- detect the text's language
 
 const DE_WORDS = /\b(der|die|das|und|ist|nicht|ein|eine|zu|den|mit|sich|auf|für|dass|wird|sie|er|es)\b/gi;
 const EN_WORDS = /\b(the|and|is|not|a|an|to|of|with|for|that|will|she|he|it|you|are|was)\b/gi;
 
-/** Deutsch oder Englisch? Lerninhalte sind in der Sprache des PDFs, nicht unbedingt in der App-Sprache. */
+/** German or English? Study content is in the PDF's language, not necessarily the app language. */
 export function detectLang(text: string): SpeechLang {
   const de = (text.match(DE_WORDS)?.length ?? 0) + (/[äöüß]/i.test(text) ? 3 : 0);
   const en = text.match(EN_WORDS)?.length ?? 0;
@@ -82,7 +86,7 @@ export function detectLang(text: string): SpeechLang {
 
 const BCP47: Record<SpeechLang, string> = { de: 'de-DE', en: 'en-US' };
 
-// ---------------------------------------------------------------- Stimmen
+// ---------------------------------------------------------------- voices
 
 export interface VoiceOption {
   id: string;
@@ -95,10 +99,10 @@ function webVoices(): SpeechSynthesisVoice[] {
   return typeof speechSynthesis === 'undefined' ? [] : speechSynthesis.getVoices();
 }
 
-/** Je natürlicher, desto weiter oben: Edge „Online (Natural)“, Google-, Premium-/Enhanced-Stimmen. */
+/** The more natural, the higher: Edge "Online (Natural)", Google, premium/enhanced voices. */
 function score(name: string, local: boolean, voiceLang = ''): number {
   let s = 0;
-  // Standardsprache bevorzugen: Deutsch aus Deutschland, Englisch aus USA/UK
+  // prefer the standard variant: German from Germany, English from the US/UK
   if (/^(de-DE|en-US|en-GB)$/i.test(voiceLang.replace('_', '-'))) s += 3;
   if (/natural|neural|online/i.test(name)) s += 4;
   if (/premium|enhanced|wavenet/i.test(name)) s += 3;
@@ -109,7 +113,9 @@ function score(name: string, local: boolean, voiceLang = ''): number {
 
 export async function listVoices(lang: SpeechLang): Promise<VoiceOption[]> {
   if (isNative) {
-    if (!nativeVoices) nativeVoices = (await TextToSpeech.getSupportedVoices().catch(() => ({ voices: [] as SpeechSynthesisVoice[] }))).voices;
+    if (!nativeVoices)
+      nativeVoices = (await TextToSpeech.getSupportedVoices().catch(() => ({ voices: [] as SpeechSynthesisVoice[] })))
+        .voices;
     return (nativeVoices ?? [])
       .map((v, i) => ({ v, i }))
       .filter(({ v }) => v.lang?.toLowerCase().startsWith(lang))
@@ -138,11 +144,11 @@ function pickWebVoice(lang: SpeechLang): SpeechSynthesisVoice | undefined {
   return [...all].sort((a, b) => score(b.name, b.localService, b.lang) - score(a.name, a.localService, a.lang))[0];
 }
 
-// ---------------------------------------------------------------- Vorlesen
+// ---------------------------------------------------------------- read-aloud
 
 export const ttsSupported = () => isNative || typeof speechSynthesis !== 'undefined';
 
-/** Text in Häppchen, weil Chrome lange Äußerungen nach ~15 s abbricht. */
+/** Splits text into chunks because Chrome cuts off long utterances after ~15 s. */
 function chunks(text: string): string[] {
   const sentences = text.replace(/\s+/g, ' ').match(/[^.!?…]+[.!?…]*["“”»«]?\s*/g) ?? [text];
   const out: string[] = [];
@@ -160,7 +166,7 @@ function chunks(text: string): string[] {
 
 let token = 0;
 
-/** Liest vor. Ein zweiter Aufruf mit derselben id stoppt (Umschalter). true = bis zum Ende vorgelesen. */
+/** Reads aloud. A second call with the same id stops (toggle). true = read to the end. */
 export async function speak(text: string, id = text): Promise<boolean> {
   if (speakingId === id) {
     stopSpeaking();
@@ -175,7 +181,14 @@ export async function speak(text: string, id = text): Promise<boolean> {
   try {
     if (isNative) {
       const v = settings.voice[lang];
-      await TextToSpeech.speak({ text: clean, lang: BCP47[lang], rate: settings.rate, volume: 1, category: 'playback', ...(v ? { voice: Number(v) } : {}) });
+      await TextToSpeech.speak({
+        text: clean,
+        lang: BCP47[lang],
+        rate: settings.rate,
+        volume: 1,
+        category: 'playback',
+        ...(v ? { voice: Number(v) } : {}),
+      });
     } else {
       await voicesReady();
       const voice = pickWebVoice(lang);
@@ -207,7 +220,7 @@ export function stopSpeaking(): void {
   if (speakingId !== null) setSpeaking(null);
 }
 
-// ---------------------------------------------------------------- Spracheingabe
+// ---------------------------------------------------------------- dictation
 
 type WebRecognition = {
   lang: string;
@@ -221,7 +234,10 @@ type WebRecognition = {
 };
 
 function webRecognitionCtor(): (new () => WebRecognition) | undefined {
-  const w = window as unknown as { SpeechRecognition?: new () => WebRecognition; webkitSpeechRecognition?: new () => WebRecognition };
+  const w = window as unknown as {
+    SpeechRecognition?: new () => WebRecognition;
+    webkitSpeechRecognition?: new () => WebRecognition;
+  };
   return w.SpeechRecognition ?? w.webkitSpeechRecognition;
 }
 
@@ -232,8 +248,8 @@ export interface Dictation {
 }
 
 /**
- * Startet die Spracheingabe. onText bekommt laufend den bisher erkannten Text (inkl. Zwischenstand),
- * onEnd wird aufgerufen, wenn die Erkennung endet (Stille, Stopp oder Fehler).
+ * Starts dictation. onText continuously receives the text recognised so far (including interim results),
+ * onEnd is called when recognition ends (silence, stop or error).
  */
 export async function startDictation(
   lang: SpeechLang,
@@ -256,7 +272,9 @@ export async function startDictation(
         onEnd();
       }
     });
-    SpeechRecognition.start({ language: BCP47[lang], partialResults: true, popup: false, maxResults: 1 }).catch((e) => onEnd(String(e?.message ?? e)));
+    SpeechRecognition.start({ language: BCP47[lang], partialResults: true, popup: false, maxResults: 1 }).catch(
+      (e: unknown) => onEnd(errorMessage(e)),
+    );
     return { stop: () => void SpeechRecognition.stop().catch(() => undefined) };
   }
 
@@ -271,7 +289,7 @@ export async function startDictation(
   rec.interimResults = true;
   rec.onresult = (e) => {
     let text = '';
-    for (let i = 0; i < e.results.length; i++) text += e.results[i][0].transcript;
+    for (const result of Array.from(e.results)) text += result[0]?.transcript ?? '';
     onText(text.trim());
   };
   let error: string | undefined;
@@ -283,11 +301,11 @@ export async function startDictation(
   return { stop: () => rec.stop() };
 }
 
-// ---------------------------------------------------------------- freihändig: einmal zuhören
+// ---------------------------------------------------------------- hands-free: listen once
 
 let currentListen: Dictation | undefined;
 
-/** Hört zu, bis eine Sprechpause kommt (oder nach timeoutMs), und liefert den erkannten Text ('' = nichts verstanden). */
+/** Listens until a pause (or timeoutMs) and returns the recognised text ('' = nothing understood). */
 export function listenOnce(lang: SpeechLang, timeoutMs = 15000): Promise<{ text: string; error?: string }> {
   return new Promise((resolve) => {
     let last = '';
@@ -309,7 +327,7 @@ export function listenOnce(lang: SpeechLang, timeoutMs = 15000): Promise<{ text:
         }, timeoutMs);
         if (done) d.stop();
       })
-      .catch((e) => finish(String(e?.message ?? e)));
+      .catch((e: unknown) => finish(errorMessage(e)));
   });
 }
 

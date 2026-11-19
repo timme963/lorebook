@@ -1,8 +1,8 @@
 import { db, deviceId, getMeta, setMeta } from './db';
 import { getLang } from './i18n';
 
-// XP und Lerntage werden pro Gerät gespeichert (meta "xp:<gerät>", "days:<gerät>") und zusammengerechnet.
-// So überschreiben sich zwei Geräte beim Sync nie gegenseitig.
+// XP and study days are stored per device (meta "xp:<device>", "days:<device>") and summed up,
+// so two devices never overwrite each other when syncing.
 
 export function dayKey(d = new Date()): string {
   const y = d.getFullYear();
@@ -11,19 +11,31 @@ export function dayKey(d = new Date()): string {
   return `${y}-${m}-${day}`;
 }
 
-export function daysBetween(a: string, b: string): number {
-  const [ya, ma, da] = a.split('-').map(Number);
-  const [yb, mb, db] = b.split('-').map(Number);
-  return Math.round((Date.UTC(yb, mb - 1, db) - Date.UTC(ya, ma - 1, da)) / 86400000);
+const MS_PER_DAY = 86_400_000;
+
+/** Parses a day key (YYYY-MM-DD) into its numeric parts. */
+function dayParts(key: string): [number, number, number] {
+  const [y = 1970, m = 1, d = 1] = key.split('-').map(Number);
+  return [y, m, d];
 }
 
-/** Sanfte Serie: Anzahl Lerntage in Folge, wobei ein Tag Pause erlaubt ist. */
+export function daysBetween(a: string, b: string): number {
+  const [ya, ma, da] = dayParts(a);
+  const [yb, mb, db] = dayParts(b);
+  return Math.round((Date.UTC(yb, mb - 1, db) - Date.UTC(ya, ma - 1, da)) / MS_PER_DAY);
+}
+
+/** Lenient streak: consecutive study days, with one day off allowed. */
 export function streakFromDays(days: Iterable<string>, today = dayKey()): number {
-  const sorted = [...new Set(days)].filter((d) => d <= today).sort().reverse();
-  if (!sorted.length || daysBetween(sorted[0], today) > 2) return 0;
+  const sorted = [...new Set(days)]
+    .filter((d) => d <= today)
+    .sort()
+    .reverse();
+  const latest = sorted[0];
+  if (latest === undefined || daysBetween(latest, today) > 2) return 0;
   let count = 1;
   for (let i = 1; i < sorted.length; i++) {
-    if (daysBetween(sorted[i], sorted[i - 1]) > 2) break;
+    if (daysBetween(sorted[i] ?? '', sorted[i - 1] ?? '') > 2) break;
     count++;
   }
   return count;
@@ -52,7 +64,7 @@ export async function currentStreak(): Promise<number> {
   return streakFromDays(rows.flatMap((r) => (Array.isArray(r.value) ? (r.value as string[]) : [])));
 }
 
-/** Alte Zähler (vor Version 2) einmalig auf das Pro-Gerät-Format umstellen. */
+/** Migrates old counters (before version 2) to the per-device format once. */
 export async function migrateLegacyProgress(): Promise<void> {
   const legacyXp = await db.meta.get('xp');
   const legacyStreak = await db.meta.get('streak');
@@ -67,7 +79,7 @@ export async function migrateLegacyProgress(): Promise<void> {
     if (legacyStreak) {
       const s = legacyStreak.value as { count: number; lastDay: string | null };
       if (s?.lastDay && s.count > 0) {
-        const [y, m, d] = s.lastDay.split('-').map(Number);
+        const [y, m, d] = dayParts(s.lastDay);
         const days = Array.from({ length: Math.min(s.count, 400) }, (_, i) => dayKey(new Date(y, m - 1, d - i)));
         const key = `days:${dev}`;
         await setMeta(key, [...new Set([...(await getMeta<string[]>(key, [])), ...days])].sort());
@@ -77,7 +89,7 @@ export async function migrateLegacyProgress(): Promise<void> {
   });
 }
 
-/** Level wächst quadratisch langsamer: Level n braucht 50·(n-1)² XP. */
+/** Levels slow down quadratically: level n needs 50·(n-1)² XP. */
 export function levelFor(xp: number): { level: number; current: number; next: number; progress: number } {
   const level = Math.floor(Math.sqrt(xp / 50)) + 1;
   const current = 50 * (level - 1) ** 2;
@@ -86,11 +98,29 @@ export function levelFor(xp: number): { level: number; current: number; next: nu
 }
 
 const LEVEL_TITLES = {
-  de: ['Neugierige Seele', 'Lehrling', 'Spurenleser', 'Wissenssammler', 'Chronist', 'Gelehrte:r', 'Meister:in der Archive', 'Hüter:in des Lorebooks'],
-  en: ['Curious soul', 'Apprentice', 'Tracker', 'Knowledge gatherer', 'Chronicler', 'Scholar', 'Master of the archives', 'Keeper of the Lorebook'],
+  de: [
+    'Neugierige Seele',
+    'Lehrling',
+    'Spurenleser',
+    'Wissenssammler',
+    'Chronist',
+    'Gelehrte:r',
+    'Meister:in der Archive',
+    'Hüter:in des Lorebooks',
+  ],
+  en: [
+    'Curious soul',
+    'Apprentice',
+    'Tracker',
+    'Knowledge gatherer',
+    'Chronicler',
+    'Scholar',
+    'Master of the archives',
+    'Keeper of the Lorebook',
+  ],
 };
 
 export function levelTitle(level: number): string {
   const titles = LEVEL_TITLES[getLang()];
-  return titles[Math.min(level - 1, titles.length - 1)];
+  return titles[Math.min(level - 1, titles.length - 1)] ?? titles[0] ?? '';
 }

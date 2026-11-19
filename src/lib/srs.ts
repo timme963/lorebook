@@ -9,7 +9,7 @@ export type { Grade };
 
 const scheduler = fsrs(generatorParameters({ enable_fuzz: true, request_retention: 0.9 }));
 
-/** Dexie liefert Datumsfelder als Date zurück – sicherheitshalber normalisieren (z. B. nach Backup-Import). */
+/** Normalises date fields to Date, which they may not be after a backup import. */
 function reviveCard(c: Card): Card {
   return {
     ...c,
@@ -23,7 +23,7 @@ export function chapterQuestions(ch: ChapterRow): Question[] {
   return [...c.pretest, ...c.posttest, ...c.review];
 }
 
-/** Legt nach Kapitelabschluss für alle Fragen Karten an (bestehende bleiben unverändert). */
+/** Creates cards for all questions after a chapter is completed (existing ones stay unchanged). */
 export async function createCardsForChapter(ch: ChapterRow): Promise<number> {
   const now = new Date();
   let created = 0;
@@ -32,7 +32,7 @@ export async function createCardsForChapter(ch: ChapterRow): Promise<number> {
       const id = `${ch.id}:${q.id}`;
       if (await db.cards.get(id)) continue;
       const card = createEmptyCard(now);
-      // Fragen aus dem Nachtest sind gerade beantwortet → erst morgen fällig, Rest sofort
+      // post-test questions were just answered → due tomorrow, the rest right away
       const answered = ch.postAnswers[q.id];
       let fsrsCard = card;
       if (answered) {
@@ -55,16 +55,14 @@ export async function createCardsForChapter(ch: ChapterRow): Promise<number> {
 
 export async function dueCards(courseId?: string, now = Date.now()): Promise<CardRow[]> {
   const rows = await db.cards.where('due').belowOrEqual(now).toArray();
-  return rows
-    .filter((r) => !r.suspended && (!courseId || r.courseId === courseId))
-    .sort((a, b) => a.due - b.due);
+  return rows.filter((r) => !r.suspended && (!courseId || r.courseId === courseId)).sort((a, b) => a.due - b.due);
 }
 
 export async function countDue(courseId?: string): Promise<number> {
   return (await dueCards(courseId)).length;
 }
 
-/** Vorschau: in wie vielen Tagen die Karte bei jeder Bewertung wieder kommt. */
+/** Preview: when the card comes back for each rating. */
 export function previewIntervals(row: CardRow, now = new Date()): Record<Grade, string> {
   const rec = scheduler.repeat(reviveCard(row.fsrs), now);
   const fmt = (d: Date) => {
@@ -77,15 +75,16 @@ export function previewIntervals(row: CardRow, now = new Date()): Record<Grade, 
     const months = Math.round(days / 30);
     return months < 12 ? `${months} ${tr('Mon', 'mo')}` : `${(days / 365).toFixed(1)} ${tr('J', 'y')}`;
   };
-  return {
+  const intervals: Record<Grade, string> = {
     [Rating.Again]: fmt(rec[Rating.Again].card.due),
     [Rating.Hard]: fmt(rec[Rating.Hard].card.due),
     [Rating.Good]: fmt(rec[Rating.Good].card.due),
     [Rating.Easy]: fmt(rec[Rating.Easy].card.due),
-  } as Record<Grade, string>;
+  };
+  return intervals;
 }
 
-/** Abrufwahrscheinlichkeit jetzt (0..1); undefined, solange die Karte nie bewertet wurde. */
+/** Retrievability now (0..1); undefined while the card was never rated. */
 export function retrievabilityOf(row: CardRow, now = new Date()): number | undefined {
   if (!row.fsrs.last_review) return undefined;
   return scheduler.retrievability(reviveCard(row.fsrs), now);

@@ -1,4 +1,4 @@
-// Für deploy:web-only: die zuletzt geladene APK (release/) wieder mit ausliefern, damit Download und Update-Check nicht wegfallen.
+// For deploy:web-only: ship the last downloaded APK (release/) again so download and update check keep working.
 import { copyFileSync, existsSync } from 'node:fs';
 
 for (const f of ['lorebook.apk', 'version.json']) {

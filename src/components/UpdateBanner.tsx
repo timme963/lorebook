@@ -8,8 +8,8 @@ interface VersionInfo {
 }
 
 /**
- * Nur in der Android-App: vergleicht den installierten Build mit /version.json auf der Website
- * (beim Deploy geschrieben) und bietet die neuere APK an. Geprüft beim Start und beim Zurückkehren.
+ * Android app only: compares the installed build with /version.json on the website
+ * (written on deploy) and offers the newer APK. Checked on start and when returning to the app.
  */
 export default function UpdateBanner() {
   const [url, setUrl] = useState<string>();
@@ -19,16 +19,20 @@ export default function UpdateBanner() {
     if (!isNative) return;
     const check = async () => {
       try {
-        const [info, res] = await Promise.all([CapApp.getInfo(), fetch(`${PUBLIC_URL}/version.json`, { cache: 'no-store' })]);
+        const [info, res] = await Promise.all([
+          CapApp.getInfo(),
+          fetch(`${PUBLIC_URL}/version.json`, { cache: 'no-store' }),
+        ]);
         if (!res.ok) return;
         const remote = (await res.json()) as VersionInfo;
-        if (remote.android && remote.android.versionCode > Number(info.build)) setUrl(new URL(remote.android.url, PUBLIC_URL).toString());
+        if (remote.android && remote.android.versionCode > Number(info.build))
+          setUrl(new URL(remote.android.url, PUBLIC_URL).toString());
       } catch {
-        /* offline – beim nächsten Mal */
+        /* offline – try again next time */
       }
     };
-    check();
-    const sub = CapApp.addListener('resume', check);
+    void check();
+    const sub = CapApp.addListener('resume', () => void check());
     return () => {
       sub.then((h) => h.remove()).catch(() => undefined);
     };
@@ -38,9 +42,13 @@ export default function UpdateBanner() {
   return (
     <div className="update-banner">
       <span>{tr('Eine neue Version von Lorebook ist da.', 'A new version of Lorebook is available.')}</span>
-      {/* öffnet den System-Browser, der die APK lädt und an den Installer übergibt */}
-      <a className="btn small primary" href={url} target="_blank" rel="noopener">{tr('Herunterladen', 'Download')}</a>
-      <button className="btn small ghost" onClick={() => setDismissed(true)} aria-label={tr('Schließen', 'Close')}>✕</button>
+      {/* opens the system browser, which downloads the APK and hands it to the installer */}
+      <a className="btn small primary" href={url} target="_blank" rel="noopener">
+        {tr('Herunterladen', 'Download')}
+      </a>
+      <button className="btn small ghost" onClick={() => setDismissed(true)} aria-label={tr('Schließen', 'Close')}>
+        ✕
+      </button>
     </div>
   );
 }
