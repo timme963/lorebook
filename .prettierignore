@@ -1,0 +1,6 @@
+dist
+dev-dist
+android
+release
+node_modules
+package-lock.json

@@ -1,0 +1,12 @@
+#!/bin/sh
+# Activated via "prepare": "git config core.hooksPath .githooks" in the root package.json.
+# gitleaks scans the staged changes; CI runs it again as the blocking gate.
+
+if command -v gitleaks >/dev/null 2>&1; then
+  gitleaks git --pre-commit --staged --redact --no-banner || {
+    echo "pre-commit: gitleaks found a potential secret. Remove it (and rotate it if it was ever pushed)." >&2
+    exit 1
+  }
+else
+  echo "pre-commit: gitleaks not installed - secret scan skipped locally (CI still blocks)." >&2
+fi
