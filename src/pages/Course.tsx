@@ -2,7 +2,7 @@ import { useLiveQuery } from 'dexie-react-hooks';
 import { useState } from 'react';
 import { deleteChapter, deleteCourse, resetChapter, type BossResult } from '../lib/courses';
 import { db, getMeta, type ChapterRow } from '../lib/db';
-import { dueCards, unflagCard } from '../lib/srs';
+import { dueCards, retuneSchedules, unflagCard } from '../lib/srs';
 import { go, href } from '../router';
 import { plural, tr } from '../lib/i18n';
 import ObjectiveInsights from '../components/ObjectiveInsights';
@@ -249,7 +249,10 @@ export default function CoursePage({ id }: { id: string }) {
             type="date"
             className="input"
             value={course.examDate ?? ''}
-            onChange={(e) => db.courses.update(id, { examDate: e.target.value || undefined })}
+            onChange={async (e) => {
+              await db.courses.update(id, { examDate: e.target.value || undefined });
+              await retuneSchedules(id);
+            }}
           />
           {course.examDate && (
             <span className="muted">

@@ -8,6 +8,7 @@ import { isNative } from './lib/platform';
 import { initReminders } from './lib/reminders';
 import { onLangChange } from './lib/i18n';
 import { localizeDemo } from './lib/demo';
+import { retuneSchedules } from './lib/srs';
 import './styles.css';
 
 // the Android app ships all files in the APK, a service worker would only get in the way there
@@ -27,6 +28,7 @@ migrateLegacyProgress()
     // the demo chapter follows the selected language
     void localizeDemo().catch((e) => console.error('[lorebook] Demo', e));
     onLangChange(() => void localizeDemo().catch((e) => console.error('[lorebook] Demo', e)));
+    void retuneSchedules().catch((e) => console.error('[lorebook] Schedules', e));
     void initSync();
     initReminders();
   });

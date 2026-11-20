@@ -17,6 +17,10 @@ interface Item {
 }
 
 const SESSION_MAX = 50;
+/** A card due again within this time ("again", or hard on a new card) comes back in the running session. */
+const SAME_SESSION_MS = 60 * 60 * 1000;
+/** How many other cards come in between before it shows up again. */
+const REQUEUE_GAP = 3;
 
 async function loadQueue(courseId?: string, focus?: 'weak'): Promise<Item[]> {
   const cards =
@@ -91,6 +95,11 @@ export default function ReviewPage({ courseId, focus }: { courseId?: string; foc
   const [handsFree, setHandsFree] = useState(false);
   // prevents a double click from rating a card twice and skipping the next one
   const rating = useRef(false);
+  // hands-free mode calls rateItem from an older render, so the position is read from a ref
+  const posRef = useRef(0);
+  useEffect(() => {
+    posRef.current = pos;
+  }, [pos]);
   const canHandsFree = ttsSupported() && dictationSupported();
   const title = focus === 'weak' ? tr('Schwachstellen-Training', 'Weak-spot training') : tr('Wiederholung', 'Review');
 
@@ -168,11 +177,19 @@ export default function ReviewPage({ courseId, focus }: { courseId?: string; foc
     if (rating.current) return;
     rating.current = true;
     try {
-      await gradeCard(it.card, g);
+      const updated = await gradeCard(it.card, g);
       setStats((s) => ({
         done: s.done + 1,
         good: s.good + (g === Rating.Again ? 0 : 1),
       }));
+      if (updated.due - Date.now() < SAME_SESSION_MS) {
+        setQueue((q) => {
+          if (!q) return q;
+          const next = [...q];
+          next.splice(Math.min(posRef.current + 1 + REQUEUE_GAP, next.length), 0, { ...it, card: updated });
+          return next;
+        });
+      }
       setPos((p) => p + 1);
     } finally {
       rating.current = false;
@@ -221,7 +238,7 @@ export default function ReviewPage({ courseId, focus }: { courseId?: string; foc
         <HandsFree queue={queue} startPos={pos} onRate={rateItem} onExit={() => setHandsFree(false)} />
       ) : (
         <QuestionCard
-          key={item.card.id}
+          key={`${item.card.id}:${pos}`}
           q={item.q}
           courseId={item.card.courseId}
           mode="feedback"

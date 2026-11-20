@@ -90,8 +90,16 @@ export default function HandsFree({
     return r.text;
   }
 
+  // the parent may append cards that come back in this session, so always read the latest queue
+  const queueRef = useRef(queue);
+  useEffect(() => {
+    queueRef.current = queue;
+  }, [queue]);
+
   async function run() {
-    for (const item of queue.slice(startPos)) {
+    for (let p = startPos; p < queueRef.current.length; p++) {
+      const item = queueRef.current[p];
+      if (!item) break;
       const res = await ask(item);
       if (res === 'stop') {
         if (alive.current) onExit();
