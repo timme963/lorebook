@@ -1,11 +1,13 @@
 import { useLiveQuery } from 'dexie-react-hooks';
 import { useState } from 'react';
-import { deleteChapter, deleteCourse, resetChapter, type BossResult } from '../lib/courses';
+import { deleteChapter, deleteCourse, resetChapter, updateQuestion, type BossResult } from '../lib/courses';
 import { db, getMeta, type ChapterRow } from '../lib/db';
 import { dueCards, retuneSchedules, unflagCard } from '../lib/srs';
 import { go, href } from '../router';
 import { plural, tr } from '../lib/i18n';
 import ObjectiveInsights from '../components/ObjectiveInsights';
+import QuestionEditor from '../components/QuestionEditor';
+import type { Question } from '../lib/schema';
 
 const PHASE_LABEL = (): Record<ChapterRow['phase'], string> => ({
   new: tr('Neu', 'New'),
@@ -37,6 +39,7 @@ export default function CoursePage({ id }: { id: string }) {
     return { course, chapters, due, pdf, boss, flagged };
   }, [id]);
   const [menu, setMenu] = useState<string>();
+  const [editingCard, setEditingCard] = useState<string>();
 
   if (!data) return null;
   if (!data.course) {
@@ -57,11 +60,13 @@ export default function CoursePage({ id }: { id: string }) {
     await db.pdfs.put({ courseId: id, name: f.name, blob: f });
   }
 
-  function questionText(chapterId: string, questionId: string): string {
+  function findQuestion(chapterId: string, questionId: string): Question | undefined {
     const ch = chapters?.find((c) => c.id === chapterId);
-    const q =
-      ch && [...ch.content.pretest, ...ch.content.posttest, ...ch.content.review].find((x) => x.id === questionId);
-    return q?.prompt ?? questionId;
+    return ch && [...ch.content.pretest, ...ch.content.posttest, ...ch.content.review].find((x) => x.id === questionId);
+  }
+
+  function questionText(chapterId: string, questionId: string): string {
+    return findQuestion(chapterId, questionId)?.prompt ?? questionId;
   }
 
   return (
@@ -275,25 +280,48 @@ export default function CoursePage({ id }: { id: string }) {
       {flagged.length > 0 && (
         <section className="card stack">
           <h3>
-            {tr('Gemeldete Fragen', 'Flagged questions')} ({flagged.length})
+            {tr('Ausgeblendete Fragen', 'Hidden questions')} ({flagged.length})
           </h3>
           <p className="muted small">
             {tr(
-              'Diese Fragen sind aus der Wiederholung genommen. Korrigiere sie über einen erneuten Import des Kapitels oder gib sie wieder frei.',
-              'These questions are excluded from review. Fix them by re-importing the chapter, or release them again.',
+              'Diese Fragen sind aus der Wiederholung genommen. Korrigiere sie und gib sie damit wieder frei, oder gib sie unverändert frei.',
+              'These questions are excluded from review. Fix them, which also releases them, or release them unchanged.',
             )}
           </p>
           <ul className="flag-list">
-            {flagged.map((c) => (
-              <li key={c.id}>
-                <span className="grow">
-                  {questionText(c.chapterId, c.questionId)} <em className="muted small">– {c.flagged}</em>
-                </span>
-                <button className="btn small" onClick={() => unflagCard(c.id)}>
-                  {tr('Freigeben', 'Release')}
-                </button>
-              </li>
-            ))}
+            {flagged.map((c) => {
+              const q = findQuestion(c.chapterId, c.questionId);
+              if (editingCard === c.id && q) {
+                return (
+                  <li key={c.id}>
+                    <QuestionEditor
+                      question={q}
+                      onCancel={() => setEditingCard(undefined)}
+                      onSave={async (edited) => {
+                        await updateQuestion(c.chapterId, edited);
+                        await unflagCard(c.id);
+                        setEditingCard(undefined);
+                      }}
+                    />
+                  </li>
+                );
+              }
+              return (
+                <li key={c.id}>
+                  <span className="grow">
+                    {questionText(c.chapterId, c.questionId)} <em className="muted small">– {c.flagged}</em>
+                  </span>
+                  {q && (
+                    <button className="btn small" onClick={() => setEditingCard(c.id)}>
+                      {tr('Bearbeiten', 'Edit')}
+                    </button>
+                  )}
+                  <button className="btn small" onClick={() => unflagCard(c.id)}>
+                    {tr('Freigeben', 'Release')}
+                  </button>
+                </li>
+              );
+            })}
           </ul>
         </section>
       )}

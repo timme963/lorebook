@@ -1,4 +1,5 @@
 import { db, slug, type ChapterRow, type CourseRow } from './db';
+import { tr } from './i18n';
 import { addXp } from './progress';
 import { chapterQuestions, createCardsForChapter } from './srs';
 import type { ChapterFile, Question } from './schema';
@@ -89,6 +90,21 @@ export async function completeChapter(ch: ChapterRow): Promise<void> {
   await db.chapters.update(ch.id, { phase: 'done', completedAt: fresh.completedAt ?? Date.now() });
   await createCardsForChapter({ ...fresh, phase: 'done' });
   if (firstTime) await addXp(50);
+}
+
+// ---------- Editing questions ----------
+
+/** Replaces a question of a chapter by its edited version (matched by id); returns the updated chapter. */
+export async function updateQuestion(chapterId: string, question: Question): Promise<ChapterRow> {
+  return db.transaction('rw', db.chapters, async () => {
+    const chapter = await db.chapters.get(chapterId);
+    if (!chapter) throw new Error(tr('Kapitel nicht gefunden.', 'Chapter not found.'));
+    const replace = (list: Question[]) => list.map((q) => (q.id === question.id ? question : q));
+    const c = chapter.content;
+    const content = { ...c, pretest: replace(c.pretest), posttest: replace(c.posttest), review: replace(c.review) };
+    await db.chapters.update(chapterId, { content });
+    return { ...chapter, content };
+  });
 }
 
 // ---------- Course list: stars and manual order ----------

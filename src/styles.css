@@ -1207,3 +1207,16 @@ details summary {
   background: var(--good);
   border-color: var(--good);
 }
+
+/* Question editor */
+.question-editor {
+  flex: 1;
+}
+.editor-option {
+  align-items: center;
+}
+.editor-option input[type='checkbox'] {
+  width: 20px;
+  height: 20px;
+  accent-color: var(--accent);
+}
