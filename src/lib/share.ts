@@ -72,14 +72,29 @@ export function parseCourseShare(raw: string): ShareParseResult {
   return { ok: true, share: parsed.data };
 }
 
-/** Imports every chapter of a shared course into one course (new, or the one with the same title). */
+/** First course ID derived from the title that is not taken yet ("statistik", "statistik-2", …). */
+async function freeCourseId(title: string): Promise<string> {
+  const base = slug(title);
+  let id = base;
+  for (let n = 2; await db.courses.get(id); n++) id = `${base}-${n}`;
+  return id;
+}
+
+/**
+ * Imports every chapter of a shared course into a new course of its own. A course with the same title is never
+ * touched: replacing its chapters would drop the recipient's progress and their own corrections.
+ * All chapters go in together or not at all.
+ */
 export async function importCourseShare(share: CourseShare): Promise<CourseRow> {
-  let courseId: string | undefined;
-  for (const chapter of share.chapters) {
-    const { course } = await importChapter({ ...chapter, course: share.course }, courseId);
-    courseId = course.id;
-  }
-  const course = courseId ? await db.courses.get(courseId) : undefined;
-  if (!course) throw new Error(tr('Import fehlgeschlagen.', 'Import failed.'));
-  return course;
+  return db.transaction('rw', [db.courses, db.chapters, db.cards, db.tombstones], async () => {
+    const course: CourseRow = {
+      id: await freeCourseId(share.course.title),
+      title: share.course.title,
+      source: share.course.source,
+      createdAt: Date.now(),
+    };
+    await db.courses.put(course);
+    for (const chapter of share.chapters) await importChapter({ ...chapter, course: share.course }, course.id);
+    return course;
+  });
 }

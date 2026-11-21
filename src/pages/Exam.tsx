@@ -16,7 +16,7 @@ import { tr } from '../lib/i18n';
 import { correctSet, parseGiven, type Question } from '../lib/schema';
 import { href } from '../router';
 
-type Phase = 'setup' | 'running' | 'grading' | 'result';
+type Phase = 'setup' | 'running' | 'grading' | 'submitting' | 'result';
 
 interface Outcome {
   scores: number[];
@@ -65,14 +65,20 @@ export default function ExamPage({ courseId }: { courseId: string }) {
   // self-assessment of open questions: ticked rubric points per question index
   const [rubricChecks, setRubricChecks] = useState<Record<number, boolean[]>>({});
   const [outcome, setOutcome] = useState<Outcome>();
+  const [error, setError] = useState<string>();
+  // set synchronously, so a double click or the running clock cannot score the same attempt twice
+  const submitting = useRef(false);
   const back = href({ name: 'course', id: courseId });
 
   useEffect(() => {
-    void db.chapters
+    db.chapters
       .where('courseId')
       .equals(courseId)
       .toArray()
-      .then((chs) => setAvailable(buildExam(chs, Number.MAX_SAFE_INTEGER).length));
+      .then(
+        (chs) => setAvailable(buildExam(chs, Number.MAX_SAFE_INTEGER).length),
+        (e: unknown) => setError(e instanceof Error ? e.message : String(e)),
+      );
   }, [courseId]);
 
   async function start(size: number) {
@@ -84,23 +90,37 @@ export default function ExamPage({ courseId }: { courseId: string }) {
     setIndex(0);
     setOutcome(undefined);
     setConfirming(false);
+    setError(undefined);
+    submitting.current = false;
     setDeadline(Date.now() + timeLimitMinutes(picked) * MINUTE_MS);
     setPhase('running');
   }
 
   const score = useCallback(
     async (checks: Record<number, boolean[]>) => {
+      if (submitting.current) return;
+      submitting.current = true;
+      const previousPhase = phase;
+      setPhase('submitting');
+      setError(undefined);
       const scores = questions.map((e, i) => {
         const auto = autoScore(e.q, answers[i] ?? '');
         if (auto !== undefined) return auto;
         const ticked = checks[i] ?? [];
         return e.q.type === 'open' ? ticked.filter(Boolean).length / e.q.rubric.length : 0;
       });
-      const { xp, best } = await finishExam(courseId, questions, scores);
-      setOutcome({ scores, xp, best });
-      setPhase('result');
+      try {
+        const { xp, best } = await finishExam(courseId, questions, scores);
+        setOutcome({ scores, xp, best });
+        setPhase('result');
+      } catch (e) {
+        // back to where the student was, with the answers intact, so they can try again
+        submitting.current = false;
+        setError(e instanceof Error ? e.message : String(e));
+        setPhase(previousPhase === 'running' ? 'grading' : previousPhase);
+      }
     },
-    [answers, courseId, questions],
+    [answers, courseId, phase, questions],
   );
 
   const handIn = useCallback(() => {
@@ -124,7 +144,16 @@ export default function ExamPage({ courseId }: { courseId: string }) {
     return () => clearInterval(timer);
   }, [phase, deadline]);
 
+  if (error && available === undefined) return <p className="error">{error}</p>;
   if (available === undefined) return null;
+
+  if (phase === 'submitting') {
+    return (
+      <section className="card result">
+        <p className="muted">{tr('Auswertung …', 'Scoring …')}</p>
+      </section>
+    );
+  }
 
   if (phase === 'setup') {
     return (
@@ -297,6 +326,11 @@ export default function ExamPage({ courseId }: { courseId: string }) {
             </section>
           ),
         )}
+        {error && (
+          <p className="error small">
+            {tr('Speichern fehlgeschlagen:', 'Saving failed:')} {error}
+          </p>
+        )}
         <button className="btn primary self-start" onClick={() => score(rubricChecks)}>
           {tr('Auswerten', 'Score')}
         </button>
@@ -307,9 +341,9 @@ export default function ExamPage({ courseId }: { courseId: string }) {
   if (!outcome) return null;
   const total = outcome.scores.reduce((a, b) => a + b, 0) / Math.max(1, outcome.scores.length);
   const passed = total >= PASS_MARK;
-  const byChapter = new Map<string, { title: string; sum: number; count: number }>();
+  const byChapter = new Map<string, { id: string; title: string; sum: number; count: number }>();
   questions.forEach((e, i) => {
-    const entry = byChapter.get(e.chapterId) ?? { title: e.chapterTitle, sum: 0, count: 0 };
+    const entry = byChapter.get(e.chapterId) ?? { id: e.chapterId, title: e.chapterTitle, sum: 0, count: 0 };
     entry.sum += outcome.scores[i] ?? 0;
     entry.count++;
     byChapter.set(e.chapterId, entry);
@@ -354,7 +388,7 @@ export default function ExamPage({ courseId }: { courseId: string }) {
           <h3>{tr('Nach Kapitel', 'By chapter')}</h3>
           <ul className="objective-list">
             {[...byChapter.values()].map((c) => (
-              <li key={c.title}>
+              <li key={c.id}>
                 <span className="grow">{c.title}</span>
                 <strong>{Math.round((c.sum / c.count) * 100)} %</strong>
               </li>

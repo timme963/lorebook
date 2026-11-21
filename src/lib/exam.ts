@@ -106,24 +106,25 @@ export async function finishExam(
   scores: readonly number[],
 ): Promise<{ xp: number; best: boolean }> {
   const total = scores.reduce((a, b) => a + b, 0) / Math.max(1, scores.length);
-  const prev = await loadExamResult(courseId);
-  const firstPass = total >= PASS_MARK && (!prev || prev.best < PASS_MARK);
-  const xp = Math.round(total * XP_PER_FULL_SCORE) + (firstPass ? FIRST_PASS_XP : 0);
-  await setMeta(examResultKey(courseId), {
-    best: Math.max(total, prev?.best ?? 0),
-    last: total,
-    at: Date.now(),
-    attempts: (prev?.attempts ?? 0) + 1,
-  } satisfies ExamResult);
-  await addXp(xp);
-  const now = Date.now();
   const missed = questions.filter((_, i) => (scores[i] ?? 0) < 1).map((e) => `${e.chapterId}:${e.q.id}`);
-  await db.transaction('rw', db.cards, async () => {
+  // result, XP and the missed cards are stored together, so a failure leaves no half-recorded attempt
+  return db.transaction('rw', [db.meta, db.local, db.cards], async () => {
+    const prev = await loadExamResult(courseId);
+    const firstPass = total >= PASS_MARK && (!prev || prev.best < PASS_MARK);
+    const xp = Math.round(total * XP_PER_FULL_SCORE) + (firstPass ? FIRST_PASS_XP : 0);
+    await setMeta(examResultKey(courseId), {
+      best: Math.max(total, prev?.best ?? 0),
+      last: total,
+      at: Date.now(),
+      attempts: (prev?.attempts ?? 0) + 1,
+    } satisfies ExamResult);
+    await addXp(xp);
+    const now = Date.now();
     for (const card of await db.cards.bulkGet(missed)) {
       if (card && !card.suspended && card.due > now) {
         await db.cards.update(card.id, { due: now, fsrs: { ...card.fsrs, due: new Date(now) } });
       }
     }
+    return { xp, best: !prev || total > prev.best };
   });
-  return { xp, best: !prev || total > prev.best };
 }

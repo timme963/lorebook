@@ -42,6 +42,7 @@ export default function CoursePage({ id }: { id: string }) {
   }, [id]);
   const [menu, setMenu] = useState<string>();
   const [editingCard, setEditingCard] = useState<string>();
+  const [shareError, setShareError] = useState<string>();
 
   if (!data) return null;
   if (!data.course) {
@@ -99,7 +100,14 @@ export default function CoursePage({ id }: { id: string }) {
                 'Kurs als Datei weitergeben – mit allen Kapiteln, ohne deinen Fortschritt und ohne PDF',
                 'Pass the course on as a file – all chapters, without your progress and without the PDF',
               )}
-              onClick={() => shareCourse(id)}
+              onClick={async () => {
+                setShareError(undefined);
+                try {
+                  await shareCourse(id);
+                } catch (e) {
+                  setShareError(e instanceof Error ? e.message : String(e));
+                }
+              }}
             >
               📤 {tr('Teilen', 'Share')}
             </button>
@@ -109,6 +117,11 @@ export default function CoursePage({ id }: { id: string }) {
           </a>
         </div>
       </div>
+      {shareError && (
+        <p className="error small">
+          {tr('Teilen fehlgeschlagen:', 'Sharing failed:')} {shareError}
+        </p>
+      )}
 
       <section className="card row between wrap gap">
         <div>

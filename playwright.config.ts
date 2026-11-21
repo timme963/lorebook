@@ -10,7 +10,6 @@ export default defineConfig({
   // each test plays through chapters in its own browser; more workers make the dev server the bottleneck
   workers: 2,
   forbidOnly: !!process.env.CI,
-  retries: process.env.CI ? 1 : 0,
   reporter: process.env.CI ? 'github' : 'list',
   use: {
     baseURL: `http://localhost:${PORT}`,

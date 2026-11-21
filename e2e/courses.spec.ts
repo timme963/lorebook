@@ -28,6 +28,15 @@ test('a shared course file imports as a course of its own', async ({ page }) => 
   await expect(page.getByRole('heading', { name: 'Geteilter Kurs' })).toBeVisible();
 });
 
+test('a shared course with the title of an existing course does not touch it', async ({ page }) => {
+  await loadDemo(page);
+  // same title as the loaded demo course
+  await importShare(page, await demoShareAs(page, 'Demo: Wie Lernen hängen bleibt'));
+  await expect(page).toHaveURL(new RegExp(`#/course/${DEMO_COURSE}-2$`));
+  await page.goto('/');
+  await expect(page.locator('.course-card')).toHaveCount(2);
+});
+
 test('starred courses stay on top and the order can be dragged', async ({ page }) => {
   await loadDemo(page);
   await importShare(page, await demoShareAs(page, 'Zweiter Kurs'));
@@ -60,6 +69,6 @@ test('the cheat sheet lists every objective with its summary', async ({ page }) 
   await loadDemo(page);
   await page.goto(`/#/sheet/${DEMO_COURSE}`);
   await expect(page.locator('.sheet-list dt')).toHaveCount(4);
-  await expect(page.locator('.sheet-list dd').first()).toContainText('Vorabfragen'.slice(0, 3));
+  await expect(page.locator('.sheet-list dd').first()).toContainText('Wer vor dem Lesen Fragen zum Stoff beantwortet');
   await expect(page.locator('.sheet-list dd em')).toHaveCount(0);
 });
