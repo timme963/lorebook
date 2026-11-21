@@ -282,15 +282,19 @@ export default function ExamPage({ courseId }: { courseId: string }) {
   }
 
   if (phase === 'grading') {
+    // also reached after a failed save, then possibly without any open question to rate
+    const hasOpen = questions.some((e) => e.q.type === 'open');
     return (
       <div className="stack">
-        <h1>{tr('Offene Fragen bewerten', 'Rate the open questions')}</h1>
-        <p className="muted">
-          {tr(
-            'Vergleiche deine Antworten mit der Musterantwort und hake ab, welche Punkte du getroffen hast.',
-            'Compare your answers with the model answer and tick the points you covered.',
-          )}
-        </p>
+        <h1>{hasOpen ? tr('Offene Fragen bewerten', 'Rate the open questions') : tr('Abgabe', 'Hand-in')}</h1>
+        {hasOpen && (
+          <p className="muted">
+            {tr(
+              'Vergleiche deine Antworten mit der Musterantwort und hake ab, welche Punkte du getroffen hast.',
+              'Compare your answers with the model answer and tick the points you covered.',
+            )}
+          </p>
+        )}
         {questions.map((e, i) =>
           e.q.type !== 'open' ? null : (
             <section key={`${e.chapterId}:${e.q.id}`} className="card stack">
