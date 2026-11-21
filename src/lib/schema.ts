@@ -123,6 +123,8 @@ export const QuestionSchema = z.discriminatedUnion('type', [McQuestionSchema, Cl
 export const ObjectiveSchema = z.object({
   id: nonEmpty,
   text: nonEmpty,
+  /** Three sentences that answer the objective, shown on the cheat sheet; older chapters lack it */
+  summary: nonEmpty.optional(),
   source: SourceSchema,
 });
 

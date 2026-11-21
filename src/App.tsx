@@ -10,6 +10,7 @@ import CoursePage from './pages/Course';
 import ChapterPage from './pages/Chapter';
 import ReviewPage from './pages/Review';
 import ExamPage from './pages/Exam';
+import SheetPage from './pages/Sheet';
 import HelpPage from './pages/Help';
 import AccountPage from './pages/Account';
 import { DatenschutzPage, ImpressumPage } from './pages/Legal';
@@ -121,6 +122,9 @@ export default function App() {
       break;
     case 'exam':
       page = <ExamPage key={route.courseId} courseId={route.courseId} />;
+      break;
+    case 'sheet':
+      page = <SheetPage courseId={route.courseId} />;
       break;
     case 'data':
       page = <AccountPage />;

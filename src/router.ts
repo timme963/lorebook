@@ -7,6 +7,7 @@ export type Route =
   | { name: 'chapter'; id: string }
   | { name: 'review'; courseId?: string; focus?: 'weak' }
   | { name: 'exam'; courseId: string }
+  | { name: 'sheet'; courseId: string }
   | { name: 'data' }
   | { name: 'account' }
   | { name: 'help' }
@@ -26,6 +27,8 @@ export function parseHash(hash: string): Route {
       return parts[1] ? { name: 'chapter', id: parts[1] } : { name: 'home' };
     case 'review':
       return { name: 'review', courseId: parts[1], focus: params.get('focus') === 'weak' ? 'weak' : undefined };
+    case 'sheet':
+      return parts[1] ? { name: 'sheet', courseId: parts[1] } : { name: 'home' };
     // 'boss' was the address of the former boss fight; old links lead to the mock exam
     case 'exam':
     case 'boss':
@@ -60,6 +63,8 @@ export function href(r: Route): string {
       return (r.courseId ? `#/review/${e(r.courseId)}` : '#/review') + (r.focus ? `?focus=${r.focus}` : '');
     case 'exam':
       return `#/exam/${e(r.courseId)}`;
+    case 'sheet':
+      return `#/sheet/${e(r.courseId)}`;
     case 'data':
       return '#/data';
     case 'help':

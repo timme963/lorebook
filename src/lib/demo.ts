@@ -16,6 +16,8 @@ export const DEMO_CHAPTER: ChapterFile = {
       {
         id: 'o1',
         text: 'Vorabfragen (Pretesting) verbessern das spätere Lernen, auch wenn man falsch rät.',
+        summary:
+          'Wer vor dem Lesen Fragen zum Stoff beantwortet, behält ihn danach besser. Das gilt auch dann, wenn die Antworten falsch geraten sind, denn das Raten lenkt die Aufmerksamkeit auf die passenden Stellen. Deshalb beginnt jedes Kapitel in Lorebook mit Vorabfragen.',
         source: {
           page: 1,
           quote:
@@ -25,11 +27,15 @@ export const DEMO_CHAPTER: ChapterFile = {
       {
         id: 'o2',
         text: 'Aktives Abrufen (Active Recall) festigt Wissen stärker als erneutes Lesen.',
+        summary:
+          'Sich eine Antwort aktiv ins Gedächtnis zu rufen, festigt Wissen stärker als denselben Text noch einmal zu lesen. Jeder Abruf stärkt die Erinnerungsspur, während Wiederlesen nur ein Gefühl von Vertrautheit erzeugt. Fragen beantworten oder ein leeres Blatt füllen ist daher wirksamer als Markieren und Wiederlesen.',
         source: { page: 1, quote: 'Sich aktiv an etwas zu erinnern, festigt es stärker als es noch einmal zu lesen.' },
       },
       {
         id: 'o3',
         text: 'Verteilte Wiederholung (Spaced Repetition) mit wachsenden Abständen nutzt das Vergessen gezielt aus.',
+        summary:
+          'Wiederholungen wirken am besten, wenn sie kurz vor dem Vergessen stattfinden. Nach jeder erfolgreichen Wiederholung wird der Abstand bis zur nächsten größer, nach einem Fehler beginnt er wieder klein. So lernt man mit weniger Wiederholungen dauerhaft, statt alles kurz vor der Prüfung zu pauken.',
         source: {
           page: 1,
           quote:
@@ -39,6 +45,8 @@ export const DEMO_CHAPTER: ChapterFile = {
       {
         id: 'o4',
         text: 'Interessante, aber irrelevante Details (Seductive Details) verschlechtern das Lernen.',
+        summary:
+          'Interessante Details, die mit dem Lernziel nichts zu tun haben, verschlechtern das Behalten des eigentlichen Stoffs. Sie ziehen Aufmerksamkeit ab und überlagern die wichtigen Inhalte. Eine Lerngeschichte sollte deshalb nur Elemente enthalten, die das Konzept erklären oder anwenden.',
         source: {
           page: 1,
           quote:
@@ -363,17 +371,29 @@ export const DEMO_CHAPTER_EN: ChapterFile = {
       {
         id: 'o1',
         text: 'Pre-questions (pretesting) improve later learning, even when you guess wrong.',
+        summary:
+          'Answering questions about material before reading it makes you remember it better afterwards. This holds even when the answers are wrong guesses, because guessing directs attention to the relevant parts. That is why every Lorebook chapter starts with pre-questions.',
         source: { page: 1, quote: Q1 },
       },
-      { id: 'o2', text: 'Active recall strengthens knowledge more than re-reading.', source: { page: 1, quote: Q2 } },
+      {
+        id: 'o2',
+        text: 'Active recall strengthens knowledge more than re-reading.',
+        summary:
+          'Actively bringing an answer to mind strengthens knowledge more than reading the same text again. Each retrieval strengthens the memory trace, while re-reading only creates a feeling of familiarity. Answering questions or filling a blank page is therefore more effective than highlighting and re-reading.',
+        source: { page: 1, quote: Q2 },
+      },
       {
         id: 'o3',
         text: 'Spaced repetition with growing intervals makes deliberate use of forgetting.',
+        summary:
+          'Reviews work best when they happen just before you would forget. After each successful review the gap to the next one grows, after a mistake it starts small again. This way you learn for the long term with fewer reviews instead of cramming right before the exam.',
         source: { page: 1, quote: Q3 },
       },
       {
         id: 'o4',
         text: 'Interesting but irrelevant details (seductive details) impair learning.',
+        summary:
+          'Interesting details that have nothing to do with the learning objective make you retain the actual material worse. They draw attention away and crowd out the important content. A learning story should therefore only contain elements that explain or apply the concept.',
         source: { page: 1, quote: Q4 },
       },
     ],

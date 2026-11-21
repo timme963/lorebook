@@ -86,6 +86,11 @@ export default function CoursePage({ id }: { id: string }) {
               ↻ {tr(`${due.length} wiederholen`, `review ${due.length}`)}
             </a>
           )}
+          {chapters.length > 0 && (
+            <a className="btn" href={href({ name: 'sheet', courseId: id })}>
+              📄 {tr('Spickzettel', 'Cheat sheet')}
+            </a>
+          )}
           <a className="btn" href={href({ name: 'import', courseId: id })}>
             {tr('+ Kapitel', '+ Chapter')}
           </a>
