@@ -1,4 +1,4 @@
-// Downloads the APK from the latest successful GitHub Actions build into release/
+// Downloads the APK from the latest successful GitHub Actions build of main into release/
 // and copies it into dist/ so the web deployment offers it as /lorebook.apk.
 import { execFileSync } from 'node:child_process';
 import { copyFileSync, existsSync, mkdirSync, rmSync, writeFileSync } from 'node:fs';
@@ -13,7 +13,10 @@ const [runId, runNumber] = run([
   '-R',
   repo,
   '-w',
-  'Android APK',
+  'android.yml',
+  // pull requests run the same workflow but build no APK
+  '-b',
+  'main',
   '-s',
   'success',
   '-L',

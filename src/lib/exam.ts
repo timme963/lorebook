@@ -84,7 +84,7 @@ export function examResultKey(courseId: string): string {
   return `exam:${courseId}`;
 }
 
-/** Earlier versions stored the best result of the boss fight under this key. */
+/** Key under which installs that predate the mock exam keep their best result. */
 export function legacyResultKey(courseId: string): string {
   return `boss:${courseId}`;
 }

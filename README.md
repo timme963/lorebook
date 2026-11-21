@@ -15,11 +15,12 @@ Lorebook ruft selbst keine KI auf. Du lädst dein PDF bei Claude, ChatGPT oder G
 - **Schwachstellen:** Abrufwahrscheinlichkeit (FSRS) pro Lernziel auf der Kursseite, gezieltes Training unter 90 % (`src/lib/insights.ts`).
 - **Probeklausur:** Gemischte Fragen aus allen abgeschlossenen Kapiteln mit Zeitlimit, ohne Auflösung bis zur Abgabe; danach Punkte, geschätzte Note und die Fehler in die nächste Wiederholung (`src/lib/exam.ts`).
 - **Spickzettel:** Pro Lernziel drei Sätze, die es beantworten, druckbar (`src/pages/Sheet.tsx`).
-- **Fragen bearbeiten:** Fehlerhafte KI-Fragen direkt in der Wiederholung korrigieren.
+- **Fragen bearbeiten:** Fehlerhafte KI-Fragen direkt in der Wiederholung korrigieren (Text, Optionen, richtige Antworten, Erklärung). Ausgeblendete Fragen lassen sich auf der Kursseite korrigieren und wieder freigeben.
 - **Kurse teilen:** Kurs als `.lorebook.json`-Datei weitergeben, mit allen Kapiteln, ohne Fortschritt und PDF (`src/lib/share.ts`).
 - **Kursliste:** Kurse mit Stern stehen oben, die Reihenfolge lässt sich am Griff ⠿ per Ziehen festlegen (Maus, Touch und Tastatur). Beides wird mitsynchronisiert.
 - **Formeln:** LaTeX zwischen `\( \)` bzw. `\[ \]`, gerendert mit KaTeX (lazy). Der Import repariert vergessene doppelte Backslashes (`src/lib/math.ts`).
-- **Korrektheit:** Zu jeder Frage gibt es Zitat und PDF-Seite. Prompt B prüft die erzeugten Inhalte in einem zweiten Chat gegen das PDF. Falsche Fragen lassen sich melden und kommen dann nicht mehr in die Wiederholung.
+- **Wiederholung:** FSRS-6 (ts-fsrs) mit Ziel 93 % Erinnerung und höchstens 90 Tagen Abstand. Hat ein Kurs ein Prüfungsdatum, kommt jede Karte spätestens 2 Tage vorher noch einmal. „Nochmal“ bringt die Karte in derselben Runde nach drei anderen zurück.
+- **Korrektheit:** Zu jeder Frage gibt es Zitat und PDF-Seite. Prompt B prüft die erzeugten Inhalte in einem zweiten Chat gegen das PDF.
 
 Live: https://lorebook-9yf.pages.dev · Impressum und Datenschutz unter `#/impressum` und `#/datenschutz` (Angaben in `src/legal.ts`).
 
@@ -29,17 +30,22 @@ Live: https://lorebook-9yf.pages.dev · Impressum und Datenschutz unter `#/impre
 npm install
 npm run dev              # http://localhost:5173
 npm test                 # Unit-Tests (Import-Validierung, Bewertung, Serie, Probeklausur)
-npm run format           # Code einheitlich formatieren (Prettier); format:check prüft nur
+npm run test:e2e         # Browser-Tests (Playwright): Kapitel, Wiederholung, Bearbeiten, Probeklausur, Teilen, Kursliste, Spickzettel
+npm run check            # Typen, ESLint, Prettier und Lizenzen – derselbe Befehl wie in der CI
+npm run format           # Code formatieren (Prettier)
+npm run licenses         # THIRD-PARTY-NOTICES.md neu erzeugen
 npm run build
 npm run deploy           # Build + neueste APK von GitHub holen + Cloudflare Pages (Projekt "lorebook")
 npm run deploy:web-only  # wie deploy, aber mit der zuletzt geladenen APK statt einer neuen (z. B. wenn der Android-Build noch läuft)
 ```
 
-`npm run deploy` braucht die GitHub CLI (`gh`, angemeldet), weil es die APK aus dem letzten erfolgreichen Build lädt.
+`npm run deploy` braucht die GitHub CLI (`gh`, angemeldet), weil es die APK aus dem letzten erfolgreichen Build von `main` lädt. Für die Browser-Tests einmalig `npx playwright install chromium`.
+
+**Ablauf:** Änderungen entstehen auf einem Branch (`feature/…`, `fix/…`) mit Commits im Conventional-Commits-Stil und kommen per Pull Request nach `main`. Die CI (`.github/workflows/android.yml`) prüft jeden Pull Request: Secret-Scan (gitleaks), `npm run check`, Unit- und Browser-Tests, Build. Jeder Pull Request hebt die Version in `package.json` einmal an.
 
 ## Android-App
 
-- Jeder Push auf `main` baut per GitHub Actions (`.github/workflows/android.yml`) eine signierte APK als Artefakt `lorebook-apk`. Die versionCode ist die Run-Nummer.
+- Jeder Push auf `main` baut per GitHub Actions (`.github/workflows/android.yml`) nach allen Prüfungen eine signierte APK als Artefakt `lorebook-apk`. Die versionCode ist die Run-Nummer.
 - `npm run deploy` legt sie als `/lorebook.apk` und `/version.json` auf die Website. Die App vergleicht beim Start mit `version.json` und bietet Updates an.
 - Lokal: `npm run android:sync`, dann `npm run android:open` (Android Studio).
 - **Signierschlüssel:** liegt in `~/.lorebook/` (`release.jks`, `keystore.properties`) und als GitHub-Secrets. Einmalig angelegt mit `bash scripts/setup-signing.sh`. **Nicht löschen** – ohne ihn lassen sich Updates nicht über die installierte App installieren.
@@ -61,16 +67,20 @@ Projekt `lorebook` (`pvzzxmwtaokcefkuyevn`, Frankfurt).
 | `src/lib/schema.ts` | Datenformat (zod) – muss zu den Prompts passen |
 | `src/lib/prompts.ts` | Prompt Gliederung, Prompt A (Erzeugen), Prompt B (Prüfen) |
 | `src/lib/importer.ts` | JSON aus Chat-Antwort holen, validieren, Korrekturanweisung erzeugen |
-| `src/lib/srs.ts` | FSRS-Wiederholung (ts-fsrs) |
+| `src/lib/srs.ts` | FSRS-Wiederholung (ts-fsrs), Prüfungstermin, Umrechnung des gespeicherten Kartenformats |
 | `src/lib/courses.ts` | Import, Antwortprüfung, Fragen bearbeiten, Kursliste |
 | `src/lib/exam.ts` | Probeklausur: Fragenauswahl, Zeitlimit, Notenschätzung |
+| `src/lib/sheet.ts` | Spickzettel: Nachhol-Prompt und Übernahme der Zusammenfassungen |
+| `src/lib/share.ts` | Kurs als Datei teilen und importieren |
 | `src/lib/db.ts` | IndexedDB (Dexie), Sync-Hooks |
 | `src/lib/sync.ts`, `supabase.ts` | Account und Synchronisierung |
 | `src/lib/platform.ts` | Web oder Android-App, öffentliche URL |
 | `src/lib/reminders.ts` | Tägliche Erinnerung (nur App, lokale Benachrichtigungen) |
 | `src/lib/i18n.ts` | Deutsch/Englisch: `tr('Deutsch', 'English')`, Umschalter oben (pro Gerät gespeichert) |
 | `src/lib/demo.ts` | Demo-Kapitel (deutsch und englisch) |
-| `src/pages/*` | Oberfläche |
+| `src/pages/*`, `src/components/*` | Oberfläche |
+| `e2e/*` | Browser-Tests (Playwright) |
+| `scripts/licenses.mjs` | Erzeugt und prüft `THIRD-PARTY-NOTICES.md` |
 
 Ändert sich das Format, müssen `FORMAT_VERSION`, Schema und Prompts gemeinsam angepasst werden.
 
@@ -82,7 +92,7 @@ Projekt `lorebook` (`pvzzxmwtaokcefkuyevn`, Frankfurt).
   "course": { "title": "…", "source": "…" },
   "chapter": {
     "number": 1, "title": "…", "pages": [3, 17],
-    "objectives": [{ "id": "o1", "text": "…", "source": { "page": 5, "quote": "…" } }],
+    "objectives": [{ "id": "o1", "text": "…", "summary": "3 Sätze für den Spickzettel", "source": { "page": 5, "quote": "…" } }],
     "pretest":  [/* Fragen */],
     "story": { "title": "…", "setting": "…", "scenes": [{ "objective": "o1", "title": "…", "text": "…", "concept": "…" }], "ending": "…" },
     "posttest": [/* Fragen */],
@@ -94,6 +104,8 @@ Projekt `lorebook` (`pvzzxmwtaokcefkuyevn`, Frankfurt).
 ```
 
 Fragetypen: `mc` (`options`, `correct` als Zahl = Einfachauswahl oder Liste wie `[0, 2]` = Mehrfachauswahl, „mehrere Antworten möglich“), `cloze` (`___` im `prompt`, `answers`), `open` (`modelAnswer`, `rubric`). Jede Frage hat `id`, `objective`, `level` (`remember|understand|apply|transfer`), `explanation` und `source`.
+
+Geteilte Kurse (`.lorebook.json`) enthalten `{ "lorebookCourse": 1, "course": {…}, "chapters": [/* Kapitel im Format oben */] }`.
 
 ## Lizenz
 

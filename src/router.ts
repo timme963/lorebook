@@ -29,7 +29,7 @@ export function parseHash(hash: string): Route {
       return { name: 'review', courseId: parts[1], focus: params.get('focus') === 'weak' ? 'weak' : undefined };
     case 'sheet':
       return parts[1] ? { name: 'sheet', courseId: parts[1] } : { name: 'home' };
-    // 'boss' was the address of the former boss fight; old links lead to the mock exam
+    // '#/boss/<id>' is still out there in bookmarks and synced links and opens the mock exam
     case 'exam':
     case 'boss':
       return parts[1] ? { name: 'exam', courseId: parts[1] } : { name: 'home' };

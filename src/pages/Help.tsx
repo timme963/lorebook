@@ -71,7 +71,8 @@ function HelpDe() {
             hast, die Originalseite.
           </li>
           <li>
-            Falsche Frage in der Wiederholung? <strong>⚑ melden</strong>, dann ist sie aus dem Plan genommen.
+            Falsche Frage in der Wiederholung? <strong>✎ Frage bearbeiten</strong> und direkt korrigieren – oder dort
+            aus der Wiederholung nehmen.
           </li>
         </ul>
       </section>
@@ -208,7 +209,8 @@ function HelpEn() {
             the original page.
           </li>
           <li>
-            Wrong question in review? <strong>⚑ Report</strong> it and it's removed from the schedule.
+            Wrong question in review? <strong>✎ Edit question</strong> and fix it right there – or remove it from the
+            review.
           </li>
         </ul>
         <p className="muted small">

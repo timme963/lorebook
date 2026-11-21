@@ -1,9 +1,11 @@
-name: Android APK
+name: CI and Android APK
 
+# Pull requests are checked and tested; the APK is built only for main.
 on:
   push:
     branches: [main]
     paths-ignore: ['**.md']
+  pull_request:
   workflow_dispatch:
 
 jobs:
@@ -20,8 +22,35 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
+  e2e:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 24
+          cache: npm
+
+      - name: Install
+        run: npm install --no-audit --no-fund
+
+      - name: Install Chromium for Playwright
+        run: npx playwright install --with-deps chromium
+
+      - name: Browser tests
+        run: npm run test:e2e
+
+      - uses: actions/upload-artifact@v7
+        if: failure()
+        with:
+          name: playwright-traces
+          path: test-results/
+          retention-days: 7
+
   apk:
-    needs: secrets
+    needs: [secrets, e2e]
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
@@ -49,10 +78,13 @@ jobs:
       - name: Build web app
         run: npm run build
 
+      # pull requests stop after checks, tests and build; the APK is only needed for main
       - name: Sync Android project
+        if: github.event_name != 'pull_request'
         run: npx cap sync android
 
       - name: Restore signing key
+        if: github.event_name != 'pull_request'
         env:
           ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
         run: |
@@ -64,6 +96,7 @@ jobs:
           fi
 
       - name: Build APK
+        if: github.event_name != 'pull_request'
         working-directory: android
         env:
           ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
@@ -76,11 +109,13 @@ jobs:
           ./gradlew assembleRelease --no-daemon
 
       - name: Rename APK
+        if: github.event_name != 'pull_request'
         run: |
           mkdir -p out
           cp android/app/build/outputs/apk/release/*.apk out/lorebook.apk
 
       - uses: actions/upload-artifact@v7
+        if: github.event_name != 'pull_request'
         with:
           name: lorebook-apk
           path: out/lorebook.apk

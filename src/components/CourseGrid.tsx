@@ -82,6 +82,7 @@ function CourseCard({ course: c, chapterCount, done, dueCount, draggable }: Cour
     id: c.id,
   });
   const style = { transform: CSS.Translate.toString(transform), transition };
+  const starLabel = c.starred ? tr('Stern entfernen', 'Remove star') : tr('Mit Stern nach oben', 'Star and pin to top');
   const classes = ['card', 'course-card', c.starred ? 'starred' : '', isDragging ? 'dragging' : ''].filter(Boolean);
 
   return (
@@ -107,7 +108,8 @@ function CourseCard({ course: c, chapterCount, done, dueCount, draggable }: Cour
         <button
           className="star-btn"
           aria-pressed={!!c.starred}
-          title={c.starred ? tr('Stern entfernen', 'Remove star') : tr('Mit Stern nach oben', 'Star and pin to top')}
+          title={starLabel}
+          aria-label={starLabel}
           onClick={() => toggleStar(c.id)}
         >
           {c.starred ? '★' : '☆'}
