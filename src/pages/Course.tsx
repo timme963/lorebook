@@ -2,6 +2,7 @@ import { useLiveQuery } from 'dexie-react-hooks';
 import { useState } from 'react';
 import { deleteChapter, deleteCourse, resetChapter, updateQuestion } from '../lib/courses';
 import { loadExamResult } from '../lib/exam';
+import { shareCourse } from '../lib/share';
 import { db, type ChapterRow } from '../lib/db';
 import { dueCards, retuneSchedules, unflagCard } from '../lib/srs';
 import { go, href } from '../router';
@@ -90,6 +91,18 @@ export default function CoursePage({ id }: { id: string }) {
             <a className="btn" href={href({ name: 'sheet', courseId: id })}>
               📄 {tr('Spickzettel', 'Cheat sheet')}
             </a>
+          )}
+          {chapters.length > 0 && (
+            <button
+              className="btn"
+              title={tr(
+                'Kurs als Datei weitergeben – mit allen Kapiteln, ohne deinen Fortschritt und ohne PDF',
+                'Pass the course on as a file – all chapters, without your progress and without the PDF',
+              )}
+              onClick={() => shareCourse(id)}
+            >
+              📤 {tr('Teilen', 'Share')}
+            </button>
           )}
           <a className="btn" href={href({ name: 'import', courseId: id })}>
             {tr('+ Kapitel', '+ Chapter')}

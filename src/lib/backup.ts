@@ -54,7 +54,11 @@ export async function importBackup(text: string): Promise<void> {
 }
 
 /** Browser: download. Android app: write the file to the cache and save/send it via the share sheet. */
-export async function downloadBlob(blob: Blob, filename: string): Promise<void> {
+export async function downloadBlob(
+  blob: Blob,
+  filename: string,
+  title = tr('Lorebook-Sicherung', 'Lorebook backup'),
+): Promise<void> {
   if (isNative) {
     const res = await Filesystem.writeFile({
       path: filename,
@@ -62,7 +66,7 @@ export async function downloadBlob(blob: Blob, filename: string): Promise<void> 
       directory: Directory.Cache,
       encoding: Encoding.UTF8,
     });
-    await Share.share({ title: tr('Lorebook-Sicherung', 'Lorebook backup'), files: [res.uri] });
+    await Share.share({ title, files: [res.uri] });
     return;
   }
   const url = URL.createObjectURL(blob);

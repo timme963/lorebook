@@ -13,6 +13,10 @@ Lorebook ruft selbst keine KI auf. Du lädst dein PDF bei Claude, ChatGPT oder G
 - **Vorlesen & Spracheingabe:** 🔊 bei Story, Fragen und Erklärungen, 🎤 bei Lückentext und offenen Fragen. Geschwindigkeit, Stimme und automatisches Vorlesen unter „Account & Daten“. Browser: Web Speech API, App: Capacitor-Plugins (`src/lib/speech.ts`).
 - **Hörmodus & freihändig:** Story als Hörbuch, Wiederholung komplett per Sprache (`src/components/HandsFree.tsx`, Antwort-Erkennung in `src/lib/voiceAnswer.ts`).
 - **Schwachstellen:** Abrufwahrscheinlichkeit (FSRS) pro Lernziel auf der Kursseite, gezieltes Training unter 90 % (`src/lib/insights.ts`).
+- **Probeklausur:** Gemischte Fragen aus allen abgeschlossenen Kapiteln mit Zeitlimit, ohne Auflösung bis zur Abgabe; danach Punkte, geschätzte Note und die Fehler in die nächste Wiederholung (`src/lib/exam.ts`).
+- **Spickzettel:** Pro Lernziel drei Sätze, die es beantworten, druckbar (`src/pages/Sheet.tsx`).
+- **Fragen bearbeiten:** Fehlerhafte KI-Fragen direkt in der Wiederholung korrigieren.
+- **Kurse teilen:** Kurs als `.lorebook.json`-Datei weitergeben, mit allen Kapiteln, ohne Fortschritt und PDF (`src/lib/share.ts`).
 - **Kursliste:** Kurse mit Stern stehen oben, die Reihenfolge lässt sich am Griff ⠿ per Ziehen festlegen (Maus, Touch und Tastatur). Beides wird mitsynchronisiert.
 - **Formeln:** LaTeX zwischen `\( \)` bzw. `\[ \]`, gerendert mit KaTeX (lazy). Der Import repariert vergessene doppelte Backslashes (`src/lib/math.ts`).
 - **Korrektheit:** Zu jeder Frage gibt es Zitat und PDF-Seite. Prompt B prüft die erzeugten Inhalte in einem zweiten Chat gegen das PDF. Falsche Fragen lassen sich melden und kommen dann nicht mehr in die Wiederholung.
