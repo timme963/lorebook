@@ -103,7 +103,7 @@ const EXAMPLE_DE = `{
     "title": "…",
     "pages": [3, 17],
     "objectives": [
-      { "id": "o1", "text": "Lernziel als ganzer Satz", "source": { "page": 5, "quote": "wörtliches Zitat aus dem PDF" } }
+      { "id": "o1", "text": "Lernziel als ganzer Satz", "summary": "Genau 3 Sätze, die das Lernziel beantworten", "source": { "page": 5, "quote": "wörtliches Zitat aus dem PDF" } }
     ],
     "pretest": [ /* Fragen, siehe Fragetypen */ ],
     "story": {
@@ -175,6 +175,7 @@ Bearbeite NUR dieses Kapitel. Nutze ausschließlich Inhalte aus dem PDF – kein
 
 ## Regeln
 **Lernziele ("objectives")**: 4–8 Stück, IDs "o1", "o2", … Jedes mit wörtlichem Zitat (max. 2 Sätze, exakt wie im PDF) und PDF-Seitenzahl.
+Jedes Lernziel hat außerdem eine "summary": genau 3 Sätze in eigenen Worten, die das Lernziel vollständig beantworten – die Kernaussage, das Wichtigste dazu (Bedingungen, Formel, Abgrenzung) und ein Beispiel oder eine Folge. Sie kommt auf einen Spickzettel für die Prüfung und muss deshalb ohne den restlichen Text verständlich sein.
 
 **Seitenzahlen**: immer PDF-Seiten, wie ein PDF-Viewer zählt (erste Seite der Datei = 1), nicht die gedruckten Seitenzahlen. "pages" = erste und letzte PDF-Seite des Kapitels.
 
@@ -225,6 +226,7 @@ function verifyDe(): string {
 6. Story und "concept"-Texte enthalten keine fachlich falschen oder irreführenden Aussagen.
 7. Jede Szene behandelt genau das Lernziel aus "objective".
 8. Formeln sind fachlich richtig und als LaTeX zwischen \\( \\) bzw. \\[ \\] geschrieben, mit verdoppelten Backslashes im JSON.
+9. Jede "summary" eines Lernziels besteht aus genau 3 Sätzen, ist fachlich richtig und beantwortet das Lernziel vollständig. Fehlt sie, ergänze sie.
 
 ## Regeln für Änderungen
 - Behalte alle IDs. Wenn du eine Frage entfernst, stelle sicher, dass "pretest" und "posttest" jeweils mindestens eine Frage behalten.
@@ -249,7 +251,7 @@ const EXAMPLE_EN = `{
     "title": "…",
     "pages": [3, 17],
     "objectives": [
-      { "id": "o1", "text": "Learning objective as a full sentence", "source": { "page": 5, "quote": "verbatim quote from the PDF" } }
+      { "id": "o1", "text": "Learning objective as a full sentence", "summary": "Exactly 3 sentences that answer the objective", "source": { "page": 5, "quote": "verbatim quote from the PDF" } }
     ],
     "pretest": [ /* questions, see question types */ ],
     "story": {
@@ -321,6 +323,7 @@ Work on THIS chapter ONLY. Use only content from the PDF – no outside knowledg
 
 ## Rules
 **Objectives ("objectives")**: 4–8, IDs "o1", "o2", … Each with a verbatim quote (max. 2 sentences, exactly as in the PDF) and the PDF page number.
+Each objective also has a "summary": exactly 3 sentences in your own words that fully answer the objective – the core statement, what matters most about it (conditions, formula, distinction) and an example or consequence. It goes on an exam cheat sheet, so it must make sense without the rest of the text.
 
 **Page numbers**: always PDF pages as a PDF viewer counts them (first page of the file = 1), not the printed page numbers. "pages" = first and last PDF page of the chapter.
 
@@ -371,6 +374,7 @@ function verifyEn(): string {
 6. The story and "concept" texts contain no technically wrong or misleading statements.
 7. Each scene covers exactly the objective in "objective".
 8. Formulas are correct and written as LaTeX between \\( \\) or \\[ \\], with doubled backslashes in the JSON.
+9. Each objective's "summary" has exactly 3 sentences, is factually correct and fully answers the objective. If it is missing, add it.
 
 ## Rules for changes
 - Keep all IDs. If you remove a question, make sure "pretest" and "posttest" each keep at least one question.

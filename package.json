@@ -1,6 +1,6 @@
 {
   "name": "lorebook",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Lernen mit Story, Vorabfragen und Spaced Repetition – Inhalte per Prompt aus eigenem PDF",
   "scripts": {
     "dev": "vite",
@@ -11,13 +11,14 @@
     "deploy:web-only": "npm run build && node scripts/copy-apk.mjs && wrangler pages deploy dist --project-name lorebook --branch main",
     "android:sync": "npm run build && cap sync android",
     "android:open": "cap open android",
-    "format": "prettier --write src scripts",
-    "format:check": "prettier --check src scripts",
+    "format": "prettier --write src scripts e2e playwright.config.ts",
+    "format:check": "prettier --check src scripts e2e playwright.config.ts",
     "lint": "eslint .",
     "licenses": "node scripts/licenses.mjs",
     "licenses:check": "node scripts/licenses.mjs --check",
-    "check": "tsc --noEmit && eslint . && prettier --check src scripts && npm run licenses:check",
-    "prepare": "git config core.hooksPath .githooks"
+    "check": "tsc --noEmit && eslint . && prettier --check src scripts e2e playwright.config.ts && npm run licenses:check",
+    "prepare": "git config core.hooksPath .githooks",
+    "test:e2e": "playwright test"
   },
   "license": "AGPL-3.0-or-later",
   "type": "module",
@@ -46,6 +47,7 @@
     "@capacitor/android": "^8.6.2",
     "@capacitor/cli": "^8.6.2",
     "@eslint/js": "^10.0.1",
+    "@playwright/test": "^1.65.1",
     "@types/react": "^19.3.0",
     "@types/react-dom": "^19.3.0",
     "@vitejs/plugin-react": "^6.3.0",

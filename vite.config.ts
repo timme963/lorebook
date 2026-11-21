@@ -36,5 +36,7 @@ export default defineConfig({
   build: { chunkSizeWarningLimit: 900 },
   test: {
     environment: 'node',
+    // e2e/ holds the Playwright browser tests, which run with their own runner
+    include: ['src/**/*.test.ts'],
   },
 });

@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import QuestionCard from '../components/QuestionCard';
-import { shuffle } from '../lib/courses';
+import QuestionEditor from '../components/QuestionEditor';
+import { shuffle, updateQuestion } from '../lib/courses';
 import { db, type AnswerRecord, type CardRow, type ChapterRow } from '../lib/db';
 import type { Question } from '../lib/schema';
 import { dueCards, flagCard, gradeCard, previewIntervals, Rating, type Grade } from '../lib/srs';
@@ -90,8 +91,9 @@ export default function ReviewPage({ courseId, focus }: { courseId?: string; foc
   const [queue, setQueue] = useState<Item[]>();
   const [pos, setPos] = useState(0);
   const [stats, setStats] = useState({ done: 0, good: 0 });
-  const [flagging, setFlagging] = useState(false);
-  const [reason, setReason] = useState('');
+  const [editing, setEditing] = useState(false);
+  // remounts the question after an edit so the corrected version is asked from scratch
+  const [revision, setRevision] = useState(0);
   const [handsFree, setHandsFree] = useState(false);
   // prevents a double click from rating a card twice and skipping the next one
   const rating = useRef(false);
@@ -199,10 +201,18 @@ export default function ReviewPage({ courseId, focus }: { courseId?: string; foc
   const current: Item = item;
   const rate = (g: Grade) => rateItem(current, g);
 
-  async function flag() {
-    await flagCard(current.card, reason.trim());
-    setFlagging(false);
-    setReason('');
+  async function saveEdit(q: Question) {
+    await updateQuestion(current.chapter.id, q);
+    setQueue((list) =>
+      list?.map((it) => (it.chapter.id === current.chapter.id && it.q.id === q.id ? { ...it, q } : it)),
+    );
+    setEditing(false);
+    setRevision((r) => r + 1);
+  }
+
+  async function hide() {
+    await flagCard(current.card, tr('ausgeblendet', 'hidden'));
+    setEditing(false);
     setPos((p) => p + 1);
   }
 
@@ -238,7 +248,7 @@ export default function ReviewPage({ courseId, focus }: { courseId?: string; foc
         <HandsFree queue={queue} startPos={pos} onRate={rateItem} onExit={() => setHandsFree(false)} />
       ) : (
         <QuestionCard
-          key={`${item.card.id}:${pos}`}
+          key={`${item.card.id}:${pos}:${revision}`}
           q={item.q}
           courseId={item.card.courseId}
           mode="feedback"
@@ -247,33 +257,18 @@ export default function ReviewPage({ courseId, focus }: { courseId?: string; foc
           meta={<span className="muted small">{item.chapter.content.title}</span>}
         />
       )}
-      {handsFree ? null : !flagging ? (
-        <button className="btn small ghost self-start" onClick={() => setFlagging(true)}>
-          {tr('⚑ Frage ist falsch oder unklar', '⚑ Question is wrong or unclear')}
-        </button>
+      {handsFree ? null : editing ? (
+        <QuestionEditor
+          key={`${item.card.id}:${revision}`}
+          question={item.q}
+          onSave={saveEdit}
+          onCancel={() => setEditing(false)}
+          onHide={hide}
+        />
       ) : (
-        <div className="card stack">
-          <p className="small">
-            {tr(
-              'Die Frage wird aus der Wiederholung genommen. Auf der Kursseite kannst du sie wieder freigeben.',
-              'The question is removed from review. You can release it again on the course page.',
-            )}
-          </p>
-          <input
-            className="input"
-            value={reason}
-            onChange={(e) => setReason(e.target.value)}
-            placeholder={tr('Was stimmt nicht? (optional)', "What's wrong? (optional)")}
-          />
-          <div className="row gap">
-            <button className="btn primary" onClick={flag}>
-              {tr('Melden', 'Report')}
-            </button>
-            <button className="btn ghost" onClick={() => setFlagging(false)}>
-              {tr('Abbrechen', 'Cancel')}
-            </button>
-          </div>
-        </div>
+        <button className="btn small ghost self-start" onClick={() => setEditing(true)}>
+          {tr('✎ Frage bearbeiten', '✎ Edit question')}
+        </button>
       )}
     </div>
   );

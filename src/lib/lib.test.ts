@@ -3,7 +3,8 @@ import { setLang } from './i18n';
 import { looseDemo } from './testFixtures';
 import { DEMO_CHAPTER, DEMO_CHAPTER_EN } from './demo';
 import { extractJson, parseChapterFile, repairPrompt } from './importer';
-import { buildBoss, checkCloze } from './courses';
+import { checkCloze } from './courses';
+import { buildExam, gradeFor } from './exam';
 import { levelFor, streakFromDays } from './progress';
 import { generatePrompt, verifyPrompt } from './prompts';
 import type { ChapterRow } from './db';
@@ -94,7 +95,7 @@ describe('Fortschritt', () => {
   });
 });
 
-describe('Boss-Fight', () => {
+describe('Probeklausur', () => {
   it('mischt Fragen mit Schwerpunkt Anwendung/Transfer', () => {
     const ch: ChapterRow = {
       id: 'd:1',
@@ -109,11 +110,18 @@ describe('Boss-Fight', () => {
       preAnswers: {},
       postAnswers: {},
     };
-    const boss = buildBoss([ch], 6);
-    expect(boss).toHaveLength(6);
-    const deep = boss.filter((b) => b.q.level === 'apply' || b.q.level === 'transfer').length;
+    const exam = buildExam([ch], 6);
+    expect(exam).toHaveLength(6);
+    const deep = exam.filter((b) => b.q.level === 'apply' || b.q.level === 'transfer').length;
     expect(deep).toBeGreaterThanOrEqual(4);
-    expect(new Set(boss.map((b) => b.q.id)).size).toBe(6);
+    expect(new Set(exam.map((b) => b.q.id)).size).toBe(6);
+    expect(buildExam([{ ...ch, phase: 'story' }], 6)).toHaveLength(0);
+  });
+  it('schätzt die Note nach der üblichen Skala', () => {
+    expect(gradeFor(1)).toBe('1,0');
+    expect(gradeFor(0.72)).toBe('2,7');
+    expect(gradeFor(0.5)).toBe('4,0');
+    expect(gradeFor(0.49)).toBe('5,0');
   });
 });
 

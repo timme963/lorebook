@@ -1,11 +1,15 @@
 import { useLiveQuery } from 'dexie-react-hooks';
 import { useState } from 'react';
-import { deleteChapter, deleteCourse, resetChapter, type BossResult } from '../lib/courses';
-import { db, getMeta, type ChapterRow } from '../lib/db';
+import { deleteChapter, deleteCourse, resetChapter, updateQuestion } from '../lib/courses';
+import { loadExamResult } from '../lib/exam';
+import { shareCourse } from '../lib/share';
+import { db, type ChapterRow } from '../lib/db';
 import { dueCards, retuneSchedules, unflagCard } from '../lib/srs';
 import { go, href } from '../router';
 import { plural, tr } from '../lib/i18n';
 import ObjectiveInsights from '../components/ObjectiveInsights';
+import QuestionEditor from '../components/QuestionEditor';
+import type { Question } from '../lib/schema';
 
 const PHASE_LABEL = (): Record<ChapterRow['phase'], string> => ({
   new: tr('Neu', 'New'),
@@ -23,20 +27,22 @@ export default function CoursePage({ id }: { id: string }) {
   const data = useLiveQuery(async () => {
     const course = await db.courses.get(id);
     if (!course) return { course: null };
-    const [chapters, due, pdf, boss, flagged] = await Promise.all([
+    const [chapters, due, pdf, exam, flagged] = await Promise.all([
       db.chapters.where('courseId').equals(id).sortBy('number'),
       dueCards(id),
       db.pdfs.get(id),
-      getMeta<BossResult | null>(`boss:${id}`, null),
+      loadExamResult(id),
       db.cards
         .where('courseId')
         .equals(id)
         .filter((c) => !!c.flagged)
         .toArray(),
     ]);
-    return { course, chapters, due, pdf, boss, flagged };
+    return { course, chapters, due, pdf, exam, flagged };
   }, [id]);
   const [menu, setMenu] = useState<string>();
+  const [editingCard, setEditingCard] = useState<string>();
+  const [shareError, setShareError] = useState<string>();
 
   if (!data) return null;
   if (!data.course) {
@@ -49,19 +55,21 @@ export default function CoursePage({ id }: { id: string }) {
       </div>
     );
   }
-  const { course, chapters, due, pdf, boss, flagged } = data;
-  const allDone = chapters.length > 0 && chapters.every((c) => c.phase === 'done');
+  const { course, chapters, due, pdf, exam, flagged } = data;
+  const anyDone = chapters.some((c) => c.phase === 'done');
 
   async function onPdf(f?: File) {
     if (!f) return;
     await db.pdfs.put({ courseId: id, name: f.name, blob: f });
   }
 
-  function questionText(chapterId: string, questionId: string): string {
+  function findQuestion(chapterId: string, questionId: string): Question | undefined {
     const ch = chapters?.find((c) => c.id === chapterId);
-    const q =
-      ch && [...ch.content.pretest, ...ch.content.posttest, ...ch.content.review].find((x) => x.id === questionId);
-    return q?.prompt ?? questionId;
+    return ch && [...ch.content.pretest, ...ch.content.posttest, ...ch.content.review].find((x) => x.id === questionId);
+  }
+
+  function questionText(chapterId: string, questionId: string): string {
+    return findQuestion(chapterId, questionId)?.prompt ?? questionId;
   }
 
   return (
@@ -80,11 +88,40 @@ export default function CoursePage({ id }: { id: string }) {
               ↻ {tr(`${due.length} wiederholen`, `review ${due.length}`)}
             </a>
           )}
+          {chapters.length > 0 && (
+            <a className="btn" href={href({ name: 'sheet', courseId: id })}>
+              📄 {tr('Spickzettel', 'Cheat sheet')}
+            </a>
+          )}
+          {chapters.length > 0 && (
+            <button
+              className="btn"
+              title={tr(
+                'Kurs als Datei weitergeben – mit allen Kapiteln, ohne deinen Fortschritt und ohne PDF',
+                'Pass the course on as a file – all chapters, without your progress and without the PDF',
+              )}
+              onClick={async () => {
+                setShareError(undefined);
+                try {
+                  await shareCourse(id);
+                } catch (e) {
+                  setShareError(e instanceof Error ? e.message : String(e));
+                }
+              }}
+            >
+              📤 {tr('Teilen', 'Share')}
+            </button>
+          )}
           <a className="btn" href={href({ name: 'import', courseId: id })}>
             {tr('+ Kapitel', '+ Chapter')}
           </a>
         </div>
       </div>
+      {shareError && (
+        <p className="error small">
+          {tr('Teilen fehlgeschlagen:', 'Sharing failed:')} {shareError}
+        </p>
+      )}
 
       <section className="card row between wrap gap">
         <div>
@@ -207,32 +244,29 @@ export default function CoursePage({ id }: { id: string }) {
           );
         })}
         {chapters.length > 0 && (
-          <li className={`quest boss ${allDone ? '' : 'locked'}`}>
-            <div className="quest-node">⚔</div>
+          <li className={`quest exam ${anyDone ? '' : 'locked'}`}>
+            <div className="quest-node">📝</div>
             <div className="card quest-card">
-              <h3>{tr('Boss-Fight: Alles gemischt', 'Boss fight: everything mixed')}</h3>
+              <h3>{tr('Probeklausur', 'Mock exam')}</h3>
               <p className="muted small">
                 {tr(
-                  'Gemischte Fragen aus allen Kapiteln, Schwerpunkt Anwendung und Transfer.',
-                  'Mixed questions from all chapters, focused on application and transfer.',
+                  'Gemischte Fragen aus den abgeschlossenen Kapiteln, mit Zeitlimit und Notenschätzung.',
+                  'Mixed questions from the completed chapters, with a time limit and an estimated grade.',
                 )}
-                {boss && (
+                {exam && (
                   <>
                     {' '}
-                    {tr('Bestwert:', 'Best:')} {pct(boss.best)} ({boss.attempts}×)
+                    {tr('Bestwert:', 'Best:')} {pct(exam.best)} ({exam.attempts}×)
                   </>
                 )}
               </p>
-              {allDone ? (
-                <a className="btn primary" href={href({ name: 'boss', courseId: id })}>
-                  {boss ? tr('Nochmal kämpfen', 'Fight again') : tr('Kampf beginnen', 'Start the fight')}
+              {anyDone ? (
+                <a className="btn primary" href={href({ name: 'exam', courseId: id })}>
+                  {exam ? tr('Neue Probeklausur', 'New mock exam') : tr('Probeklausur starten', 'Start mock exam')}
                 </a>
               ) : (
                 <p className="muted small">
-                  {tr(
-                    'Wird freigeschaltet, wenn alle Kapitel gemeistert sind.',
-                    'Unlocks once all chapters are mastered.',
-                  )}
+                  {tr('Wird freigeschaltet, sobald ein Kapitel gemeistert ist.', 'Unlocks once a chapter is mastered.')}
                 </p>
               )}
             </div>
@@ -275,25 +309,48 @@ export default function CoursePage({ id }: { id: string }) {
       {flagged.length > 0 && (
         <section className="card stack">
           <h3>
-            {tr('Gemeldete Fragen', 'Flagged questions')} ({flagged.length})
+            {tr('Ausgeblendete Fragen', 'Hidden questions')} ({flagged.length})
           </h3>
           <p className="muted small">
             {tr(
-              'Diese Fragen sind aus der Wiederholung genommen. Korrigiere sie über einen erneuten Import des Kapitels oder gib sie wieder frei.',
-              'These questions are excluded from review. Fix them by re-importing the chapter, or release them again.',
+              'Diese Fragen sind aus der Wiederholung genommen. Korrigiere sie und gib sie damit wieder frei, oder gib sie unverändert frei.',
+              'These questions are excluded from review. Fix them, which also releases them, or release them unchanged.',
             )}
           </p>
           <ul className="flag-list">
-            {flagged.map((c) => (
-              <li key={c.id}>
-                <span className="grow">
-                  {questionText(c.chapterId, c.questionId)} <em className="muted small">– {c.flagged}</em>
-                </span>
-                <button className="btn small" onClick={() => unflagCard(c.id)}>
-                  {tr('Freigeben', 'Release')}
-                </button>
-              </li>
-            ))}
+            {flagged.map((c) => {
+              const q = findQuestion(c.chapterId, c.questionId);
+              if (editingCard === c.id && q) {
+                return (
+                  <li key={c.id}>
+                    <QuestionEditor
+                      question={q}
+                      onCancel={() => setEditingCard(undefined)}
+                      onSave={async (edited) => {
+                        await updateQuestion(c.chapterId, edited);
+                        await unflagCard(c.id);
+                        setEditingCard(undefined);
+                      }}
+                    />
+                  </li>
+                );
+              }
+              return (
+                <li key={c.id}>
+                  <span className="grow">
+                    {questionText(c.chapterId, c.questionId)} <em className="muted small">– {c.flagged}</em>
+                  </span>
+                  {q && (
+                    <button className="btn small" onClick={() => setEditingCard(c.id)}>
+                      {tr('Bearbeiten', 'Edit')}
+                    </button>
+                  )}
+                  <button className="btn small" onClick={() => unflagCard(c.id)}>
+                    {tr('Freigeben', 'Release')}
+                  </button>
+                </li>
+              );
+            })}
           </ul>
         </section>
       )}

@@ -26,8 +26,8 @@ function HelpDe() {
             kommt seltener. Was du vergisst, kommt bald wieder.
           </li>
           <li>
-            <strong>Boss-Fight:</strong> Wenn alle Kapitel eines Kurses gemeistert sind, gibt es gemischte Fragen aus
-            allen Kapiteln, mit Schwerpunkt auf Anwendung und Transfer.
+            <strong>Probeklausur:</strong> Gemischte Fragen aus allen abgeschlossenen Kapiteln, mit Zeitlimit und ohne
+            Auflösung zwischendurch. Am Ende gibt es Punkte und eine geschätzte Note.
           </li>
         </ol>
       </section>
@@ -71,7 +71,8 @@ function HelpDe() {
             hast, die Originalseite.
           </li>
           <li>
-            Falsche Frage in der Wiederholung? <strong>⚑ melden</strong>, dann ist sie aus dem Plan genommen.
+            Falsche Frage in der Wiederholung? <strong>✎ Frage bearbeiten</strong> und direkt korrigieren – oder dort
+            aus der Wiederholung nehmen.
           </li>
         </ul>
       </section>
@@ -163,8 +164,8 @@ function HelpEn() {
             often. What you forget comes back soon.
           </li>
           <li>
-            <strong>Boss fight:</strong> Once all chapters of a course are mastered, you get mixed questions from all
-            chapters, focused on application and transfer.
+            <strong>Mock exam:</strong> Mixed questions from all completed chapters, with a time limit and no feedback
+            in between. At the end you get points and an estimated grade.
           </li>
         </ol>
       </section>
@@ -208,7 +209,8 @@ function HelpEn() {
             the original page.
           </li>
           <li>
-            Wrong question in review? <strong>⚑ Report</strong> it and it's removed from the schedule.
+            Wrong question in review? <strong>✎ Edit question</strong> and fix it right there – or remove it from the
+            review.
           </li>
         </ul>
         <p className="muted small">

@@ -1,5 +1,5 @@
-import { createEmptyCard, fsrs, generatorParameters, Rating, State, type Card, type Grade } from 'ts-fsrs';
-import { db, type CardRow, type ChapterRow } from './db';
+import { DefaultScheduler, Rating, State, type Grade } from 'ts-fsrs';
+import { db, type CardRow, type ChapterRow, type StoredSchedule } from './db';
 import { addXp, touchStreak } from './progress';
 import type { Question } from './schema';
 import { tr } from './i18n';
@@ -14,18 +14,74 @@ const MAX_INTERVAL_DAYS = 90;
 /** Every card comes up once more at least this many days before a course's exam (1 day if that is too late). */
 const EXAM_LEAD_DAYS = 2;
 const DAY_MS = 86_400_000;
+const GRADES: readonly Grade[] = [Rating.Again, Rating.Hard, Rating.Good, Rating.Easy];
 
-const scheduler = fsrs(
-  generatorParameters({ enable_fuzz: true, request_retention: RETENTION, maximum_interval: MAX_INTERVAL_DAYS }),
-);
+// FSRS-6 matches the stability and difficulty values already stored on every card
+const scheduler = await DefaultScheduler({
+  version: 'FSRS-6',
+  desiredRetention: RETENTION,
+  maximumInterval: MAX_INTERVAL_DAYS,
+  enableFuzz: true,
+});
 
-// FSRS-6 forgetting curve R(t) = (1 + FACTOR * t / S) ^ DECAY, solved for t at the target retention
-const DECAY = -(scheduler.parameters.w[20] ?? 0.1542);
-const FACTOR = 0.9 ** (1 / DECAY) - 1;
+// ---------- conversion between the stored format and the scheduler's format ----------
 
-/** Gap in days that FSRS would schedule for a review card of this stability (without fuzz). */
+/** Card type of the FSRS-6 scheduler (the exported default type describes FSRS-7). */
+type SchedulerCard = Parameters<typeof scheduler.review>[0]['card'];
+
+const STATUS_BY_STATE = {
+  [State.New]: 'new',
+  [State.Learning]: 'learning',
+  [State.Review]: 'review',
+  [State.Relearning]: 'learning',
+} as const;
+
+function statusOf(state: number): SchedulerCard['scheduleStatus'] {
+  return state === State.Learning || state === State.Review || state === State.Relearning
+    ? STATUS_BY_STATE[state]
+    : 'new';
+}
+
+function stateOf(state: number): State {
+  return state === State.Learning || state === State.Review || state === State.Relearning ? state : State.New;
+}
+
+/** Date fields may arrive as strings after a backup import or a sync, so they are always revived. */
+function toScheduler(stored: StoredSchedule, cardId: string): SchedulerCard {
+  return {
+    cardId,
+    stability: stored.stability,
+    difficulty: stored.difficulty,
+    state: stateOf(stored.state),
+    scheduleStatus: statusOf(stored.state),
+    dueAt: new Date(stored.due),
+    lastReviewAt: stored.last_review ? new Date(stored.last_review) : null,
+    reps: stored.reps,
+    lapses: stored.lapses,
+    scheduledDays: stored.scheduled_days,
+    learningStep: stored.learning_steps,
+  };
+}
+
+function toStored(card: SchedulerCard, due = card.dueAt): StoredSchedule {
+  return {
+    due,
+    stability: card.stability,
+    difficulty: card.difficulty,
+    scheduled_days: card.scheduledDays,
+    reps: card.reps,
+    lapses: card.lapses,
+    learning_steps: card.learningStep ?? 0,
+    state: card.state,
+    last_review: card.lastReviewAt ?? undefined,
+  };
+}
+
+// ---------- intervals and exam dates ----------
+
+/** Gap in days that FSRS schedules for a review card of this stability (without fuzz), capped like real reviews. */
 export function intervalDays(stability: number): number {
-  const days = Math.round((stability / FACTOR) * (RETENTION ** (1 / DECAY) - 1));
+  const days = Math.round(scheduler.model.nextInterval({ stability, difficulty: 5 }, RETENTION));
   return Math.min(MAX_INTERVAL_DAYS, Math.max(1, days));
 }
 
@@ -40,23 +96,11 @@ export function examDeadline(examDate: string | undefined, now: number): number 
   return undefined;
 }
 
-/** The card with a different due time. */
-function withDue(card: Card, due: number): Card {
-  return { ...card, due: new Date(due) };
-}
-
 async function examDateOf(courseId: string): Promise<string | undefined> {
   return (await db.courses.get(courseId))?.examDate;
 }
 
-/** Normalises date fields to Date, which they may not be after a backup import. */
-function reviveCard(c: Card): Card {
-  return {
-    ...c,
-    due: new Date(c.due),
-    last_review: c.last_review ? new Date(c.last_review) : undefined,
-  };
-}
+// ---------- cards ----------
 
 export function chapterQuestions(ch: ChapterRow): Question[] {
   const c = ch.content;
@@ -71,23 +115,23 @@ export async function createCardsForChapter(ch: ChapterRow): Promise<number> {
     for (const q of chapterQuestions(ch)) {
       const id = `${ch.id}:${q.id}`;
       if (await db.cards.get(id)) continue;
-      const card = createEmptyCard(now);
+      let card = scheduler.newCard({ now, cardId: id });
+      let due = card.dueAt;
       // post-test questions were just answered: correct ones come back tomorrow at the earliest, the rest right away
       const answered = ch.postAnswers[q.id];
-      let fsrsCard = card;
       if (answered) {
         const correct = answered.score >= 1;
-        fsrsCard = scheduler.next(card, now, correct ? Rating.Good : Rating.Again).card;
-        const tomorrow = now.getTime() + DAY_MS;
-        if (correct && new Date(fsrsCard.due).getTime() < tomorrow) fsrsCard = withDue(fsrsCard, tomorrow);
+        card = scheduler.review({ card, grade: correct ? Rating.Good : Rating.Again, now }).card;
+        const tomorrow = new Date(now.getTime() + DAY_MS);
+        due = correct && card.dueAt < tomorrow ? tomorrow : card.dueAt;
       }
       await db.cards.put({
         id,
         courseId: ch.courseId,
         chapterId: ch.id,
         questionId: q.id,
-        fsrs: fsrsCard,
-        due: new Date(fsrsCard.due).getTime(),
+        fsrs: toStored(card, due),
+        due: due.getTime(),
         suspended: false,
       });
       created++;
@@ -105,43 +149,49 @@ export async function countDue(courseId?: string): Promise<number> {
   return (await dueCards(courseId)).length;
 }
 
+function formatGap(from: Date, to: Date): string {
+  const mins = Math.round((to.getTime() - from.getTime()) / 60000);
+  if (mins < 60) return `${Math.max(1, mins)} min`;
+  const hours = Math.round(mins / 60);
+  if (hours < 24) return `${hours} h`;
+  const days = Math.round(hours / 24);
+  if (days < 31) return `${days} ${tr('T', 'd')}`;
+  const months = Math.round(days / 30);
+  return months < 12 ? `${months} ${tr('Mon', 'mo')}` : `${(days / 365).toFixed(1)} ${tr('J', 'y')}`;
+}
+
 /** Preview: when the card comes back for each rating. */
 export function previewIntervals(row: CardRow, now = new Date()): Record<Grade, string> {
-  const rec = scheduler.repeat(reviveCard(row.fsrs), now);
-  const fmt = (d: Date) => {
-    const mins = Math.round((d.getTime() - now.getTime()) / 60000);
-    if (mins < 60) return `${Math.max(1, mins)} min`;
-    const hours = Math.round(mins / 60);
-    if (hours < 24) return `${hours} h`;
-    const days = Math.round(hours / 24);
-    if (days < 31) return `${days} ${tr('T', 'd')}`;
-    const months = Math.round(days / 30);
-    return months < 12 ? `${months} ${tr('Mon', 'mo')}` : `${(days / 365).toFixed(1)} ${tr('J', 'y')}`;
-  };
+  const due = new Map<number, Date>();
+  for (const item of scheduler.preview({ card: toScheduler(row.fsrs, row.id), now }))
+    due.set(item.grade, item.card.dueAt);
   const intervals: Record<Grade, string> = {
-    [Rating.Again]: fmt(rec[Rating.Again].card.due),
-    [Rating.Hard]: fmt(rec[Rating.Hard].card.due),
-    [Rating.Good]: fmt(rec[Rating.Good].card.due),
-    [Rating.Easy]: fmt(rec[Rating.Easy].card.due),
+    [Rating.Again]: '',
+    [Rating.Hard]: '',
+    [Rating.Good]: '',
+    [Rating.Easy]: '',
   };
+  for (const grade of GRADES) intervals[grade] = formatGap(now, due.get(grade) ?? now);
   return intervals;
 }
 
 /** Retrievability now (0..1); undefined while the card was never rated. */
 export function retrievabilityOf(row: CardRow, now = new Date()): number | undefined {
-  if (!row.fsrs.last_review) return undefined;
-  return scheduler.retrievability(reviveCard(row.fsrs), now);
+  const card = toScheduler(row.fsrs, row.id);
+  if (!card.lastReviewAt) return undefined;
+  const elapsed = Math.max(0, scheduler.chrono.difference(card.lastReviewAt, now));
+  return scheduler.model.forgettingCurve(card, elapsed);
 }
 
 /** Rates a card and returns it with its new schedule. */
 export async function gradeCard(row: CardRow, rating: Grade): Promise<CardRow> {
   const now = new Date();
-  let { card } = scheduler.next(reviveCard(row.fsrs), now, rating);
+  const { card } = scheduler.review({ card: toScheduler(row.fsrs, row.id), grade: rating, now });
   const deadline = examDeadline(await examDateOf(row.courseId), now.getTime());
-  if (deadline !== undefined && new Date(card.due).getTime() > deadline) card = withDue(card, deadline);
-  const updated: CardRow = { ...row, fsrs: card, due: new Date(card.due).getTime() };
+  const due = deadline !== undefined && card.dueAt.getTime() > deadline ? new Date(deadline) : card.dueAt;
+  const updated: CardRow = { ...row, fsrs: toStored(card, due), due: due.getTime() };
   await db.transaction('rw', [db.cards, db.reviews, db.meta, db.local], async () => {
-    await db.cards.update(row.id, { fsrs: card, due: updated.due });
+    await db.cards.update(row.id, { fsrs: updated.fsrs, due: updated.due });
     await db.reviews.add({ cardId: row.id, courseId: row.courseId, rating, at: now.getTime() });
     await addXp(rating === Rating.Again ? 4 : 10);
     await touchStreak();
@@ -160,16 +210,16 @@ export async function retuneSchedules(courseId?: string, now = Date.now()): Prom
   const cards = courseId ? await db.cards.where('courseId').equals(courseId).toArray() : await db.cards.toArray();
   let changed = 0;
   for (const row of cards) {
-    const card = reviveCard(row.fsrs);
     let target = row.due;
-    if (card.state === State.Review && card.last_review) {
-      target = Math.min(target, card.last_review.getTime() + intervalDays(card.stability) * DAY_MS);
+    const lastReview = row.fsrs.last_review ? new Date(row.fsrs.last_review).getTime() : undefined;
+    if (row.fsrs.state === State.Review && lastReview !== undefined) {
+      target = Math.min(target, lastReview + intervalDays(row.fsrs.stability) * DAY_MS);
     }
     const deadline = deadlines.get(row.courseId);
     if (deadline !== undefined) target = Math.min(target, deadline);
     // tolerance keeps fuzzed due dates from being rewritten (and re-synced) on every start
     if (row.due - target > DAY_MS / 24) {
-      await db.cards.update(row.id, { fsrs: withDue(card, target), due: target });
+      await db.cards.update(row.id, { fsrs: { ...row.fsrs, due: new Date(target) }, due: target });
       changed++;
     }
   }

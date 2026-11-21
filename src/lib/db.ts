@@ -1,5 +1,4 @@
 import Dexie, { type EntityTable } from 'dexie';
-import type { Card } from 'ts-fsrs';
 import type { ChapterContent } from './schema';
 
 export interface CourseRow {
@@ -39,12 +38,31 @@ export interface AnswerRecord {
   score: number; // 0..1
 }
 
+/**
+ * Scheduling state of a card as stored and synced. The field names follow the ts-fsrs v5 format; they stay this
+ * way so that devices running older app versions can still read synced cards. srs.ts converts to the scheduler's
+ * own format at its boundary.
+ */
+export interface StoredSchedule {
+  due: Date;
+  stability: number;
+  difficulty: number;
+  /** Interval in days planned at the last review */
+  scheduled_days: number;
+  reps: number;
+  lapses: number;
+  learning_steps: number;
+  /** 0 new, 1 learning, 2 review, 3 relearning */
+  state: number;
+  last_review?: Date;
+}
+
 export interface CardRow {
   id: string; // `${chapterId}:${questionId}`
   courseId: string;
   chapterId: string;
   questionId: string;
-  fsrs: Card;
+  fsrs: StoredSchedule;
   due: number; // ms, indexed
   suspended: boolean;
   flagged?: string;

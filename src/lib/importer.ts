@@ -45,13 +45,15 @@ function allQuestions(file: ChapterFile): { list: string; q: Question; i: number
   return out;
 }
 
-export function parseChapterFile(raw: string): ImportResult {
-  const errors: string[] = [];
+export type LenientJson =
+  { ok: true; value: unknown; warnings: string[] } | { ok: false; error: string; warnings: string[] };
+
+/**
+ * Parses JSON from a chat reply and repairs the usual model mistakes: text around the code block,
+ * typographic quotes and single backslashes in formulas.
+ */
+export function parseLenientJson(raw: string): LenientJson {
   const warnings: string[] = [];
-
-  if (!raw.trim()) return { ok: false, errors: [tr('Es wurde nichts eingefügt.', 'Nothing was pasted.')], warnings };
-
-  let json: unknown;
   const extracted = extractJson(raw);
   const quotesMsg = tr(
     'Typografische Anführungszeichen wurden automatisch korrigiert.',
@@ -71,29 +73,36 @@ export function parseChapterFile(raw: string): ImportResult {
   let firstError: Error | undefined;
   for (const [text, msgs] of attempts) {
     try {
-      json = JSON.parse(text);
+      const json: unknown = JSON.parse(text);
       warnings.push(...msgs);
-      break;
+      // a single backslash like \f in \frac turns into a control character when parsed – restore it in formulas
+      const repaired = repairMath(json);
+      if (repaired.changed && !warnings.includes(escMsg)) warnings.push(escMsg);
+      return { ok: true, value: repaired.value, warnings };
     } catch (e) {
-      firstError ??= e as Error;
+      firstError ??= e instanceof Error ? e : new Error(String(e));
     }
   }
-  if (json === undefined) {
-    return {
-      ok: false,
-      errors: [
-        tr(
-          `Kein gültiges JSON: ${firstError?.message}. Oft ist die Antwort abgeschnitten – dann im Chat „weiter“ schreiben und alles zusammen einfügen.`,
-          `Not valid JSON: ${firstError?.message}. Often the answer was cut off – write "continue" in the chat and paste everything together.`,
-        ),
-      ],
-      warnings,
-    };
-  }
-  // a single backslash like \f in \frac turns into a control character when parsed – restore it in formulas
-  const repaired = repairMath(json);
-  json = repaired.value;
-  if (repaired.changed && !warnings.includes(escMsg)) warnings.push(escMsg);
+  return {
+    ok: false,
+    error: tr(
+      `Kein gültiges JSON: ${firstError?.message}. Oft ist die Antwort abgeschnitten – dann im Chat „weiter“ schreiben und alles zusammen einfügen.`,
+      `Not valid JSON: ${firstError?.message}. Often the answer was cut off – write "continue" in the chat and paste everything together.`,
+    ),
+    warnings,
+  };
+}
+
+export function parseChapterFile(raw: string): ImportResult {
+  const errors: string[] = [];
+  const warnings: string[] = [];
+
+  if (!raw.trim()) return { ok: false, errors: [tr('Es wurde nichts eingefügt.', 'Nothing was pasted.')], warnings };
+
+  const lenient = parseLenientJson(raw);
+  warnings.push(...lenient.warnings);
+  if (!lenient.ok) return { ok: false, errors: [lenient.error], warnings };
+  const json = lenient.value;
 
   applyZodLocale();
   const parsed = ChapterFileSchema.safeParse(json);

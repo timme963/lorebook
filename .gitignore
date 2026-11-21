@@ -13,3 +13,7 @@ dev-dist
 release/
 *.jks
 *.keystore
+
+# Playwright output
+test-results/
+playwright-report/

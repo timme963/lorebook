@@ -4,6 +4,7 @@ import CopyButton from '../components/CopyButton';
 import { importChapter } from '../lib/courses';
 import { db } from '../lib/db';
 import { parseChapterFile, repairPrompt, type ImportResult } from '../lib/importer';
+import { importCourseShare, looksLikeCourseShare, parseCourseShare, type ShareParseResult } from '../lib/share';
 import { generatePrompt, outlinePrompt, STORY_STYLES, verifyPrompt } from '../lib/prompts';
 import { go } from '../router';
 import { tr } from '../lib/i18n';
@@ -103,6 +104,8 @@ export default function ImportPage({ courseId }: { courseId?: string }) {
   const [customStyle, setCustomStyle] = useState(false);
   const [pasted, setPasted] = useState('');
   const [result, setResult] = useState<ImportResult>();
+  // a shared course (several chapters) instead of a single chapter from the chat
+  const [share, setShare] = useState<ShareParseResult>();
   const [busy, setBusy] = useState(false);
   const [importError, setImportError] = useState<string>();
 
@@ -121,8 +124,15 @@ export default function ImportPage({ courseId }: { courseId?: string }) {
   const prompt = generatePrompt({ course: targetCourse?.title ?? courseTitle, chapterNumber, chapterTitle, style });
 
   useEffect(() => {
-    if (!pasted.trim()) return setResult(undefined);
-    const t = setTimeout(() => setResult(parseChapterFile(pasted)), 250);
+    if (!pasted.trim()) {
+      setShare(undefined);
+      return setResult(undefined);
+    }
+    const t = setTimeout(() => {
+      const isShare = looksLikeCourseShare(pasted);
+      setShare(isShare ? parseCourseShare(pasted) : undefined);
+      setResult(isShare ? undefined : parseChapterFile(pasted));
+    }, 250);
     return () => clearTimeout(t);
   }, [pasted]);
 
@@ -140,6 +150,19 @@ export default function ImportPage({ courseId }: { courseId?: string }) {
     } catch (e) {
       // e.g. storage full – re-enable the button instead of hanging silently
       setImportError((e as Error).message);
+      setBusy(false);
+    }
+  }
+
+  async function doImportShare() {
+    if (!share?.ok) return;
+    setBusy(true);
+    setImportError(undefined);
+    try {
+      const course = await importCourseShare(share.share);
+      go({ name: 'course', id: course.id });
+    } catch (e) {
+      setImportError(e instanceof Error ? e.message : String(e));
       setBusy(false);
     }
   }
@@ -314,6 +337,35 @@ export default function ImportPage({ courseId }: { courseId?: string }) {
           />
         </label>
 
+        {share?.ok && (
+          <div className="feedback good stack">
+            <p className="verdict">
+              {tr('Geteilter Kurs:', 'Shared course:')} {share.share.course.title}
+            </p>
+            <p className="small">
+              {tr(
+                `${share.share.chapters.length} Kapitel. Sie werden als eigener Kurs importiert; dein Fortschritt beginnt bei null.`,
+                `${share.share.chapters.length} chapters. They are imported as a course of their own; your progress starts from zero.`,
+              )}
+            </p>
+            <button className="btn primary self-start" onClick={doImportShare} disabled={busy}>
+              {tr('Kurs importieren', 'Import course')}
+            </button>
+            {importError && <p className="error small">{importError}</p>}
+          </div>
+        )}
+        {share && !share.ok && (
+          <div className="feedback bad">
+            <p className="verdict">{tr('Die Kurs-Datei ist nicht lesbar', 'The course file cannot be read')}</p>
+            <ul className="small">
+              {share.errors.slice(0, 8).map((e) => (
+                <li key={e}>
+                  <code>{e}</code>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
         {result && !result.ok && (
           <div className="feedback bad">
             <p className="verdict">

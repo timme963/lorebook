@@ -6,7 +6,8 @@ export type Route =
   | { name: 'course'; id: string }
   | { name: 'chapter'; id: string }
   | { name: 'review'; courseId?: string; focus?: 'weak' }
-  | { name: 'boss'; courseId: string }
+  | { name: 'exam'; courseId: string }
+  | { name: 'sheet'; courseId: string }
   | { name: 'data' }
   | { name: 'account' }
   | { name: 'help' }
@@ -26,8 +27,12 @@ export function parseHash(hash: string): Route {
       return parts[1] ? { name: 'chapter', id: parts[1] } : { name: 'home' };
     case 'review':
       return { name: 'review', courseId: parts[1], focus: params.get('focus') === 'weak' ? 'weak' : undefined };
+    case 'sheet':
+      return parts[1] ? { name: 'sheet', courseId: parts[1] } : { name: 'home' };
+    // '#/boss/<id>' is still out there in bookmarks and synced links and opens the mock exam
+    case 'exam':
     case 'boss':
-      return parts[1] ? { name: 'boss', courseId: parts[1] } : { name: 'home' };
+      return parts[1] ? { name: 'exam', courseId: parts[1] } : { name: 'home' };
     case 'data':
       return { name: 'data' };
     case 'help':
@@ -56,8 +61,10 @@ export function href(r: Route): string {
       return `#/chapter/${e(r.id)}`;
     case 'review':
       return (r.courseId ? `#/review/${e(r.courseId)}` : '#/review') + (r.focus ? `?focus=${r.focus}` : '');
-    case 'boss':
-      return `#/boss/${e(r.courseId)}`;
+    case 'exam':
+      return `#/exam/${e(r.courseId)}`;
+    case 'sheet':
+      return `#/sheet/${e(r.courseId)}`;
     case 'data':
       return '#/data';
     case 'help':
