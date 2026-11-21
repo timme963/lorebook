@@ -1,6 +1,6 @@
 # Lorebook
 
-Lernen mit **Vorabfragen → Story → Nachfragen → Spaced Repetition**, pro Kapitel und mit einem Boss-Fight für den ganzen Kurs.
+Lernen mit **Vorabfragen → Story → Nachfragen → Spaced Repetition**, pro Kapitel und mit einer Probeklausur für den ganzen Kurs.
 
 Lorebook ruft selbst keine KI auf. Du lädst dein PDF bei Claude, ChatGPT oder Gemini hoch, nimmst dazu den fertigen Prompt aus der App und fügst die Antwort (JSON) wieder ein. Die App zeigt die Inhalte an, fragt ab und plant die Wiederholungen.
 
@@ -24,7 +24,7 @@ Live: https://lorebook-9yf.pages.dev · Impressum und Datenschutz unter `#/impre
 ```bash
 npm install
 npm run dev              # http://localhost:5173
-npm test                 # Unit-Tests (Import-Validierung, Bewertung, Serie, Boss)
+npm test                 # Unit-Tests (Import-Validierung, Bewertung, Serie, Probeklausur)
 npm run format           # Code einheitlich formatieren (Prettier); format:check prüft nur
 npm run build
 npm run deploy           # Build + neueste APK von GitHub holen + Cloudflare Pages (Projekt "lorebook")
@@ -58,7 +58,8 @@ Projekt `lorebook` (`pvzzxmwtaokcefkuyevn`, Frankfurt).
 | `src/lib/prompts.ts` | Prompt Gliederung, Prompt A (Erzeugen), Prompt B (Prüfen) |
 | `src/lib/importer.ts` | JSON aus Chat-Antwort holen, validieren, Korrekturanweisung erzeugen |
 | `src/lib/srs.ts` | FSRS-Wiederholung (ts-fsrs) |
-| `src/lib/courses.ts` | Import, Antwortprüfung, Boss-Fight |
+| `src/lib/courses.ts` | Import, Antwortprüfung, Fragen bearbeiten, Kursliste |
+| `src/lib/exam.ts` | Probeklausur: Fragenauswahl, Zeitlimit, Notenschätzung |
 | `src/lib/db.ts` | IndexedDB (Dexie), Sync-Hooks |
 | `src/lib/sync.ts`, `supabase.ts` | Account und Synchronisierung |
 | `src/lib/platform.ts` | Web oder Android-App, öffentliche URL |

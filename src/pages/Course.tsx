@@ -1,7 +1,8 @@
 import { useLiveQuery } from 'dexie-react-hooks';
 import { useState } from 'react';
-import { deleteChapter, deleteCourse, resetChapter, updateQuestion, type BossResult } from '../lib/courses';
-import { db, getMeta, type ChapterRow } from '../lib/db';
+import { deleteChapter, deleteCourse, resetChapter, updateQuestion } from '../lib/courses';
+import { loadExamResult } from '../lib/exam';
+import { db, type ChapterRow } from '../lib/db';
 import { dueCards, retuneSchedules, unflagCard } from '../lib/srs';
 import { go, href } from '../router';
 import { plural, tr } from '../lib/i18n';
@@ -25,18 +26,18 @@ export default function CoursePage({ id }: { id: string }) {
   const data = useLiveQuery(async () => {
     const course = await db.courses.get(id);
     if (!course) return { course: null };
-    const [chapters, due, pdf, boss, flagged] = await Promise.all([
+    const [chapters, due, pdf, exam, flagged] = await Promise.all([
       db.chapters.where('courseId').equals(id).sortBy('number'),
       dueCards(id),
       db.pdfs.get(id),
-      getMeta<BossResult | null>(`boss:${id}`, null),
+      loadExamResult(id),
       db.cards
         .where('courseId')
         .equals(id)
         .filter((c) => !!c.flagged)
         .toArray(),
     ]);
-    return { course, chapters, due, pdf, boss, flagged };
+    return { course, chapters, due, pdf, exam, flagged };
   }, [id]);
   const [menu, setMenu] = useState<string>();
   const [editingCard, setEditingCard] = useState<string>();
@@ -52,8 +53,8 @@ export default function CoursePage({ id }: { id: string }) {
       </div>
     );
   }
-  const { course, chapters, due, pdf, boss, flagged } = data;
-  const allDone = chapters.length > 0 && chapters.every((c) => c.phase === 'done');
+  const { course, chapters, due, pdf, exam, flagged } = data;
+  const anyDone = chapters.some((c) => c.phase === 'done');
 
   async function onPdf(f?: File) {
     if (!f) return;
@@ -212,32 +213,29 @@ export default function CoursePage({ id }: { id: string }) {
           );
         })}
         {chapters.length > 0 && (
-          <li className={`quest boss ${allDone ? '' : 'locked'}`}>
-            <div className="quest-node">⚔</div>
+          <li className={`quest exam ${anyDone ? '' : 'locked'}`}>
+            <div className="quest-node">📝</div>
             <div className="card quest-card">
-              <h3>{tr('Boss-Fight: Alles gemischt', 'Boss fight: everything mixed')}</h3>
+              <h3>{tr('Probeklausur', 'Mock exam')}</h3>
               <p className="muted small">
                 {tr(
-                  'Gemischte Fragen aus allen Kapiteln, Schwerpunkt Anwendung und Transfer.',
-                  'Mixed questions from all chapters, focused on application and transfer.',
+                  'Gemischte Fragen aus den abgeschlossenen Kapiteln, mit Zeitlimit und Notenschätzung.',
+                  'Mixed questions from the completed chapters, with a time limit and an estimated grade.',
                 )}
-                {boss && (
+                {exam && (
                   <>
                     {' '}
-                    {tr('Bestwert:', 'Best:')} {pct(boss.best)} ({boss.attempts}×)
+                    {tr('Bestwert:', 'Best:')} {pct(exam.best)} ({exam.attempts}×)
                   </>
                 )}
               </p>
-              {allDone ? (
-                <a className="btn primary" href={href({ name: 'boss', courseId: id })}>
-                  {boss ? tr('Nochmal kämpfen', 'Fight again') : tr('Kampf beginnen', 'Start the fight')}
+              {anyDone ? (
+                <a className="btn primary" href={href({ name: 'exam', courseId: id })}>
+                  {exam ? tr('Neue Probeklausur', 'New mock exam') : tr('Probeklausur starten', 'Start mock exam')}
                 </a>
               ) : (
                 <p className="muted small">
-                  {tr(
-                    'Wird freigeschaltet, wenn alle Kapitel gemeistert sind.',
-                    'Unlocks once all chapters are mastered.',
-                  )}
+                  {tr('Wird freigeschaltet, sobald ein Kapitel gemeistert ist.', 'Unlocks once a chapter is mastered.')}
                 </p>
               )}
             </div>

@@ -60,6 +60,7 @@ export async function deleteCourse(courseId: string): Promise<void> {
       await db.cards.where('courseId').equals(courseId).delete();
       await db.reviews.where('courseId').equals(courseId).delete();
       await db.pdfs.delete(courseId);
+      await db.meta.delete(`exam:${courseId}`);
       await db.meta.delete(`boss:${courseId}`);
       await db.courses.delete(courseId);
     },
@@ -204,13 +205,7 @@ export function scoreOf(answers: Record<string, { score: number }>, questions: Q
   return questions.reduce((s, q) => s + (answers[q.id]?.score ?? 0), 0) / questions.length;
 }
 
-// ---------- Boss fight ----------
-
-export interface BossQuestion {
-  chapterId: string;
-  chapterTitle: string;
-  q: Question;
-}
+// ---------- Helpers ----------
 
 /** Fisher-Yates shuffle into a new array. */
 export function shuffle<T>(arr: readonly T[]): T[] {
@@ -222,26 +217,4 @@ export function shuffle<T>(arr: readonly T[]): T[] {
     a[j] = tmp;
   }
   return a;
-}
-
-/** Mixed questions across all chapters, weighted towards apply/transfer (interleaving). */
-export function buildBoss(chapters: ChapterRow[], size = 12): BossQuestion[] {
-  const all: BossQuestion[] = chapters.flatMap((ch) =>
-    [...ch.content.posttest, ...ch.content.review].map((q) => ({
-      chapterId: ch.id,
-      chapterTitle: ch.content.title,
-      q,
-    })),
-  );
-  const deep = shuffle(all.filter((b) => b.q.level === 'apply' || b.q.level === 'transfer'));
-  const rest = shuffle(all.filter((b) => b.q.level !== 'apply' && b.q.level !== 'transfer'));
-  const picked = [...deep.slice(0, Math.ceil(size * 0.6)), ...rest].slice(0, size);
-  return shuffle(picked.length < size ? [...picked, ...deep.slice(Math.ceil(size * 0.6))].slice(0, size) : picked);
-}
-
-export interface BossResult {
-  best: number;
-  last: number;
-  at: number;
-  attempts: number;
 }

@@ -878,7 +878,7 @@ details summary {
 .quest.locked .quest-card {
   opacity: 0.65;
 }
-.quest.boss .quest-node {
+.quest.exam .quest-node {
   border-color: var(--bad);
   color: var(--bad);
 }
@@ -1219,4 +1219,60 @@ details summary {
   width: 20px;
   height: 20px;
   accent-color: var(--accent);
+}
+
+/* Mock exam */
+.exam-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+}
+.exam-clock {
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+}
+.exam-clock.urgent {
+  color: var(--bad);
+}
+.exam-nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.exam-pill {
+  min-width: 34px;
+  min-height: 34px;
+  border-radius: 8px;
+  border: 1px solid var(--line);
+  background: var(--surface);
+  color: var(--ink);
+  cursor: pointer;
+}
+.exam-pill.answered {
+  background: var(--accent-soft);
+  border-color: var(--accent);
+}
+.exam-pill.current {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+.exam-review {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding-left: 20px;
+}
+.exam-review li {
+  border-left: 3px solid var(--line);
+  padding-left: 10px;
+}
+.exam-review li.right {
+  border-color: var(--good);
+}
+.exam-review li.partly {
+  border-color: var(--accent);
+}
+.exam-review li.wrong {
+  border-color: var(--bad);
 }
